@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/pablo/.m2/wrapper/dists/apache-maven-3.9.14/db91789b/bin/mvn clean *)"
+    ]
+  }
+}
