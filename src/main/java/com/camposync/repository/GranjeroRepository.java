@@ -7,5 +7,7 @@ import java.util.Optional;
 
 public interface GranjeroRepository extends JpaRepository<Granjero, Long> {
 
+    Optional<Granjero> findByUsername(String username);
+
     Optional<Granjero> findByNumLeg(String numLeg);
 }
