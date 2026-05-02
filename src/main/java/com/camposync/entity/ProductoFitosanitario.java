@@ -3,6 +3,7 @@ package com.camposync.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -36,6 +37,16 @@ public class ProductoFitosanitario {
 
     @Column(nullable = false)
     private boolean activo;
+
+    // ── Campos de validación MAPA ────────────────────────────────────────────
+    @Column(name = "dosis_min", precision = 10, scale = 4)
+    private BigDecimal dosisMin;
+
+    @Column(name = "dosis_max", precision = 10, scale = 4)
+    private BigDecimal dosisMax;
+
+    @Column(name = "unidad_dosis_oficial", length = 20)
+    private String unidadDosisOficial;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

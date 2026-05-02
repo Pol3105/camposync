@@ -21,11 +21,19 @@ public class Parcela {
     @Column(name = "ref_catastral")
     private String refCatastral;
 
-    private float superficie;
-
-    private String cultivo;
-
     private String municipio;
+
+    // ── Campos SIGPAC ────────────────────────────────────────────────────────
+    private String provincia;
+
+    private Integer agregado;
+
+    private Integer zona;
+
+    private Integer poligono;
+
+    @Column(name = "parcela_sigpac")
+    private Integer parcelaSigpac;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "explotacion_id", nullable = false)

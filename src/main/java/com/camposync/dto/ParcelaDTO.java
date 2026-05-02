@@ -5,11 +5,15 @@ import java.time.LocalDateTime;
 public record ParcelaDTO(
         Long id,
         String refCatastral,
-        Float superficie,
-        String cultivo,
         String municipio,
+        String provincia,
+        Integer agregado,
+        Integer zona,
+        Integer poligono,
+        Integer parcelaSigpac,
         Long explotacionId,
         String explotacionNombre,
+        int numRecintos,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {}

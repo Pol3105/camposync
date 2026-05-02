@@ -9,6 +9,7 @@ import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.ExplotacionRepository;
 import com.camposync.repository.GranjeroRepository;
 import com.camposync.repository.ParcelaRepository;
+import com.camposync.repository.RecintoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class ParcelaService {
     private final ParcelaRepository parcelaRepository;
     private final ExplotacionRepository explotacionRepository;
     private final GranjeroRepository granjeroRepository;
+    private final RecintoRepository recintoRepository;
 
     @Transactional
     public ParcelaDTO crear(String username, ParcelaCreateRequest request) {
@@ -31,9 +33,12 @@ public class ParcelaService {
 
         Parcela parcela = Parcela.builder()
                 .refCatastral(request.refCatastral())
-                .superficie(request.superficie() != null ? request.superficie() : 0f)
-                .cultivo(request.cultivo())
                 .municipio(request.municipio())
+                .provincia(request.provincia())
+                .agregado(request.agregado())
+                .zona(request.zona())
+                .poligono(request.poligono())
+                .parcelaSigpac(request.parcelaSigpac())
                 .explotacion(explotacion)
                 .build();
 
@@ -66,14 +71,19 @@ public class ParcelaService {
     }
 
     private ParcelaDTO toDTO(Parcela p) {
+        int numRecintos = recintoRepository.findByParcela_Id(p.getId()).size();
         return new ParcelaDTO(
                 p.getId(),
                 p.getRefCatastral(),
-                p.getSuperficie(),
-                p.getCultivo(),
                 p.getMunicipio(),
+                p.getProvincia(),
+                p.getAgregado(),
+                p.getZona(),
+                p.getPoligono(),
+                p.getParcelaSigpac(),
                 p.getExplotacion().getId(),
                 p.getExplotacion().getNombre(),
+                numRecintos,
                 p.getCreatedAt(),
                 p.getUpdatedAt()
         );

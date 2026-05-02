@@ -23,6 +23,15 @@ public abstract class Usuario {
     @Column(nullable = false)
     private String passwd;
 
+    @Column(name = "nombre")
+    private String nombre;
+
+    @Column(name = "nif")
+    private String nif;
+
+    @Column(name = "nombre_legal")
+    private String nombreLegal;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
