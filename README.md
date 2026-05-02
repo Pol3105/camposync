@@ -16,6 +16,7 @@
 - [Variables de entorno](#variables-de-entorno)
 - [Seguridad](#seguridad)
 - [Estado del desarrollo](#estado-del-desarrollo)
+- [Bitácora de desafíos técnicos](#bitácora-de-desafíos-técnicos)
 - [Próximos pasos](#próximos-pasos)
 
 ---
@@ -24,7 +25,7 @@
 
 A partir de septiembre de 2025, todas las explotaciones agrarias en España están obligadas a llevar un Cuaderno Digital de Explotación (CUE) y reportarlo al sistema SIEX del Ministerio de Agricultura, Pesca y Alimentación.
 
-CampoSync digitaliza ese flujo end-to-end: el agricultor registra los tratamientos fitosanitarios desde el campo (incluso sin conexión), el asesor valida la información y la plataforma genera automáticamente el XML reglamentario para SIEX.
+CampoSync digitaliza ese flujo end-to-end: el agricultor registra los tratamientos fitosanitarios desde el campo (incluso sin conexión), el asesor valida la información y la plataforma generará automáticamente el XML reglamentario para SIEX.
 
 ## Modelo de negocio
 
@@ -41,7 +42,8 @@ Cada asesoría es un *tenant* independiente. La facturación se gestiona via Str
 ```
 ┌──────────────────────────┐        ┌──────────────────────────┐
 │  App del Granjero (PWA)  │        │  Panel del Asesor (SPA)  │
-│  React · offline-first   │        │  React · dashboard       │
+│  React · offline-first   │        │  React · funcional       │
+│  (planificada)           │        │  (implementado)          │
 └────────────┬─────────────┘        └────────────┬─────────────┘
              │                                   │
              └────────────────┬──────────────────┘
@@ -74,7 +76,7 @@ Cada asesoría es un *tenant* independiente. La facturación se gestiona via Str
 | Hibernate | — | ORM |
 | PostgreSQL | 15 | Base de datos principal |
 | Redis | 7 | Caché y sesiones |
-| Flyway | — | Migraciones de BD |
+| Flyway | — | Migraciones de BD (V1–V6) |
 | MapStruct | 1.5.5 | Mapeo Entity ↔ DTO |
 | Lombok | — | Reducción de boilerplate |
 | JJWT | 0.12.5 | Generación y validación de JWT |
@@ -82,10 +84,10 @@ Cada asesoría es un *tenant* independiente. La facturación se gestiona via Str
 | Quartz | — | Tareas programadas |
 | Maven | 3.9 | Build tool |
 
-### Frontends *(planificados)*
+### Frontend
 
-- **App del Granjero**: React PWA, offline-first con sincronización en background
-- **Panel del Asesor**: React SPA, dashboard centralizado con exportador SIEX
+- **Panel del Asesor**: React SPA, funcional — navegación jerárquica Explotación → Parcela → Recinto → Tratamiento, modales SIEX/SIGPAC con datos reales de BD
+- **App del Granjero**: React PWA, offline-first con sincronización en background *(planificada)*
 
 ## Modelo de datos
 
@@ -98,6 +100,9 @@ PLAN ──┐
                        │
                        ▼
                    PARCELA
+                       │
+                       ▼
+                   RECINTO          ← unidad mínima SIGPAC
                        │
                        ▼
                   TRATAMIENTO ──► PRODUCTO_FITOSANITARIO ◄── INVENTARIO ◄── GRANJERO
@@ -115,28 +120,56 @@ PLAN ──┐
 | `Asesor` | Hereda de Usuario — vinculado a una asesoría |
 | `Granjero` | Hereda de Usuario — propietario de explotaciones |
 | `Invitacion` | Onboarding self-service por token |
-| `Explotacion` | Unidad agraria con referencia SIGPAC |
-| `Parcela` | Subdivisión catastral de una explotación |
-| `ProductoFitosanitario` | Catálogo de productos autorizados (RETO) |
-| `Tratamiento` | Aplicación registrada de un producto en una parcela |
+| `Explotacion` | Unidad agraria con campos SIEX completos (REA, orientación, provincia/municipio INE, año declaración) |
+| `Parcela` | Subdivisión catastral — incluye datos SIGPAC (polígono, parcela, agregado, zona, provincia) |
+| `Recinto` | Unidad mínima de declaración SIGPAC (uso, sistema de cultivo, cultivo, superficie) |
+| `ProductoFitosanitario` | Catálogo de productos con dosis oficiales MAPA (dosisMin, dosisMax, unidadDosisOficial) |
+| `Tratamiento` | Aplicación registrada de un producto en un recinto — campos SIEX completos (motivo, plaga EPPO, ITEAF, ROPO, aplicador) |
 | `Inventario` | Stock de productos por granjero |
+
+### Campos SIEX implementados
+
+| Entidad | Campos SIEX |
+|---------|-------------|
+| `Explotacion` | `codigoRea`, `tipoExplotacion` (PF/SC/SA/SL), `orientacionProductiva` (CE/VI/OL/FS/HO/PA), `provinciaExplotacion`, `municipioExplotacion`, `anioDeclaracion` |
+| `Tratamiento` | `motivoTratamiento` (PR/CU/ED), `codigoPlaga` (EPPO), `tipoEquipo`, `numRegistroIteaf`, `fechaIteaf`, `volumenCaldo`, `nifAplicador`, `numeroRopo`, `nivelCapacitacionRopo` |
+| `ProductoFitosanitario` | `dosisMin`, `dosisMax`, `unidadDosisOficial` |
 
 ## Estructura del proyecto
 
 ```
 camposync/
-├── docker-compose.yml          # PostgreSQL + Redis
+├── docker-compose.yml
 ├── pom.xml
 ├── src/
 │   └── main/
 │       ├── java/com/camposync/
 │       │   ├── CamposyncApplication.java
-│       │   ├── controller/     # REST endpoints
-│       │   │   └── AuthController.java
-│       │   ├── dto/            # Records de entrada/salida
-│       │   ├── entity/         # 12 entidades JPA
-│       │   ├── repository/     # 11 repositorios Spring Data
-│       │   └── security/       # JWT + Spring Security
+│       │   ├── config/
+│       │   │   ├── DataInitializer.java     # Seed base (asesor + granjero demo)
+│       │   │   └── DataSeeder.java          # Seed realista (10 granjeros, 25 explot., 20 tratamientos)
+│       │   ├── controller/
+│       │   │   ├── AsesorPanelController.java   # /api/asesor/** (panel centralizado)
+│       │   │   ├── AuthController.java
+│       │   │   ├── ExplotacionController.java
+│       │   │   ├── InventarioController.java
+│       │   │   ├── InvitacionController.java
+│       │   │   ├── ParcelaController.java
+│       │   │   ├── RecintoController.java
+│       │   │   └── TratamientoController.java
+│       │   ├── dto/                         # 19 Records de entrada/salida
+│       │   ├── entity/                      # 12 entidades JPA
+│       │   ├── repository/                  # 12 repositorios Spring Data
+│       │   ├── service/
+│       │   │   ├── AsesorPanelService.java
+│       │   │   ├── AuthService.java
+│       │   │   ├── ExplotacionService.java
+│       │   │   ├── InventarioService.java
+│       │   │   ├── InvitacionService.java
+│       │   │   ├── ParcelaService.java
+│       │   │   ├── RecintoService.java
+│       │   │   └── TratamientoService.java
+│       │   └── security/
 │       │       ├── JwtAuthenticationFilter.java
 │       │       ├── JwtService.java
 │       │       ├── SecurityConfig.java
@@ -145,7 +178,35 @@ camposync/
 │       └── resources/
 │           ├── application.yaml
 │           └── db/migration/
-│               └── V1__init.sql
+│               ├── V1__init.sql                  # Esquema base
+│               ├── V2__granjero_asesoria.sql      # Relación granjero-asesoría
+│               ├── V3__tratamiento_observaciones_validador.sql
+│               ├── V4__siex_fields.sql            # Campos SIEX iniciales
+│               ├── V5__recinto.sql                # Entidad Recinto + migración datos
+│               └── V6__siex_compliance.sql        # Campos SIEX completos + VARCHAR calibrados
+└── frontend/
+    ├── package.json
+    └── src/
+        ├── App.jsx                          # Enrutador principal (React Router)
+        ├── components/
+        │   └── AppLayout.jsx
+        ├── services/
+        │   └── api.js                       # Cliente HTTP centralizado
+        └── pages/
+            ├── LoginPage.jsx
+            ├── SignUpPage.jsx
+            ├── InviteRegisterPage.jsx
+            ├── InvitacionesPage.jsx
+            ├── DashboardPage.jsx            # Panel del asesor
+            ├── DashboardGranjero.jsx        # Cuaderno del granjero
+            ├── AgricultoresPage.jsx         # Listado de agricultores
+            ├── AgricultorExplotacionesPage.jsx  # Explotaciones + modal Ficha SIEX
+            ├── ExplotacionesPage.jsx
+            ├── ExplotacionParcelasPage.jsx  # Parcelas + modal SIGPAC + botón Exportar SIEX
+            ├── ParcelaRecintosPage.jsx      # Recintos SIGPAC + modal detalle
+            ├── ParcelaTratamientosPage.jsx
+            ├── RecintoTratamientosPage.jsx  # Historial tratamientos por recinto + KPIs
+            └── TratamientosPage.jsx
 ```
 
 ## Puesta en marcha
@@ -155,6 +216,7 @@ camposync/
 - Java 21
 - Docker + Docker Compose
 - Maven 3.9+ (o el wrapper incluido `./mvnw`)
+- Node.js 18+ (para el frontend)
 
 ### Pasos
 
@@ -168,14 +230,15 @@ cp .env.example .env
 # 3. Levantar PostgreSQL y Redis
 docker compose up -d
 
-# 4. Compilar el proyecto
-./mvnw clean compile
-
-# 5. Arrancar el backend (Flyway crea las tablas en el primer arranque)
+# 4. Arrancar el backend (Flyway ejecuta V1–V6 y los seeders en el primer arranque)
 ./mvnw spring-boot:run
+
+# 5. (Opcional) Arrancar el frontend del asesor
+cd frontend && npm install && npm run dev
 ```
 
-La API queda disponible en `http://localhost:8080`.
+La API queda disponible en `http://localhost:8080`.  
+El frontend de desarrollo en `http://localhost:5173`.
 
 ### Verificar que la BD está creada
 
@@ -244,7 +307,10 @@ Content-Type: application/json
 
 | Patrón | Acceso |
 |--------|--------|
-| `/api/auth/**` | Público |
+| `/api/auth/login` | Público |
+| `/api/auth/register` | Público |
+| `/api/auth/register-invite/**` | Público |
+| `/api/invitaciones/*/aceptar` | Público |
 | Resto | Requiere JWT válido |
 
 ### Roles
@@ -262,33 +328,126 @@ Los `GrantedAuthority` se generan en función de la subclase concreta del usuari
 
 ### Implementado
 
-- [x] Configuración de Maven, Docker y Flyway
-- [x] Modelo de datos completo (12 entidades + migración SQL)
-- [x] Capa de repositorios Spring Data (11 interfaces)
+- [x] Configuración de Maven, Docker y Flyway (V1–V6)
+- [x] Modelo de datos completo — 12 entidades + esquema jerárquico Explotacion → Parcela → Recinto → Tratamiento
+- [x] Campos SIEX/SIGPAC en Explotacion, Recinto, Tratamiento y ProductoFitosanitario
+- [x] Capa de repositorios Spring Data (12 interfaces)
 - [x] Seguridad JWT (filtro, servicio, configuración)
-- [x] Endpoint `POST /api/auth/login`
+- [x] Endpoints de autenticación (`POST /api/auth/login`, registro, onboarding por invitación)
+- [x] **Capa de servicios** — lógica de negocio básica (8 servicios)
+- [x] **CRUD de explotaciones, parcelas y recintos** — endpoints REST securizados
+- [x] Panel del asesor — endpoints `/api/asesor/**` con verificación de pertenencia a asesoría
+- [x] Nuevos endpoints: `GET /asesor/parcelas/{id}/recintos` y `GET /asesor/recintos/{id}/tratamientos`
+- [x] **Frontend SPA del asesor** — refactorizado y funcional
+  - Navegación jerárquica: Agricultores → Explotaciones → Parcelas → Recintos → Tratamientos
+  - Ficha SIEX dinámica por explotación (datos reales de BD)
+  - Modal de detalles SIGPAC por parcela y por recinto (datos reales de BD)
+  - KPIs de tratamientos (total, validados, pendientes) por recinto
+  - Breadcrumb completo en todas las vistas de detalle
+  - Botón "Exportar SIEX (XML)" integrado en la UI — **lógica de generación pendiente**
+- [x] Seed de datos realistas: 10 granjeros, 25 explotaciones, 50 parcelas/recintos, 20 tratamientos con campos SIEX completos
 
 ### Pendiente (orden previsto)
 
-- [ ] Capa de servicios (lógica de negocio)
-- [ ] Endpoint de registro y onboarding por invitación
-- [ ] Filtro multi-tenant por asesoría
-- [ ] CRUD de explotaciones, parcelas y tratamientos
+- [ ] **Exportador SIEX (XML reglamentario)** — botón ya presente en UI, lógica de generación no implementada
+- [ ] App PWA del granjero (registro de tratamientos en campo, offline-first)
 - [ ] Validador RETO (productos autorizados por cultivo)
-- [ ] Exportador SIEX (XML reglamentario)
-- [ ] Integración SIGPAC (validación geográfica)
-- [ ] Pasarela Stripe (suscripciones)
-- [ ] Frontend PWA (granjero) y SPA (asesor)
+- [ ] Integración SIGPAC (validación geográfica de recintos)
+- [ ] Filtro multi-tenant estricto por asesoría en todos los endpoints
+- [ ] Pasarela Stripe (suscripciones y facturación)
+- [ ] Panel de administración (gestión de asesorías y planes)
+
+---
+
+## Bitácora de desafíos técnicos
+
+Esta sección documenta los problemas no triviales resueltos durante el desarrollo, para preservar el contexto de decisiones arquitectónicas que no son evidentes en el código.
+
+### 1. Migración de `ddl-auto` a Flyway (V1–V6)
+
+**Problema**: En la fase inicial, el esquema se gestionaba con `spring.jpa.hibernate.ddl-auto: update`. Esta estrategia resulta aceptable para prototipar, pero en cuanto el modelo evolucionó (adición de `Recinto`, refactorización de campos SIEX, renombrado de columnas), Hibernate dejó de ser capaz de aplicar los cambios de forma segura: no ejecuta `DROP COLUMN`, no renombra columnas y no garantiza el orden de las migraciones.
+
+**Solución**: Transición completa a Flyway con `ddl-auto: validate`. Se estableció la convención de versiones:
+
+| Migración | Contenido |
+|-----------|-----------|
+| `V1__init.sql` | Esquema base completo |
+| `V2__granjero_asesoria.sql` | Relación granjero-asesoría |
+| `V3__tratamiento_observaciones_validador.sql` | Campos de validación |
+| `V4__siex_fields.sql` | Primeros campos SIEX |
+| `V5__recinto.sql` | Introducción de la entidad `Recinto` con migración de datos (`parcela_id → recinto_id` en tratamientos) |
+| `V6__siex_compliance.sql` | Campos SIEX completos, renombrado `superficie_ha → superficie_total`, calibración de VARCHAR |
+
+El paso más crítico fue V5: la migración debía ser idempotente (uso de `IF NOT EXISTS` y bloques `DO $$`) para no romper entornos ya inicializados.
+
+---
+
+### 2. El "Filtro Fantasma" — doble registro del filtro JWT
+
+**Problema**: En Spring Boot, cualquier `@Component` que implemente `Filter` (o herede de `OncePerRequestFilter`) se registra **automáticamente** como servlet filter por `FilterRegistrationAutoConfiguration`, además de cualquier registro explícito dentro del `SecurityFilterChain` vía `addFilterBefore`. El resultado es que `JwtAuthenticationFilter` se ejecutaba dos veces por petición: una vez fuera del contexto de Security (sin acceso al `SecurityContextHolder`) y otra dentro. La segunda ejecución producía comportamientos erráticos en rutas públicas con wildcards y rompía la propagación del contexto de autenticación.
+
+**Solución**: Deshabilitar el auto-registro del filtro declarando un `FilterRegistrationBean` con `setEnabled(false)` en `SecurityConfig`:
+
+```java
+@Bean
+public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
+        JwtAuthenticationFilter filter) {
+    FilterRegistrationBean<JwtAuthenticationFilter> bean = new FilterRegistrationBean<>(filter);
+    bean.setEnabled(false);  // Solo debe ejecutarse dentro del SecurityFilterChain
+    return bean;
+}
+```
+
+Esto garantiza que el filtro únicamente se ejecute en el contexto correcto, gestionado por Spring Security.
+
+---
+
+### 3. Robustez en la comunicación frontend-API (crash en login)
+
+**Problema**: Tras un login exitoso, el cliente React crasheaba con `TypeError: Cannot read properties of undefined` en el proceso de almacenar el token. La causa raíz era que el cliente HTTP esperaba la respuesta en un formato (`data.token`) que no coincidía con la estructura real devuelta por el backend en ciertos casos de error HTTP que llegaban con status 200 (respuestas de error de Spring Security no configuradas correctamente).
+
+**Solución**: El cliente HTTP centralizado (`api.js`) se reforzó para:
+1. Verificar explícitamente `response.ok` antes de parsear el JSON.
+2. Lanzar un error con el cuerpo de la respuesta cuando el status no es 2xx.
+3. Validar la existencia de `token` en la respuesta antes de persistirlo en `localStorage`.
+
+Este patrón defensivo se aplicó a todas las llamadas del cliente, eliminando la clase completa de crashes por respuestas inesperadas.
+
+---
+
+### 4. Calibración de longitudes VARCHAR para cumplimiento SIEX
+
+**Problema**: El estándar SIEX define longitudes máximas estrictas para sus campos codificados. Al poblar la base de datos con el seeder, varias inserciones fallaban con `value too long for type character varying(N)` porque los campos de entidad Java tenían o bien `@Column` sin `length` (que Hibernate mapea a VARCHAR(255) por defecto) o bien longitudes incorrectas.
+
+**Campos afectados y longitudes finales** (migración V6):
+
+| Columna | Tabla | VARCHAR |
+|---------|-------|---------|
+| `tipo_explotacion` | `explotacion` | 2 |
+| `orientacion_productiva` | `explotacion` | 4 |
+| `provincia_explotacion` | `explotacion` | 2 |
+| `municipio_explotacion` | `explotacion` | 5 |
+| `motivo_tratamiento` | `tratamiento` | 2 |
+| `nivel_capacitacion_ropo` | `tratamiento` | 2 |
+| `nif_aplicador` | `tratamiento` | 15 |
+| `unidad_dosis_oficial` | `producto_fitosanitario` | 20 |
+
+**Solución**: Aplicación de los tipos correctos en V6 vía `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` con la precisión exacta requerida por la normativa. En el seeder, se adoptaron los códigos de 2 caracteres normalizados (p. ej. `CE`, `VI`, `OL` para `orientacionProductiva`) en lugar de los códigos CNAE de 4 caracteres que se usaban por error en la iteración anterior.
+
+---
 
 ## Próximos pasos
 
-El siguiente bloque de trabajo es la **capa de servicios**, donde se implementará la lógica de negocio sobre las entidades y repositorios existentes:
+El bloque prioritario es el **exportador SIEX (XML reglamentario)**. El botón ya está integrado en `ExplotacionParcelasPage` y el modelo de datos contiene todos los campos necesarios. La implementación requiere:
 
-1. `AsesoriaService` — alta de asesoría, asignación de plan, gestión del ciclo de vida
-2. `UsuarioService` — registro, validación de credenciales, BCrypt encoding
-3. `InvitacionService` — flujo de onboarding self-service por token
-4. `ExplotacionService` — alta de explotación con validación contra el límite del Plan
-5. `TratamientoService` — registro y validación de tratamientos
+1. `SiexXmlService` — serialización del árbol Explotacion → Parcela → Recinto → Tratamiento al esquema XSD oficial del MAPA
+2. Endpoint `GET /asesor/explotaciones/{id}/siex-xml` que devuelva el fichero como `application/xml`
+3. Conexión del botón frontend al endpoint real
+
+Adicionalmente:
+
+4. `RetoValidatorService` — cruce de productos aplicados contra el registro de productos autorizados por cultivo
+5. Integración SIGPAC para validación geográfica de recintos declarados
 
 ---
 
