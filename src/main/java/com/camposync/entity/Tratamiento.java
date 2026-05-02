@@ -3,6 +3,7 @@ package com.camposync.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -39,18 +40,52 @@ public class Tratamiento {
     @Column(nullable = false)
     private boolean validado;
 
+    @Column(name = "observaciones_validador", columnDefinition = "TEXT")
+    private String observacionesValidador;
+
     @Column(name = "plaga_objetivo")
     private String plagaObjetivo;
-
-    @Column(name = "equipo_aplicacion")
-    private String equipoAplicacion;
 
     @Column(name = "superficie_tratada", nullable = false)
     private double superficieTratada;
 
+    // ── Campos SIEX obligatorios ─────────────────────────────────────────────
+
+    /** PR=Preventivo, CU=Curativo, ED=Erradicación de delimitación */
+    @Column(name = "motivo_tratamiento", length = 2)
+    private String motivoTratamiento;
+
+    /** Código EPPO de la plaga u organismo nocivo */
+    @Column(name = "codigo_plaga")
+    private String codigoPlaga;
+
+    /** Código tabla maestra SIEX de equipos de aplicación */
+    @Column(name = "tipo_equipo")
+    private String tipoEquipo;
+
+    @Column(name = "num_registro_iteaf")
+    private String numRegistroIteaf;
+
+    @Column(name = "fecha_iteaf")
+    private LocalDate fechaIteaf;
+
+    @Column(name = "volumen_caldo", precision = 10, scale = 2)
+    private BigDecimal volumenCaldo;
+
+    @Column(name = "nif_aplicador", length = 15)
+    private String nifAplicador;
+
+    /** Número de Registro Oficial de Productores y Operadores */
+    @Column(name = "numero_ropo")
+    private String numeroRopo;
+
+    /** 01=Básico, 02=Cualificado, 03=Fumigador */
+    @Column(name = "nivel_capacitacion_ropo", length = 2)
+    private String nivelCapacitacionRopo;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "parcela_id", nullable = false)
-    private Parcela parcela;
+    @JoinColumn(name = "recinto_id", nullable = false)
+    private Recinto recinto;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)

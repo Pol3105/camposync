@@ -9,10 +9,12 @@ import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.AsesoriaRepository;
 import com.camposync.repository.ExplotacionRepository;
 import com.camposync.repository.GranjeroRepository;
+import com.camposync.repository.ParcelaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -23,6 +25,7 @@ public class ExplotacionService {
     private final ExplotacionRepository explotacionRepository;
     private final GranjeroRepository granjeroRepository;
     private final AsesoriaRepository asesoriaRepository;
+    private final ParcelaRepository parcelaRepository;
 
     @Transactional
     public ExplotacionDTO crear(String username, ExplotacionCreateRequest request) {
@@ -35,9 +38,14 @@ public class ExplotacionService {
         Explotacion explotacion = Explotacion.builder()
                 .nombre(request.nombre())
                 .refSig(request.refSig())
-                .superficieHa(request.superficieHa() != null ? request.superficieHa() : 0f)
-                .cultivo(request.cultivo())
+                .superficieTotal(request.superficieTotal() != null ? request.superficieTotal() : BigDecimal.ZERO)
                 .estado(request.estado())
+                .codigoRea(request.codigoRea())
+                .tipoExplotacion(request.tipoExplotacion())
+                .orientacionProductiva(request.orientacionProductiva())
+                .provinciaExplotacion(request.provinciaExplotacion())
+                .municipioExplotacion(request.municipioExplotacion())
+                .anioDeclaracion(request.anioDeclaracion())
                 .asesoria(asesoria)
                 .granjero(granjero)
                 .build();
@@ -70,16 +78,23 @@ public class ExplotacionService {
     }
 
     private ExplotacionDTO toDTO(Explotacion e) {
+        int numParc = parcelaRepository.findByExplotacion_Id(e.getId()).size();
         return new ExplotacionDTO(
                 e.getId(),
                 e.getNombre(),
                 e.getRefSig(),
-                e.getSuperficieHa(),
-                e.getCultivo(),
+                e.getSuperficieTotal(),
                 e.getEstado(),
+                e.getCodigoRea(),
+                e.getTipoExplotacion(),
+                e.getOrientacionProductiva(),
+                e.getProvinciaExplotacion(),
+                e.getMunicipioExplotacion(),
+                e.getAnioDeclaracion(),
                 e.getAsesoria().getId(),
                 e.getAsesoria().getNombre(),
                 e.getGranjero().getId(),
+                numParc,
                 e.getCreatedAt(),
                 e.getUpdatedAt()
         );

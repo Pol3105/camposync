@@ -18,4 +18,7 @@ public class Asesor extends Usuario {
 
     @Column(name = "es_jefe", nullable = false)
     private boolean esJefe;
+
+    @Column(name = "num_colegiado")
+    private String numColegiado;
 }

@@ -3,11 +3,12 @@ package com.camposync.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "explotacion")
-@Getter @Setter @NoArgsConstructor  @AllArgsConstructor @Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Explotacion {
 
     @Id
@@ -17,15 +18,33 @@ public class Explotacion {
     @Column(nullable = false)
     private String nombre;
 
+    // Mantener ref_sig como legacy hasta migración completa a SIGPAC
     @Column(name = "ref_sig")
     private String refSig;
 
-    @Column(name = "superficie_ha")
-    private float superficieHa;
-
-    private String cultivo;
+    @Column(name = "superficie_total", precision = 10, scale = 4)
+    private BigDecimal superficieTotal;
 
     private String estado;
+
+    // ── Campos SIEX obligatorios ─────────────────────────────────────────────
+    @Column(name = "codigo_rea", length = 20)
+    private String codigoRea;
+
+    @Column(name = "tipo_explotacion", length = 2)
+    private String tipoExplotacion;
+
+    @Column(name = "orientacion_productiva", length = 4)
+    private String orientacionProductiva;
+
+    @Column(name = "provincia_explotacion", length = 2)
+    private String provinciaExplotacion;
+
+    @Column(name = "municipio_explotacion", length = 5)
+    private String municipioExplotacion;
+
+    @Column(name = "anio_declaracion")
+    private Integer anioDeclaracion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "asesoria_id", nullable = false)
