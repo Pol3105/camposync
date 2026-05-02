@@ -69,9 +69,15 @@ public class DataInitializer implements CommandLineRunner {
         // 3º — Explotación
         Explotacion explotacion = explotacionRepository.save(Explotacion.builder()
                 .nombre("Finca La Demo")
-                .refSig("SIG-2024-001")
+                .refSig("SIG-28-013-0-001")
                 .superficieTotal(new BigDecimal("25.5000"))
                 .estado("ACTIVA")
+                .codigoRea("ES280130001")
+                .tipoExplotacion("PF")
+                .orientacionProductiva("CE")
+                .provinciaExplotacion("28")
+                .municipioExplotacion("013")
+                .anioDeclaracion(2024)
                 .asesoria(asesoria)
                 .granjero(granjero)
                 .build());
@@ -124,11 +130,19 @@ public class DataInitializer implements CommandLineRunner {
                 .dosis(2.5f)
                 .unidades("L/ha")
                 .superficieTratada(12.5)
-                .plagaObjetivo("Mildiu")
+                .plagaObjetivo("Mildiu de la vid")
                 .motivoTratamiento("CU")
-                .tipoEquipo("AT")
+                .codigoPlaga("PLASVI")
+                .tipoEquipo("PULV_TRAC")
+                .numRegistroIteaf("ITEAF-28-001234")
+                .fechaIteaf(LocalDate.of(2024, 3, 15))
+                .volumenCaldo(new java.math.BigDecimal("200.00"))
+                .nifAplicador("12345678Z")
+                .numeroRopo("ROPO-28-0001")
+                .nivelCapacitacionRopo("02")
                 .estado("PENDIENTE")
                 .validado(false)
+                .aiConfidence(0f)
                 .recinto(recinto)
                 .granjero(granjero)
                 .productoFitosanitario(producto)
@@ -152,6 +166,9 @@ public class DataInitializer implements CommandLineRunner {
                 .numReg("ES-00123")
                 .cultivosAutori("Manzano,Peral,Vid,Fresa")
                 .fechaCadu(LocalDate.of(2027, 12, 31))
+                .dosisMin(new java.math.BigDecimal("1.5"))
+                .dosisMax(new java.math.BigDecimal("3.0"))
+                .unidadDosisOficial("kg/ha")
                 .activo(true)
                 .build());
 
@@ -161,6 +178,9 @@ public class DataInitializer implements CommandLineRunner {
                 .numReg("ES-00456")
                 .cultivosAutori("Cereal,Olivo,Citricos")
                 .fechaCadu(LocalDate.of(2026, 6, 30))
+                .dosisMin(new java.math.BigDecimal("1.0"))
+                .dosisMax(new java.math.BigDecimal("2.0"))
+                .unidadDosisOficial("L/ha")
                 .activo(true)
                 .build());
 
@@ -170,6 +190,9 @@ public class DataInitializer implements CommandLineRunner {
                 .numReg("ES-00789")
                 .cultivosAutori("Uso general herbicida")
                 .fechaCadu(LocalDate.of(2028, 3, 31))
+                .dosisMin(new java.math.BigDecimal("2.0"))
+                .dosisMax(new java.math.BigDecimal("4.0"))
+                .unidadDosisOficial("L/ha")
                 .activo(true)
                 .build());
 

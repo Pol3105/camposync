@@ -6,6 +6,7 @@ import com.camposync.dto.ExplotacionDTO;
 import com.camposync.dto.GranjeroDTO;
 import com.camposync.dto.InvitacionDTO;
 import com.camposync.dto.ParcelaDTO;
+import com.camposync.dto.RecintoDTO;
 import com.camposync.dto.TratamientoDTO;
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.entity.Asesor;
@@ -13,6 +14,7 @@ import com.camposync.entity.Explotacion;
 import com.camposync.entity.Granjero;
 import com.camposync.entity.Invitacion;
 import com.camposync.entity.Parcela;
+import com.camposync.entity.Recinto;
 import com.camposync.entity.Tratamiento;
 import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.AsesorRepository;
@@ -259,6 +261,40 @@ public class AsesorPanelService {
         return toParcelaDTO(parcelaRepository.save(parcela));
     }
 
+    // ── Recintos de una parcela ────────────────────────────────────────────────
+
+    public List<RecintoDTO> listarRecintosPorParcela(String username, Long parcelaId) {
+        Asesor asesor = getAsesor(username);
+        Parcela parcela = parcelaRepository.findById(parcelaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parcela", parcelaId));
+
+        if (!parcela.getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Parcela", parcelaId);
+        }
+
+        return recintoRepository.findByParcela_Id(parcelaId)
+                .stream()
+                .map(this::toRecintoDTO)
+                .toList();
+    }
+
+    // ── Tratamientos de un recinto ────────────────────────────────────────────
+
+    public List<TratamientoDTO> listarTratamientosPorRecinto(String username, Long recintoId) {
+        Asesor asesor = getAsesor(username);
+        Recinto recinto = recintoRepository.findById(recintoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recinto", recintoId));
+
+        if (!recinto.getParcela().getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Recinto", recintoId);
+        }
+
+        return tratamientoRepository.findByRecinto_Id(recintoId)
+                .stream()
+                .map(this::toTratamientoDTO)
+                .toList();
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private Asesor getAsesor(String username) {
@@ -379,6 +415,21 @@ public class AsesorPanelService {
                 i.getAsesoria().getId(),
                 i.getAsesoria().getNombre(),
                 i.getCreatedAt()
+        );
+    }
+
+    private RecintoDTO toRecintoDTO(Recinto r) {
+        return new RecintoDTO(
+                r.getId(),
+                r.getNumeroRecinto(),
+                r.getSuperficie(),
+                r.getUsoSigpac(),
+                r.getSistemaCultivo(),
+                r.getCultivo(),
+                r.getParcela().getId(),
+                r.getParcela().getRefCatastral(),
+                r.getCreatedAt(),
+                r.getUpdatedAt()
         );
     }
 }
