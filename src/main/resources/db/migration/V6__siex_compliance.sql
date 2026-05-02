@@ -12,17 +12,11 @@
 -- ============================================================
 
 -- ── EXPLOTACION ──────────────────────────────────────────────────────────────
--- Añadir la nueva columna
-ALTER TABLE explotacion ADD COLUMN IF NOT EXISTS superficie_total NUMERIC(10, 4);
 
--- Migración segura de datos: Usa SQL Dinámico (EXECUTE) para que el parser no falle si no existe
-DO $$ 
-BEGIN 
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='explotacion' AND column_name='superficie_ha') THEN
-        EXECUTE 'UPDATE explotacion SET superficie_total = CAST(superficie_ha AS NUMERIC(10, 4)) WHERE superficie_total IS NULL';
-        EXECUTE 'ALTER TABLE explotacion DROP COLUMN superficie_ha';
-    END IF;
-END $$;
+-- Renombrar superficie_ha → superficie_total y cambiar tipo
+ALTER TABLE explotacion ADD COLUMN IF NOT EXISTS superficie_total NUMERIC(10, 4);
+UPDATE explotacion SET superficie_total = CAST(superficie_ha AS NUMERIC(10, 4)) WHERE superficie_total IS NULL;
+ALTER TABLE explotacion DROP COLUMN IF EXISTS superficie_ha;
 
 -- Eliminar cultivo (migrado a recinto)
 ALTER TABLE explotacion DROP COLUMN IF EXISTS cultivo;

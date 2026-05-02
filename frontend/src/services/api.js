@@ -79,6 +79,8 @@ export const asesor = {
   explotaciones: () => request('/asesor/explotaciones'),
   tratamientos: () => request('/asesor/tratamientos'),
   parcelasDeExplotacion: (id) => request(`/asesor/explotaciones/${id}/parcelas`),
+  recintosPorParcela:    (id) => request(`/asesor/parcelas/${id}/recintos`),
+  tratamientosPorRecinto: (id) => request(`/asesor/recintos/${id}/tratamientos`),
   validarTratamiento: (id, validado, observaciones) =>
     request(`/asesor/tratamientos/${id}/validar`, {
       method: 'PATCH',

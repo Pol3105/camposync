@@ -6,6 +6,7 @@ import com.camposync.dto.ExplotacionDTO;
 import com.camposync.dto.GranjeroDTO;
 import com.camposync.dto.InvitacionDTO;
 import com.camposync.dto.ParcelaDTO;
+import com.camposync.dto.RecintoDTO;
 import com.camposync.dto.TratamientoDTO;
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.service.AsesorPanelService;
@@ -58,6 +59,16 @@ public class AsesorPanelController {
     @GetMapping("/parcelas/{id}/tratamientos")
     public ResponseEntity<List<TratamientoDTO>> listarTratamientosPorParcela(@PathVariable Long id) {
         return ResponseEntity.ok(asesorPanelService.listarTratamientosPorParcela(currentUsername(), id));
+    }
+
+    @GetMapping("/parcelas/{id}/recintos")
+    public ResponseEntity<List<RecintoDTO>> listarRecintosPorParcela(@PathVariable Long id) {
+        return ResponseEntity.ok(asesorPanelService.listarRecintosPorParcela(currentUsername(), id));
+    }
+
+    @GetMapping("/recintos/{id}/tratamientos")
+    public ResponseEntity<List<TratamientoDTO>> listarTratamientosPorRecinto(@PathVariable Long id) {
+        return ResponseEntity.ok(asesorPanelService.listarTratamientosPorRecinto(currentUsername(), id));
     }
 
     @GetMapping("/invitaciones")
