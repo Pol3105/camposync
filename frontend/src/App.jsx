@@ -13,6 +13,7 @@ import ExplotacionParcelasPage from './pages/ExplotacionParcelasPage'
 import ParcelaTratamientosPage from './pages/ParcelaTratamientosPage'
 import ParcelaRecintosPage from './pages/ParcelaRecintosPage'
 import RecintoTratamientosPage from './pages/RecintoTratamientosPage'
+import ConfiguracionPage from './pages/ConfiguracionPage'
 
 function PrivateRoute({ children }) {
   return localStorage.getItem('token') ? children : <Navigate to="/login" replace />
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/parcelas/:id/recintos"              element={<Private><ParcelaRecintosPage /></Private>} />
         <Route path="/recintos/:id/tratamientos"          element={<Private><RecintoTratamientosPage /></Private>} />
         <Route path="/tratamientos"                        element={<Private><TratamientosPage /></Private>} />
+        <Route path="/configuracion"                       element={<Private><ConfiguracionPage /></Private>} />
         <Route path="*"               element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

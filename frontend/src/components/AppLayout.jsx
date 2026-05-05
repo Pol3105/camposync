@@ -14,7 +14,7 @@ const NAV = [
   { label: 'Explotaciones',    Icon: Map,         path: '/explotaciones' },
   { label: 'Tratamientos',     Icon: FlaskConical,path: '/tratamientos'  },
   { label: 'Invitaciones',     Icon: Mail,        path: '/invitaciones'  },
-  { label: 'Configuración',    Icon: Settings,    path: null             },
+  { label: 'Configuración',    Icon: Settings,    path: '/configuracion' },
 ]
 
 /**
