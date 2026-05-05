@@ -1,6 +1,7 @@
 package com.camposync.service;
 
 import com.camposync.dto.ActualizarPerfilRequest;
+import com.camposync.dto.AsesorRecintoCreateRequest;
 import com.camposync.dto.AsesorDTO;
 import com.camposync.dto.AsesorExplotacionCreateRequest;
 import com.camposync.dto.AsesorParcelaCreateRequest;
@@ -264,6 +265,145 @@ public class AsesorPanelService {
                 .build();
 
         return toParcelaDTO(parcelaRepository.save(parcela));
+    }
+
+    // ── Editar explotación ────────────────────────────────────────────────────
+
+    @Transactional
+    public ExplotacionDTO editarExplotacion(String username, Long explotacionId, AsesorExplotacionCreateRequest request) {
+        Asesor asesor = getAsesor(username);
+        Explotacion exp = explotacionRepository.findById(explotacionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Explotacion", explotacionId));
+        if (!exp.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Explotacion", explotacionId);
+        }
+        if (request.nombre()                != null) exp.setNombre(request.nombre());
+        if (request.refSig()                != null) exp.setRefSig(request.refSig());
+        if (request.superficieTotal()       != null) exp.setSuperficieTotal(request.superficieTotal());
+        if (request.codigoRea()             != null) exp.setCodigoRea(request.codigoRea());
+        if (request.tipoExplotacion()       != null) exp.setTipoExplotacion(request.tipoExplotacion());
+        if (request.orientacionProductiva() != null) exp.setOrientacionProductiva(request.orientacionProductiva());
+        if (request.provinciaExplotacion()  != null) exp.setProvinciaExplotacion(request.provinciaExplotacion());
+        if (request.municipioExplotacion()  != null) exp.setMunicipioExplotacion(request.municipioExplotacion());
+        if (request.anioDeclaracion()       != null) exp.setAnioDeclaracion(request.anioDeclaracion());
+        if (request.granjeroId() != null) {
+            granjeroRepository.findById(request.granjeroId())
+                    .ifPresent(exp::setGranjero);
+        }
+        return toExplotacionDTO(explotacionRepository.save(exp));
+    }
+
+    @Transactional
+    public void eliminarExplotacion(String username, Long explotacionId) {
+        Asesor asesor = getAsesor(username);
+        Explotacion exp = explotacionRepository.findById(explotacionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Explotacion", explotacionId));
+        if (!exp.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Explotacion", explotacionId);
+        }
+        // Manual cascade: tratamientos → recintos → parcelas → explotación
+        List<Parcela> parcelas = parcelaRepository.findByExplotacion_Id(explotacionId);
+        for (Parcela p : parcelas) {
+            List<Recinto> recintos = recintoRepository.findByParcela_Id(p.getId());
+            for (Recinto r : recintos) {
+                tratamientoRepository.deleteAll(tratamientoRepository.findByRecinto_Id(r.getId()));
+            }
+            recintoRepository.deleteAll(recintos);
+        }
+        parcelaRepository.deleteAll(parcelas);
+        explotacionRepository.delete(exp);
+    }
+
+    // ── Editar parcela ────────────────────────────────────────────────────────
+
+    @Transactional
+    public ParcelaDTO editarParcela(String username, Long parcelaId, AsesorParcelaCreateRequest request) {
+        Asesor asesor = getAsesor(username);
+        Parcela parcela = parcelaRepository.findById(parcelaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parcela", parcelaId));
+        if (!parcela.getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Parcela", parcelaId);
+        }
+        parcela.setRefCatastral(request.refCatastral());
+        parcela.setMunicipio(request.municipio());
+        parcela.setProvincia(request.provincia());
+        parcela.setAgregado(request.agregado());
+        parcela.setZona(request.zona());
+        parcela.setPoligono(request.poligono());
+        parcela.setParcelaSigpac(request.parcelaSigpac());
+        return toParcelaDTO(parcelaRepository.save(parcela));
+    }
+
+    @Transactional
+    public void eliminarParcela(String username, Long parcelaId) {
+        Asesor asesor = getAsesor(username);
+        Parcela parcela = parcelaRepository.findById(parcelaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parcela", parcelaId));
+        if (!parcela.getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Parcela", parcelaId);
+        }
+        // Manual cascade: tratamientos → recintos → parcela
+        List<Recinto> recintos = recintoRepository.findByParcela_Id(parcelaId);
+        for (Recinto r : recintos) {
+            tratamientoRepository.deleteAll(tratamientoRepository.findByRecinto_Id(r.getId()));
+        }
+        recintoRepository.deleteAll(recintos);
+        parcelaRepository.delete(parcela);
+    }
+
+    // ── Editar recinto ────────────────────────────────────────────────────────
+
+    @Transactional
+    public RecintoDTO editarRecinto(String username, Long recintoId, AsesorRecintoCreateRequest request) {
+        Asesor asesor = getAsesor(username);
+        Recinto recinto = recintoRepository.findById(recintoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recinto", recintoId));
+        if (!recinto.getParcela().getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Recinto", recintoId);
+        }
+        recinto.setNumeroRecinto(request.numeroRecinto());
+        recinto.setSuperficie(request.superficie());
+        recinto.setUsoSigpac(request.usoSigpac());
+        recinto.setSistemaCultivo(request.sistemaCultivo());
+        recinto.setCultivo(request.cultivo());
+        return toRecintoDTO(recintoRepository.save(recinto));
+    }
+
+    @Transactional
+    public void eliminarRecinto(String username, Long recintoId) {
+        Asesor asesor = getAsesor(username);
+        Recinto recinto = recintoRepository.findById(recintoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recinto", recintoId));
+        if (!recinto.getParcela().getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Recinto", recintoId);
+        }
+        // Manual cascade: tratamientos → recinto
+        tratamientoRepository.deleteAll(tratamientoRepository.findByRecinto_Id(recintoId));
+        recintoRepository.delete(recinto);
+    }
+
+    // ── Crear recinto desde el panel del asesor ───────────────────────────────
+
+    @Transactional
+    public RecintoDTO crearRecinto(String username, Long parcelaId, AsesorRecintoCreateRequest request) {
+        Asesor asesor = getAsesor(username);
+        Parcela parcela = parcelaRepository.findById(parcelaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parcela", parcelaId));
+
+        if (!parcela.getExplotacion().getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Parcela", parcelaId);
+        }
+
+        Recinto recinto = Recinto.builder()
+                .numeroRecinto(request.numeroRecinto())
+                .superficie(request.superficie())
+                .usoSigpac(request.usoSigpac())
+                .sistemaCultivo(request.sistemaCultivo())
+                .cultivo(request.cultivo())
+                .parcela(parcela)
+                .build();
+
+        return toRecintoDTO(recintoRepository.save(recinto));
     }
 
     // ── Recintos de una parcela ────────────────────────────────────────────────

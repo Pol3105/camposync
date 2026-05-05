@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Layers, FlaskConical, Info, X } from 'lucide-react'
+import { ArrowLeft, Layers, FlaskConical, Info, Pencil, Trash2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
+import NuevoRecintoModal from '../components/NuevoRecintoModal'
 import { asesor } from '../services/api'
 
 const USO_SIGPAC = {
@@ -106,9 +107,18 @@ export default function ParcelaRecintosPage() {
   const granjeroNombre = location.state?.granjeroNombre   ?? null
   const granjeroId     = location.state?.granjeroId       ?? null
 
-  const [recintos, setRecintos] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [recintos,    setRecintos]    = useState([])
+  const [loading,     setLoading]     = useState(true)
   const [recintoInfo, setRecintoInfo] = useState(null)
+  const [editRecinto, setEditRecinto] = useState(null)
+
+  async function handleDeleteRecinto(recinto) {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este recinto? Esta acción no se puede deshacer.')) return
+    try {
+      await asesor.eliminarRecinto(recinto.id)
+      setRecintos(prev => prev.filter(r => r.id !== recinto.id))
+    } catch { /* noop */ }
+  }
 
   const fetchRecintos = useCallback(async () => {
     setLoading(true)
@@ -256,6 +266,20 @@ export default function ParcelaRecintosPage() {
                               Detalles
                             </button>
                             <button
+                              onClick={() => setEditRecinto(r)}
+                              title="Editar recinto"
+                              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            >
+                              <Pencil size={14} color="#6b7280" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRecinto(r)}
+                              title="Eliminar recinto"
+                              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #fecaca', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            >
+                              <Trash2 size={14} color="#ef4444" />
+                            </button>
+                            <button
                               onClick={() => navigate(`/recintos/${r.id}/tratamientos`, {
                                 state: {
                                   recintoNumero: r.numeroRecinto,
@@ -286,6 +310,16 @@ export default function ParcelaRecintosPage() {
           )}
         </div>
       </div>
+      {editRecinto && (
+        <NuevoRecintoModal
+          initialData={editRecinto}
+          onClose={() => setEditRecinto(null)}
+          onSaved={(updated) => {
+            setRecintos(prev => prev.map(r => r.id === updated.id ? updated : r))
+            setEditRecinto(null)
+          }}
+        />
+      )}
     </AppLayout>
   )
 }

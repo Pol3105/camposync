@@ -17,7 +17,7 @@ const CHIPS = {
 }
 
 /* ── Toast component ── */
-function Toast({ onClose }) {
+function Toast({ onClose, titulo, subtitulo }) {
   useEffect(() => {
     const t = setTimeout(onClose, 4000)
     return () => clearTimeout(t)
@@ -42,8 +42,8 @@ function Toast({ onClose }) {
         <CheckCircle2 size={16} color="#7cc94a" />
       </div>
       <div className="flex-1">
-        <p className="font-bold" style={{ fontSize: 13.5, color: '#d4f1b0', letterSpacing: '-0.1px' }}>¡Invitación enviada con éxito!</p>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>El agricultor recibirá el enlace en su correo</p>
+        <p className="font-bold" style={{ fontSize: 13.5, color: '#d4f1b0', letterSpacing: '-0.1px' }}>{titulo}</p>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{subtitulo}</p>
       </div>
       <button
         onClick={onClose}
@@ -69,7 +69,8 @@ export default function InvitacionesPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [sending,    setSending]    = useState(false)
-  const [showToast,  setShowToast]  = useState(false)
+  const [showToast,       setShowToast]       = useState(false)
+  const [showReenviarToast, setShowReenviarToast] = useState(false)
   const [actioningToken, setActioningToken] = useState(null)
 
   const fetchData = useCallback(async () => {
@@ -97,6 +98,7 @@ export default function InvitacionesPage() {
     try {
       const updated = await invAPI.reenviar(token)
       setRows(prev => prev.map(r => r.token === token ? updated : r))
+      setShowReenviarToast(true)
     } catch { /* noop */ }
     finally { setActioningToken(null) }
   }
@@ -276,8 +278,21 @@ export default function InvitacionesPage() {
         />
       )}
 
-      {/* Toast */}
-      {showToast && <Toast onClose={() => setShowToast(false)} />}
+      {/* Toasts */}
+      {showToast && (
+        <Toast
+          onClose={() => setShowToast(false)}
+          titulo="¡Invitación enviada con éxito!"
+          subtitulo="El agricultor recibirá el enlace en su correo"
+        />
+      )}
+      {showReenviarToast && (
+        <Toast
+          onClose={() => setShowReenviarToast(false)}
+          titulo="¡Invitación reenviada con éxito!"
+          subtitulo="Se ha generado un nuevo enlace para el agricultor"
+        />
+      )}
     </>
   )
 }

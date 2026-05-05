@@ -1,6 +1,7 @@
 package com.camposync.controller;
 
 import com.camposync.dto.ActualizarPerfilRequest;
+import com.camposync.dto.AsesorRecintoCreateRequest;
 import com.camposync.dto.AsesorDTO;
 import com.camposync.dto.AsesorExplotacionCreateRequest;
 import com.camposync.dto.AsesorParcelaCreateRequest;
@@ -110,12 +111,59 @@ public class AsesorPanelController {
                 .body(asesorPanelService.crearExplotacion(currentUsername(), request));
     }
 
+    @PutMapping("/explotaciones/{id}")
+    public ResponseEntity<ExplotacionDTO> editarExplotacion(
+            @PathVariable Long id,
+            @RequestBody AsesorExplotacionCreateRequest request) {
+        return ResponseEntity.ok(asesorPanelService.editarExplotacion(currentUsername(), id, request));
+    }
+
+    @DeleteMapping("/explotaciones/{id}")
+    public ResponseEntity<Void> eliminarExplotacion(@PathVariable Long id) {
+        asesorPanelService.eliminarExplotacion(currentUsername(), id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/explotaciones/{id}/parcelas")
     public ResponseEntity<ParcelaDTO> crearParcela(
             @PathVariable Long id,
             @RequestBody AsesorParcelaCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(asesorPanelService.crearParcela(currentUsername(), id, request));
+    }
+
+    @PutMapping("/parcelas/{id}")
+    public ResponseEntity<ParcelaDTO> editarParcela(
+            @PathVariable Long id,
+            @RequestBody AsesorParcelaCreateRequest request) {
+        return ResponseEntity.ok(asesorPanelService.editarParcela(currentUsername(), id, request));
+    }
+
+    @DeleteMapping("/parcelas/{id}")
+    public ResponseEntity<Void> eliminarParcela(@PathVariable Long id) {
+        asesorPanelService.eliminarParcela(currentUsername(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/parcelas/{id}/recintos")
+    public ResponseEntity<RecintoDTO> crearRecinto(
+            @PathVariable Long id,
+            @RequestBody AsesorRecintoCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(asesorPanelService.crearRecinto(currentUsername(), id, request));
+    }
+
+    @PutMapping("/recintos/{id}")
+    public ResponseEntity<RecintoDTO> editarRecinto(
+            @PathVariable Long id,
+            @RequestBody AsesorRecintoCreateRequest request) {
+        return ResponseEntity.ok(asesorPanelService.editarRecinto(currentUsername(), id, request));
+    }
+
+    @DeleteMapping("/recintos/{id}")
+    public ResponseEntity<Void> eliminarRecinto(@PathVariable Long id) {
+        asesorPanelService.eliminarRecinto(currentUsername(), id);
+        return ResponseEntity.noContent().build();
     }
 
     private String currentUsername() {
