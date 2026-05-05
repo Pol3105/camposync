@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileCode, Info, Layers, X } from 'lucide-react'
+import { ArrowLeft, FileCode, Info, Layers, Pencil, PlusCircle, Trash2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
+import NuevaParcelaModal from '../components/NuevaParcelaModal'
+import NuevoRecintoModal from '../components/NuevoRecintoModal'
 import { asesor } from '../services/api'
 
 function ParcelaInfoModal({ parcela, onClose }) {
@@ -94,7 +96,17 @@ export default function ExplotacionParcelasPage() {
 
   const [parcelas, setParcelas] = useState([])
   const [loading, setLoading] = useState(true)
-  const [parcelaInfo, setParcelaInfo] = useState(null)
+  const [parcelaInfo,   setParcelaInfo]   = useState(null)
+  const [editParcela,   setEditParcela]   = useState(null)
+  const [recintoModal,  setRecintoModal]  = useState(null)
+
+  async function handleDeleteParcela(parcela) {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta parcela? Esta acción no se puede deshacer.')) return
+    try {
+      await asesor.eliminarParcela(parcela.id)
+      setParcelas(prev => prev.filter(p => p.id !== parcela.id))
+    } catch { /* noop */ }
+  }
 
   const fetchParcelas = useCallback(async () => {
     setLoading(true)
@@ -218,6 +230,28 @@ export default function ExplotacionParcelasPage() {
                             Info
                           </button>
                           <button
+                            onClick={() => setRecintoModal(p)}
+                            title="Añadir Recinto"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#f0faf3', border: '1px solid #a8d8b0', borderRadius: 10, color: '#267a40', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            <PlusCircle size={14} color="#267a40" />
+                            Añadir Recinto
+                          </button>
+                          <button
+                            onClick={() => setEditParcela(p)}
+                            title="Editar parcela"
+                            style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            <Pencil size={14} color="#6b7280" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteParcela(p)}
+                            title="Eliminar parcela"
+                            style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #fecaca', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            <Trash2 size={14} color="#ef4444" />
+                          </button>
+                          <button
                             onClick={() => navigate(`/parcelas/${p.id}/recintos`, {
                               state: {
                                 refCatastral: p.refCatastral,
@@ -243,6 +277,29 @@ export default function ExplotacionParcelasPage() {
           )}
         </div>
       </div>
+      {editParcela && (
+        <NuevaParcelaModal
+          initialData={editParcela}
+          onClose={() => setEditParcela(null)}
+          onSaved={(updated) => {
+            setParcelas(prev => prev.map(p => p.id === updated.id ? updated : p))
+            setEditParcela(null)
+          }}
+        />
+      )}
+
+      {recintoModal && (
+        <NuevoRecintoModal
+          parcela={recintoModal}
+          onClose={() => setRecintoModal(null)}
+          onCreated={() => {
+            setParcelas(prev => prev.map(p =>
+              p.id === recintoModal.id ? { ...p, numRecintos: (p.numRecintos ?? 0) + 1 } : p
+            ))
+            setRecintoModal(null)
+          }}
+        />
+      )}
     </AppLayout>
   )
 }

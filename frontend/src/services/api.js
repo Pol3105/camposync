@@ -92,6 +92,20 @@ export const asesor = {
     request('/asesor/explotaciones', { method: 'POST', body: JSON.stringify(body) }),
   crearParcela: (explotacionId, body) =>
     request(`/asesor/explotaciones/${explotacionId}/parcelas`, { method: 'POST', body: JSON.stringify(body) }),
+  crearRecinto: (parcelaId, body) =>
+    request(`/asesor/parcelas/${parcelaId}/recintos`, { method: 'POST', body: JSON.stringify(body) }),
+  editarExplotacion: (id, body) =>
+    request(`/asesor/explotaciones/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  eliminarExplotacion: (id) =>
+    request(`/asesor/explotaciones/${id}`, { method: 'DELETE' }),
+  editarParcela: (id, body) =>
+    request(`/asesor/parcelas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  eliminarParcela: (id) =>
+    request(`/asesor/parcelas/${id}`, { method: 'DELETE' }),
+  editarRecinto: (id, body) =>
+    request(`/asesor/recintos/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  eliminarRecinto: (id) =>
+    request(`/asesor/recintos/${id}`, { method: 'DELETE' }),
   explotacionesPorGranjero: (granjeroId) => request(`/asesor/granjeros/${granjeroId}/explotaciones`),
   tratamientosPorExplotacion: (explotacionId) => request(`/asesor/explotaciones/${explotacionId}/tratamientos`),
   tratamientosPorParcela: (parcelaId) => request(`/asesor/parcelas/${parcelaId}/tratamientos`),
