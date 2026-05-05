@@ -84,6 +84,37 @@ public class InvitacionService {
         return toDTO(invitacion);
     }
 
+    // ── Asesor: cancela una invitación pendiente ──────────────────────────────
+
+    @Transactional
+    public InvitacionDTO cancelar(String token, String username) {
+        var asesor = asesorRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Asesor", username));
+        Invitacion inv = invitacionRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invitación", token));
+        if (!inv.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Invitación", token);
+        }
+        inv.setEstado(EstadoInvitacion.CANCELADA);
+        return toDTO(invitacionRepository.save(inv));
+    }
+
+    // ── Asesor: reenvía (extiende) una invitación pendiente ──────────────────
+
+    @Transactional
+    public InvitacionDTO reenviar(String token, String username) {
+        var asesor = asesorRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Asesor", username));
+        Invitacion inv = invitacionRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invitación", token));
+        if (!inv.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Invitación", token);
+        }
+        inv.setExpiraEn(LocalDateTime.now().plusDays(7));
+        inv.setEstado(EstadoInvitacion.PENDIENTE);
+        return toDTO(invitacionRepository.save(inv));
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private Granjero verificarGranjero(String username) {

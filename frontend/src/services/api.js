@@ -62,7 +62,9 @@ export const invitaciones = {
   crear: (emailInvitado) =>
     request('/invitaciones', { method: 'POST', body: JSON.stringify({ emailInvitado }) }),
 
-  listar: () => request('/asesor/invitaciones'),
+  listar:   () => request('/asesor/invitaciones'),
+  cancelar: (token) => request(`/invitaciones/${token}`, { method: 'DELETE' }),
+  reenviar: (token) => request(`/invitaciones/${token}/reenviar`, { method: 'POST' }),
 }
 
 export const granjero = {

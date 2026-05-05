@@ -68,8 +68,9 @@ export default function InvitacionesPage() {
   const [rows, setRows]       = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [sending, setSending]     = useState(false)
-  const [showToast, setShowToast] = useState(false)
+  const [sending,    setSending]    = useState(false)
+  const [showToast,  setShowToast]  = useState(false)
+  const [actioningToken, setActioningToken] = useState(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -81,6 +82,24 @@ export default function InvitacionesPage() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  async function handleCancelar(token) {
+    setActioningToken(token)
+    try {
+      const updated = await invAPI.cancelar(token)
+      setRows(prev => prev.map(r => r.token === token ? updated : r))
+    } catch { /* noop */ }
+    finally { setActioningToken(null) }
+  }
+
+  async function handleReenviar(token) {
+    setActioningToken(token)
+    try {
+      const updated = await invAPI.reenviar(token)
+      setRows(prev => prev.map(r => r.token === token ? updated : r))
+    } catch { /* noop */ }
+    finally { setActioningToken(null) }
+  }
 
   async function handleEnviar(emailInvitado) {
     setSending(true)
@@ -217,14 +236,18 @@ export default function InvitacionesPage() {
                             {isPend ? (
                               <div className="flex gap-2">
                                 <button
+                                  onClick={() => handleReenviar(row.token)}
+                                  disabled={actioningToken === row.token}
                                   className="font-semibold transition hover:opacity-80"
-                                  style={{ padding: '5px 12px', background: '#f0f8ff', border: '1px solid #b8d4f8', borderRadius: 8, color: '#2e6ea6', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                                  style={{ padding: '5px 12px', background: '#f0f8ff', border: '1px solid #b8d4f8', borderRadius: 8, color: '#2e6ea6', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: actioningToken === row.token ? 0.6 : 1 }}
                                 >
                                   Reenviar
                                 </button>
                                 <button
+                                  onClick={() => handleCancelar(row.token)}
+                                  disabled={actioningToken === row.token}
                                   className="font-semibold transition hover:opacity-80"
-                                  style={{ padding: '5px 12px', background: '#fff4f4', border: '1px solid #f8c8c8', borderRadius: 8, color: '#c03030', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                                  style={{ padding: '5px 12px', background: '#fff4f4', border: '1px solid #f8c8c8', borderRadius: 8, color: '#c03030', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: actioningToken === row.token ? 0.6 : 1 }}
                                 >
                                   Cancelar
                                 </button>

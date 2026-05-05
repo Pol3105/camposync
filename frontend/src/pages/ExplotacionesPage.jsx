@@ -14,30 +14,55 @@ const CULTIVO_COLORS = {
 const CULTIVO_OPTS = ['Cereal', 'Olivar', 'Viñedo', 'Hortícola', 'Pastizal', 'Frutales']
 const DEFAULT_CHIP = { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' }
 
+const TIPO_EXPLOTACION_OPTS = [
+  { value: 'PF', label: 'PF — Persona Física' },
+  { value: 'SA', label: 'SA — Sociedad Anónima' },
+  { value: 'SC', label: 'SC — Sociedad Cooperativa' },
+  { value: 'SL', label: 'SL — Sociedad Limitada' },
+]
+const ORIENTACION_OPTS = [
+  { value: 'CE', label: 'CE — Cereales' },
+  { value: 'VI', label: 'VI — Viñedo' },
+  { value: 'OL', label: 'OL — Olivar' },
+  { value: 'FS', label: 'FS — Frutas y semillas' },
+  { value: 'HO', label: 'HO — Horticultura' },
+  { value: 'PA', label: 'PA — Pastos' },
+  { value: 'OT', label: 'OT — Otros' },
+]
+
 // ── Nueva explotación modal ───────────────────────────────────────────────────
 function NuevaExplotacionModal({ granjeros, onClose, onCreated }) {
-  const [form, setForm] = useState({ nombre: '', cultivo: 'Cereal', superficieHa: '', refSig: '', granjeroId: granjeros[0]?.id ?? '' })
+  const [form, setForm] = useState({
+    nombre: '', superficieTotal: '', refSig: '', granjeroId: granjeros[0]?.id ?? '',
+    codigoRea: '', tipoExplotacion: 'PF', orientacionProductiva: 'CE',
+    provinciaExplotacion: '', municipioExplotacion: '', anioDeclaracion: new Date().getFullYear().toString(),
+  })
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
+  const [saved,  setSaved]  = useState(false)
+  const [error,  setError]  = useState('')
 
   function handleChange(e) {
     setForm(p => ({ ...p, [e.target.name]: e.target.value }))
   }
 
   async function handleSubmit() {
-    if (!form.nombre || !form.superficieHa || !form.granjeroId) {
+    if (!form.nombre || !form.superficieTotal || !form.granjeroId) {
       return setError('Nombre, superficie y granjero son obligatorios.')
     }
     setSaving(true)
     setError('')
     try {
       const created = await asesor.crearExplotacion({
-        nombre: form.nombre,
-        cultivo: form.cultivo,
-        superficieHa: parseFloat(form.superficieHa),
-        refSig: form.refSig || null,
-        granjeroId: Number(form.granjeroId),
+        nombre:                form.nombre,
+        refSig:                form.refSig || null,
+        superficieTotal:       parseFloat(form.superficieTotal),
+        granjeroId:            Number(form.granjeroId),
+        codigoRea:             form.codigoRea || null,
+        tipoExplotacion:       form.tipoExplotacion || null,
+        orientacionProductiva: form.orientacionProductiva || null,
+        provinciaExplotacion:  form.provinciaExplotacion || null,
+        municipioExplotacion:  form.municipioExplotacion || null,
+        anioDeclaracion:       form.anioDeclaracion ? parseInt(form.anioDeclaracion) : null,
       })
       setSaved(true)
       setTimeout(() => { onCreated(created); onClose() }, 700)
@@ -49,6 +74,7 @@ function NuevaExplotacionModal({ granjeros, onClose, onCreated }) {
 
   const inputStyle = { width: '100%', padding: '9px 13px', borderRadius: 10, border: '1.5px solid #d1d5db', fontSize: 13.5, color: '#111827', fontFamily: 'inherit', background: '#fafafa', outline: 'none', boxSizing: 'border-box' }
   const labelStyle = { fontSize: 12.5, fontWeight: 600, color: '#374151', marginBottom: 5, display: 'block' }
+  const sectionLabel = { fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, marginTop: 4 }
 
   return (
     <div
@@ -57,7 +83,7 @@ function NuevaExplotacionModal({ granjeros, onClose, onCreated }) {
       onClick={onClose}
     >
       <div
-        style={{ width: 480, background: '#fff', borderRadius: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.20)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        style={{ width: 560, maxHeight: '90vh', background: '#fff', borderRadius: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.20)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -72,7 +98,8 @@ function NuevaExplotacionModal({ granjeros, onClose, onCreated }) {
         </div>
 
         {/* Form */}
-        <div style={{ padding: '20px 26px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ padding: '20px 26px', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
+
           <div>
             <label style={labelStyle}>Nombre de la explotación <span style={{ color: '#e07030' }}>*</span></label>
             <input name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej. La Vega Norte" style={inputStyle} />
@@ -80,20 +107,13 @@ function NuevaExplotacionModal({ granjeros, onClose, onCreated }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={labelStyle}>Cultivo principal</label>
-              <select name="cultivo" value={form.cultivo} onChange={handleChange} style={{ ...inputStyle, cursor: 'pointer' }}>
-                {CULTIVO_OPTS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <label style={labelStyle}>Superficie total (ha) <span style={{ color: '#e07030' }}>*</span></label>
+              <input name="superficieTotal" type="number" step="0.01" min="0" value={form.superficieTotal} onChange={handleChange} placeholder="Ej. 12.4" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Superficie (ha) <span style={{ color: '#e07030' }}>*</span></label>
-              <input name="superficieHa" type="number" step="0.1" min="0" value={form.superficieHa} onChange={handleChange} placeholder="Ej. 12.4" style={inputStyle} />
+              <label style={labelStyle}>Ref. SIGPAC</label>
+              <input name="refSig" value={form.refSig} onChange={handleChange} placeholder="Ej. 14-077-0-0-1-80-PAR" style={inputStyle} />
             </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Ref. SIGPAC</label>
-            <input name="refSig" value={form.refSig} onChange={handleChange} placeholder="Ej. 14-077-0-0-1-80-PAR" style={inputStyle} />
           </div>
 
           <div>
@@ -106,13 +126,58 @@ function NuevaExplotacionModal({ granjeros, onClose, onCreated }) {
             </select>
           </div>
 
+          {/* SIEX section */}
+          <div style={{ borderTop: '1px solid #eceef5', paddingTop: 14 }}>
+            <p style={sectionLabel}>Datos SIEX</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Código REA</label>
+                  <input name="codigoRea" value={form.codigoRea} onChange={handleChange} placeholder="Ej. ES010012345" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Año de declaración</label>
+                  <input name="anioDeclaracion" type="number" value={form.anioDeclaracion} onChange={handleChange} placeholder={new Date().getFullYear()} style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Tipo de explotación</label>
+                  <select name="tipoExplotacion" value={form.tipoExplotacion} onChange={handleChange} style={{ ...inputStyle, cursor: 'pointer' }}>
+                    {TIPO_EXPLOTACION_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Orientación productiva</label>
+                  <select name="orientacionProductiva" value={form.orientacionProductiva} onChange={handleChange} style={{ ...inputStyle, cursor: 'pointer' }}>
+                    {ORIENTACION_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Provincia (código INE, 2 dígitos)</label>
+                  <input name="provinciaExplotacion" value={form.provinciaExplotacion} onChange={handleChange} placeholder="Ej. 14" maxLength={2} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Municipio (código INE, 5 dígitos)</label>
+                  <input name="municipioExplotacion" value={form.municipioExplotacion} onChange={handleChange} placeholder="Ej. 14077" maxLength={5} style={inputStyle} />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           {error && (
             <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fff3e6', border: '1px solid #fdd8b4', color: '#c25c10', fontSize: 13 }}>{error}</div>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '16px 26px', borderTop: '1px solid #eceef5', background: '#fafbfc' }}>
+        <div style={{ padding: '16px 26px', borderTop: '1px solid #eceef5', background: '#fafbfc', flexShrink: 0 }}>
           <button
             onClick={handleSubmit}
             disabled={saving || saved}

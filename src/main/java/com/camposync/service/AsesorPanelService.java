@@ -12,6 +12,8 @@ import com.camposync.dto.RecintoDTO;
 import com.camposync.dto.TratamientoDTO;
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.entity.Asesor;
+import com.camposync.entity.Asesoria;
+import com.camposync.repository.AsesoriaRepository;
 import com.camposync.entity.Explotacion;
 import com.camposync.entity.Granjero;
 import com.camposync.entity.Invitacion;
@@ -39,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AsesorPanelService {
 
     private final AsesorRepository asesorRepository;
+    private final AsesoriaRepository asesoriaRepository;
     private final GranjeroRepository granjeroRepository;
     private final ExplotacionRepository explotacionRepository;
     private final ParcelaRepository parcelaRepository;
@@ -307,10 +310,16 @@ public class AsesorPanelService {
     @Transactional
     public AsesorDTO actualizarPerfil(String username, ActualizarPerfilRequest req) {
         Asesor a = getAsesor(username);
-        if (req.nombre()        != null) a.setNombre(req.nombre());
-        if (req.nif()           != null) a.setNif(req.nif());
-        if (req.nombreLegal()   != null) a.setNombreLegal(req.nombreLegal());
-        a.setNumColegiado(req.numColegiado()); // nullable — allow clearing
+        if (req.nombre()      != null) a.setNombre(req.nombre());
+        if (req.nif()         != null) a.setNif(req.nif());
+        if (req.nombreLegal() != null) a.setNombreLegal(req.nombreLegal());
+        a.setNumColegiado(req.numColegiado());
+        if (a.isEsJefe()) {
+            Asesoria asesoria = a.getAsesoria();
+            asesoria.setTelefono(req.asesoriaTelefono());
+            asesoria.setProvincia(req.asesoriaProvinciaAsesoria());
+            asesoriaRepository.save(asesoria);
+        }
         return toAsesorDTO(asesorRepository.save(a));
     }
 
@@ -327,6 +336,8 @@ public class AsesorPanelService {
                 a.getAsesoria().getId(),
                 a.getAsesoria().getNombre(),
                 a.isEsJefe(),
+                a.getAsesoria().getTelefono(),
+                a.getAsesoria().getProvincia(),
                 a.getCreatedAt()
         );
     }
