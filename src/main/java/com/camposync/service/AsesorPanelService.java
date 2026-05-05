@@ -1,5 +1,7 @@
 package com.camposync.service;
 
+import com.camposync.dto.ActualizarPerfilRequest;
+import com.camposync.dto.AsesorDTO;
 import com.camposync.dto.AsesorExplotacionCreateRequest;
 import com.camposync.dto.AsesorParcelaCreateRequest;
 import com.camposync.dto.ExplotacionDTO;
@@ -295,7 +297,39 @@ public class AsesorPanelService {
                 .toList();
     }
 
+    // ── Perfil ────────────────────────────────────────────────────────────────
+
+    public AsesorDTO getPerfil(String username) {
+        Asesor a = getAsesor(username);
+        return toAsesorDTO(a);
+    }
+
+    @Transactional
+    public AsesorDTO actualizarPerfil(String username, ActualizarPerfilRequest req) {
+        Asesor a = getAsesor(username);
+        if (req.nombre()        != null) a.setNombre(req.nombre());
+        if (req.nif()           != null) a.setNif(req.nif());
+        if (req.nombreLegal()   != null) a.setNombreLegal(req.nombreLegal());
+        a.setNumColegiado(req.numColegiado()); // nullable — allow clearing
+        return toAsesorDTO(asesorRepository.save(a));
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private AsesorDTO toAsesorDTO(Asesor a) {
+        return new AsesorDTO(
+                a.getId(),
+                a.getUsername(),
+                a.getNombre(),
+                a.getNif(),
+                a.getNombreLegal(),
+                a.getNumColegiado(),
+                a.getAsesoria().getId(),
+                a.getAsesoria().getNombre(),
+                a.isEsJefe(),
+                a.getCreatedAt()
+        );
+    }
 
     private Asesor getAsesor(String username) {
         return asesorRepository.findByUsername(username)

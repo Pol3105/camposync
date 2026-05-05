@@ -1,5 +1,7 @@
 package com.camposync.controller;
 
+import com.camposync.dto.ActualizarPerfilRequest;
+import com.camposync.dto.AsesorDTO;
 import com.camposync.dto.AsesorExplotacionCreateRequest;
 import com.camposync.dto.AsesorParcelaCreateRequest;
 import com.camposync.dto.ExplotacionDTO;
@@ -25,6 +27,16 @@ import java.util.List;
 public class AsesorPanelController {
 
     private final AsesorPanelService asesorPanelService;
+
+    @GetMapping("/perfil")
+    public ResponseEntity<AsesorDTO> getPerfil() {
+        return ResponseEntity.ok(asesorPanelService.getPerfil(currentUsername()));
+    }
+
+    @PutMapping("/perfil")
+    public ResponseEntity<AsesorDTO> actualizarPerfil(@RequestBody ActualizarPerfilRequest request) {
+        return ResponseEntity.ok(asesorPanelService.actualizarPerfil(currentUsername(), request));
+    }
 
     @GetMapping("/granjeros")
     public ResponseEntity<List<GranjeroDTO>> listarGranjeros() {
