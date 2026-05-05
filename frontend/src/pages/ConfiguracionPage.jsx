@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FlaskConical, Users, Lock, Check, Pencil, Plus } from 'lucide-react'
+import { FlaskConical, Users, Lock, Check, Pencil, Plus, Building2, CreditCard } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor } from '../services/api'
 
@@ -373,6 +373,9 @@ export default function ConfiguracionPage() {
   const [numColegiado, setNumColegiado] = useState('')
   const [username,     setUsername]     = useState(localStorage.getItem('username') ?? '')
   const [email,        setEmail]        = useState('')
+  const [esJefe,       setEsJefe]       = useState(false)
+  const [asesoriaTel,  setAsesoriaTel]  = useState('')
+  const [asesoriaProv, setAsesoriaProv] = useState('')
   const [saving,       setSaving]       = useState(false)
   const [saveMsg,      setSaveMsg]      = useState('')
 
@@ -383,6 +386,9 @@ export default function ConfiguracionPage() {
       setNumColegiado(data.numColegiado ?? '')
       setUsername(data.nombre ?? data.username ?? '')
       setEmail(data.username ?? '')
+      setEsJefe(data.esJefe ?? false)
+      setAsesoriaTel(data.asesoriaTelefono ?? '')
+      setAsesoriaProv(data.asesoriaProvinciaAsesoria ?? '')
     }).catch(() => {})
   }, [])
 
@@ -394,15 +400,19 @@ export default function ConfiguracionPage() {
     setSaveMsg('')
     try {
       const data = await asesor.actualizarPerfil({
-        nombre:       username,
-        nif:          nif       || null,
-        nombreLegal:  nombreLegal || null,
-        numColegiado: numColegiado || null,
+        nombre:                  username,
+        nif:                     nif        || null,
+        nombreLegal:             nombreLegal || null,
+        numColegiado:            numColegiado || null,
+        asesoriaTelefono:        asesoriaTel  || null,
+        asesoriaProvinciaAsesoria: asesoriaProv || null,
       })
       setNif(data.nif ?? '')
       setNombreLegal(data.nombreLegal ?? '')
       setNumColegiado(data.numColegiado ?? '')
       setUsername(data.nombre ?? data.username ?? '')
+      setAsesoriaTel(data.asesoriaTelefono ?? '')
+      setAsesoriaProv(data.asesoriaProvinciaAsesoria ?? '')
       setSaveMsg('¡Cambios guardados!')
       setTimeout(() => setSaveMsg(''), 3000)
     } catch {
@@ -567,6 +577,66 @@ export default function ConfiguracionPage() {
 
           </div>
         </div>
+
+        {/* Card 3 — Datos de la Asesoría (solo jefe) */}
+        {esJefe && (
+          <div style={baseCard}>
+            <div style={{ padding: '18px 24px 16px', borderBottom: `1px solid ${S.table.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f3f0ff', border: '1px solid #d4c8f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Building2 size={18} color="#5b3ea6" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15.5, fontWeight: 700, color: '#111827', letterSpacing: '-0.2px' }}>Datos de la Asesoría</div>
+                <div style={{ fontSize: 12.5, color: '#9ca3af', marginTop: 1 }}>Información de tu asesoría visible para los granjeros.</div>
+              </div>
+            </div>
+
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+              {/* Teléfono */}
+              <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Teléfono</div>
+                  <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 2 }}>Contacto de la asesoría</div>
+                </div>
+                <input
+                  value={asesoriaTel}
+                  onChange={e => setAsesoriaTel(e.target.value)}
+                  placeholder="Ej. +34 957 000 000"
+                  style={{ ...S.field.editable, display: 'block' }}
+                />
+              </div>
+
+              {/* Provincia */}
+              <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Provincia</div>
+                  <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 2 }}>Provincia donde opera la asesoría</div>
+                </div>
+                <input
+                  value={asesoriaProv}
+                  onChange={e => setAsesoriaProv(e.target.value)}
+                  placeholder="Ej. Córdoba"
+                  style={{ ...S.field.editable, display: 'block' }}
+                />
+              </div>
+
+              {/* Stripe */}
+              <div style={{ paddingTop: 6, borderTop: `1px solid ${S.table.border}`, marginTop: 2 }}>
+                <div style={{ paddingTop: 18 }}>
+                  <button
+                    onClick={() => alert('Próximamente')}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 18px', background: '#f9fafb', border: '1.5px solid #d1d5db', borderRadius: 12, color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    <CreditCard size={15} color="#6b7280" />
+                    Gestionar Suscripción (Stripe)
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
 
         {/* Footer actions */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, paddingTop: 4 }}>

@@ -26,6 +26,18 @@ public class InvitacionController {
                 .body(invitacionService.crear(currentUsername(), request));
     }
 
+    // Solo Asesores
+    @DeleteMapping("/{token}")
+    public ResponseEntity<InvitacionDTO> cancelar(@PathVariable String token) {
+        return ResponseEntity.ok(invitacionService.cancelar(token, currentUsername()));
+    }
+
+    // Solo Asesores
+    @PostMapping("/{token}/reenviar")
+    public ResponseEntity<InvitacionDTO> reenviar(@PathVariable String token) {
+        return ResponseEntity.ok(invitacionService.reenviar(token, currentUsername()));
+    }
+
     // Solo Granjeros
     @GetMapping("/me")
     public ResponseEntity<List<InvitacionDTO>> listarMisInvitaciones() {

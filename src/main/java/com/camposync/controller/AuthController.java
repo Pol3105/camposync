@@ -64,7 +64,7 @@ public class AuthController {
 
         LoginResponse response = authService.registerViaInvite(
                 token,
-                 request.username(), request.password(), request.nombre());
+                request.username(), request.nombre(), request.password());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

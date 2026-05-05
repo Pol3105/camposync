@@ -12,5 +12,7 @@ public record AsesorDTO(
         Long asesoriaId,
         String asesorianombre,
         boolean esJefe,
+        String asesoriaTelefono,
+        String asesoriaProvinciaAsesoria,
         LocalDateTime createdAt
 ) {}
