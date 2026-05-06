@@ -1,11 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutGrid, Users, Map, FlaskConical, Mail, Settings, Bell, Search, LogOut } from 'lucide-react'
+import { LayoutGrid, Users, Map, FlaskConical, Mail, Settings, LogOut } from 'lucide-react'
 import logoImg from '../assets/logo.jpg'
 
 const S = {
   sidebar: { bg: '#1c3829', activeBg: 'rgba(110,180,80,0.18)', activeBar: '#7cc94a', textActive: '#d4f1b0', textMuted: '#7aac66' },
   topbar:  { bg: '#ffffff', border: '#e8eaf0', shadow: '0 1px 3px rgba(0,0,0,0.06)' },
-  search:  { bg: '#f0f2f7', border: '#dde0ea', radius: 10 },
 }
 
 const NAV = [
@@ -18,9 +17,9 @@ const NAV = [
 ]
 
 /**
- * @param {{ title?: string, greeting?: boolean, searchPlaceholder?: string, notificationDot?: boolean, children: React.ReactNode }} props
+ * @param {{ title?: string, greeting?: boolean, children: React.ReactNode }} props
  */
-export default function AppLayout({ title, greeting = false, searchPlaceholder = 'Buscar…', notificationDot = false, children }) {
+export default function AppLayout({ title, greeting = false, children }) {
   const navigate  = useNavigate()
   const location  = useLocation()
   const username  = localStorage.getItem('username') ?? 'Asesoría'
@@ -103,16 +102,7 @@ export default function AppLayout({ title, greeting = false, searchPlaceholder =
               <span className="font-bold" style={{ fontSize: 18, color: '#1a1e1a', letterSpacing: '-0.3px' }}>{title}</span>
             )}
           </div>
-          <div className="flex items-center gap-2" style={{ background: S.search.bg, border: `1px solid ${S.search.border}`, borderRadius: S.search.radius, padding: '7px 14px', width: 220 }}>
-            <Search size={15} color="#9aa0b0" />
-            <span style={{ fontSize: 13, color: '#a8aec0' }}>{searchPlaceholder}</span>
-          </div>
-          <div className="relative flex items-center justify-center" style={{ width: 38, height: 38, border: `1px solid ${S.search.border}`, borderRadius: 10, background: '#fff', cursor: 'pointer', flexShrink: 0 }}>
-            <Bell size={18} color="#6b7280" />
-            {notificationDot && (
-              <div className="absolute rounded-full" style={{ top: 7, right: 7, width: 9, height: 9, background: '#e07030', border: '2px solid #fff' }} />
-            )}
-          </div>
+
         </header>
 
         {/* Page content */}
