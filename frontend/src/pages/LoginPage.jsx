@@ -92,9 +92,9 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             <AuthField
-              label="Email o usuario"
+              label="Correo electrónico"
               name="username"
-              placeholder="asesor@campo.es"
+              placeholder="Correo electrónico"
               value={form.username}
               onChange={handleChange}
               autoComplete="username"
