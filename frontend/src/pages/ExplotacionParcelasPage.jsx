@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileCode, Info, Layers, Pencil, PlusCircle, Trash2, X } from 'lucide-react'
+import { ArrowLeft, FileCode, FileText, Info, Layers, Pencil, PlusCircle, Trash2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import NuevaParcelaModal from '../components/NuevaParcelaModal'
 import NuevoRecintoModal from '../components/NuevoRecintoModal'
@@ -99,6 +99,12 @@ export default function ExplotacionParcelasPage() {
   const [parcelaInfo,   setParcelaInfo]   = useState(null)
   const [editParcela,   setEditParcela]   = useState(null)
   const [recintoModal,  setRecintoModal]  = useState(null)
+  const [pdfToast,      setPdfToast]      = useState(false)
+
+  function handleGenerarPdf() {
+    setPdfToast(true)
+    setTimeout(() => setPdfToast(false), 4000)
+  }
 
   async function handleDeleteParcela(parcela) {
     if (!window.confirm('¿Estás seguro de que deseas eliminar esta parcela? Esta acción no se puede deshacer.')) return
@@ -145,6 +151,13 @@ export default function ExplotacionParcelasPage() {
             >
               <FileCode size={15} color="#fff" />
               Exportar SIEX (XML)
+            </button>
+            <button
+              onClick={handleGenerarPdf}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', background: 'linear-gradient(135deg,#1e40af,#3b82f6)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(30,64,175,0.28)' }}
+            >
+              <FileText size={15} color="#fff" />
+              Generar Cuaderno (PDF)
             </button>
           </div>
 
@@ -299,6 +312,16 @@ export default function ExplotacionParcelasPage() {
             setRecintoModal(null)
           }}
         />
+      )}
+
+      {pdfToast && (
+        <div style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', background: '#1e40af', borderRadius: 14, boxShadow: '0 8px 30px rgba(30,64,175,0.30)', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: "'Inter',system-ui,sans-serif", maxWidth: 380 }}>
+          <FileText size={18} color="#fff" style={{ flexShrink: 0 }} />
+          <span>Generando Cuaderno de Campo en PDF... (Próximamente)</span>
+          <button onClick={() => setPdfToast(false)} style={{ marginLeft: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', padding: 0, display: 'flex', alignItems: 'center' }}>
+            <X size={16} />
+          </button>
+        </div>
       )}
     </AppLayout>
   )
