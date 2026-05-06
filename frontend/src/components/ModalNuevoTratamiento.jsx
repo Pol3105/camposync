@@ -31,6 +31,9 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
     fecha:         today,
     superficieTratada: '',
     plagaObjetivo:     '',
+    motivoTratamiento: '',
+    tipoEquipo:        '',
+    volumenCaldo:      '',
   })
 
   useEffect(() => {
@@ -105,7 +108,10 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
         unidades:                form.unidades,
         fecha:                   form.fecha,
         superficieTratada:       parseFloat(form.superficieTratada),
-        plagaObjetivo:           form.plagaObjetivo || null,
+        plagaObjetivo:           form.plagaObjetivo     || null,
+        motivoTratamiento:       form.motivoTratamiento || null,
+        tipoEquipo:              form.tipoEquipo        || null,
+        volumenCaldo:            form.volumenCaldo ? parseFloat(form.volumenCaldo) : null,
       }
       const nuevo = await granjero.crearTratamiento(body)
       onCreado(nuevo)
@@ -124,7 +130,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, zIndex: 50,
+        position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       }}
@@ -338,6 +344,50 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
               />
             </Field>
 
+            {/* ── Sección opcional SIEX ── */}
+            <div style={{ borderTop: '1px dashed #e5e7eb', paddingTop: 10, marginTop: -2 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#c8ccd8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+                Datos adicionales (opcional)
+              </p>
+
+              {/* 9. Motivo del tratamiento */}
+              <Field label="Motivo del tratamiento">
+                <input
+                  type="text"
+                  placeholder="Ej. Preventivo, Curativo…"
+                  value={form.motivoTratamiento}
+                  onChange={e => set('motivoTratamiento', e.target.value)}
+                  style={inputStyle}
+                />
+              </Field>
+
+              <div style={{ height: 10 }} />
+
+              {/* 10. Tipo de equipo */}
+              <Field label="Tipo de equipo">
+                <input
+                  type="text"
+                  placeholder="Ej. Pulverizador de arrastre…"
+                  value={form.tipoEquipo}
+                  onChange={e => set('tipoEquipo', e.target.value)}
+                  style={inputStyle}
+                />
+              </Field>
+
+              <div style={{ height: 10 }} />
+
+              {/* 11. Volumen de caldo (L/ha) */}
+              <Field label="Volumen de caldo (L/ha)">
+                <input
+                  type="number" min="0" step="any"
+                  placeholder="Ej. 200"
+                  value={form.volumenCaldo}
+                  onChange={e => set('volumenCaldo', e.target.value)}
+                  style={inputStyle}
+                />
+              </Field>
+            </div>
+
             {error && (
               <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>
             )}
@@ -362,6 +412,9 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
             >
               {enviando ? 'Guardando…' : 'Registrar tratamiento'}
             </button>
+
+            {/* Spacer so button clears the bottom navigation bar */}
+            <div style={{ height: 72 }} />
           </form>
         )}
       </div>

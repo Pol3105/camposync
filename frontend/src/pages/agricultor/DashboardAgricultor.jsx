@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Clock, Plus, ChevronRight, X } from 'lucide-react'
+import { CheckCircle, Clock, Plus, ChevronRight } from 'lucide-react'
 import AgricultorLayout from './AgricultorLayout'
+import ModalNuevoTratamiento from '../../components/ModalNuevoTratamiento'
 import { granjero } from '../../services/api'
 
 function greeting() {
@@ -264,151 +265,11 @@ export default function DashboardAgricultor() {
       </button>
 
       {fabOpen && (
-        <NuevoTratamientoModal explotaciones={explotaciones} onClose={() => setFabOpen(false)} onCreado={() => { setFabOpen(false); granjero.tratamientos().then(t => setTrat(t ?? [])) }} />
+        <ModalNuevoTratamiento
+          onClose={() => setFabOpen(false)}
+          onCreado={() => { setFabOpen(false); granjero.tratamientos().then(t => setTrat(t ?? [])) }}
+        />
       )}
     </AgricultorLayout>
-  )
-}
-
-// ─── NuevoTratamientoModal ───────────────────────────────────────────────────
-function NuevoTratamientoModal({ explotaciones, onClose, onCreado }) {
-  const [expId, setExpId]     = useState('')
-  const [parcelas, setParcelas] = useState([])
-  const [parcelaId, setParcelaId] = useState('')
-  const [recintos, setRecintos] = useState([])
-  const [recintoId, setRecintoId] = useState('')
-  const [inventario, setInv]  = useState([])
-  const [form, setForm]       = useState({ productoFitosanitarioId: '', fecha: new Date().toISOString().slice(0, 10), dosis: '', unidades: 'l/ha', superficieTratada: '' })
-  const [saving, setSaving]   = useState(false)
-  const [error, setError]     = useState('')
-
-  useEffect(() => {
-    granjero.inventario().then(i => setInv(i ?? [])).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (!expId) { setParcelas([]); setParcelaId(''); setRecintos([]); setRecintoId(''); return }
-    granjero.parcelasPorExplotacion(expId).then(p => { setParcelas(p ?? []); setParcelaId(''); setRecintos([]); setRecintoId('') }).catch(() => {})
-  }, [expId])
-
-  useEffect(() => {
-    if (!parcelaId) { setRecintos([]); setRecintoId(''); return }
-    granjero.recintosPorParcela(parcelaId).then(r => { setRecintos(r ?? []); setRecintoId('') }).catch(() => {})
-  }, [parcelaId])
-
-  async function handleSubmit() {
-    if (!recintoId || !form.productoFitosanitarioId || !form.fecha || !form.dosis) {
-      setError('Completa todos los campos obligatorios')
-      return
-    }
-    setSaving(true)
-    setError('')
-    try {
-      await granjero.crearTratamiento({
-        recintoId: Number(recintoId),
-        productoFitosanitarioId: Number(form.productoFitosanitarioId),
-        fecha: form.fecha,
-        dosis: Number(form.dosis),
-        unidades: form.unidades,
-        superficieTratada: form.superficieTratada ? Number(form.superficieTratada) : null,
-      })
-      onCreado()
-    } catch (e) {
-      setError(e.message ?? 'Error al guardar')
-      setSaving(false)
-    }
-  }
-
-  const sel = { width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 14, fontFamily: 'inherit', background: '#fafafa', color: '#111827', outline: 'none' }
-  const inp = { ...sel }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', borderRadius: '22px 22px 0 0', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', padding: '20px 18px 32px' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#111827' }}>Nuevo Tratamiento</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-            <X size={20} color="#9ca3af" />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {/* Explotación */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Explotación *</label>
-            <select style={sel} value={expId} onChange={e => setExpId(e.target.value)}>
-              <option value="">Seleccionar...</option>
-              {explotaciones.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-            </select>
-          </div>
-
-          {/* Parcela */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Parcela *</label>
-            <select style={sel} value={parcelaId} onChange={e => setParcelaId(e.target.value)} disabled={!expId}>
-              <option value="">Seleccionar...</option>
-              {parcelas.map(p => <option key={p.id} value={p.id}>{p.refCatastral} — {p.municipio}</option>)}
-            </select>
-          </div>
-
-          {/* Recinto */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Recinto *</label>
-            <select style={sel} value={recintoId} onChange={e => setRecintoId(e.target.value)} disabled={!parcelaId}>
-              <option value="">Seleccionar...</option>
-              {recintos.map(r => <option key={r.id} value={r.id}>Recinto {r.numeroRecinto} — {r.superficie} ha {r.cultivo ? `(${r.cultivo})` : ''}</option>)}
-            </select>
-          </div>
-
-          {/* Producto */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Producto fitosanitario *</label>
-            <select style={sel} value={form.productoFitosanitarioId} onChange={e => setForm(f => ({ ...f, productoFitosanitarioId: e.target.value }))}>
-              <option value="">Seleccionar...</option>
-              {inventario.map(i => <option key={i.productoFitosanitarioId} value={i.productoFitosanitarioId}>{i.aliasAgric ?? i.productoNombre}</option>)}
-            </select>
-          </div>
-
-          {/* Fecha */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Fecha *</label>
-            <input style={inp} type="date" value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))} />
-          </div>
-
-          {/* Dosis + Unidades */}
-          <div className="flex gap-2">
-            <div style={{ flex: 2 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Dosis *</label>
-              <input style={inp} type="number" step="0.01" placeholder="Ej. 1.5" value={form.dosis} onChange={e => setForm(f => ({ ...f, dosis: e.target.value }))} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Unidades</label>
-              <select style={sel} value={form.unidades} onChange={e => setForm(f => ({ ...f, unidades: e.target.value }))}>
-                <option>l/ha</option>
-                <option>kg/ha</option>
-                <option>cc/hl</option>
-                <option>g/hl</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Superficie */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>Superficie tratada (ha)</label>
-            <input style={inp} type="number" step="0.01" placeholder="Opcional" value={form.superficieTratada} onChange={e => setForm(f => ({ ...f, superficieTratada: e.target.value }))} />
-          </div>
-        </div>
-
-        {error && <p style={{ fontSize: 13, color: '#dc2626', marginTop: 12, textAlign: 'center' }}>{error}</p>}
-
-        <button
-          onClick={handleSubmit}
-          disabled={saving}
-          style={{ marginTop: 20, width: '100%', padding: '13px', borderRadius: 14, background: saving ? '#9ca3af' : 'linear-gradient(135deg,#2e5c38,#4e9a5f)', border: 'none', color: '#fff', fontSize: 15, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}
-        >
-          {saving ? 'Guardando...' : 'Registrar Tratamiento'}
-        </button>
-      </div>
-    </div>
   )
 }
