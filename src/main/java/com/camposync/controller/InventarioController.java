@@ -1,13 +1,13 @@
 package com.camposync.controller;
 
+import com.camposync.dto.InventarioCreateRequest;
 import com.camposync.dto.InventarioDTO;
 import com.camposync.service.InventarioService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,6 +21,11 @@ public class InventarioController {
     @GetMapping
     public ResponseEntity<List<InventarioDTO>> listar() {
         return ResponseEntity.ok(inventarioService.listarPorGranjero(currentUsername()));
+    }
+
+    @PostMapping
+    public ResponseEntity<InventarioDTO> crear(@Valid @RequestBody InventarioCreateRequest req) {
+        return ResponseEntity.ok(inventarioService.crear(currentUsername(), req));
     }
 
     private String currentUsername() {

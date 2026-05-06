@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FlaskConical, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import AgricultorLayout from './AgricultorLayout'
+import ModalNuevoInventario from '../../components/ModalNuevoInventario'
 import { granjero } from '../../services/api'
 
 const LOW_STOCK_THRESHOLD = 5
@@ -14,7 +15,7 @@ function stockColor(stock) {
 export default function InventarioAgricultor() {
   const [items,   setItems]   = useState([])
   const [loading, setLoading] = useState(true)
-  const [toast,   setToast]   = useState(false)
+  const [modal,   setModal]   = useState(false)
 
   useEffect(() => {
     granjero.inventario()
@@ -25,9 +26,18 @@ export default function InventarioAgricultor() {
       .finally(() => setLoading(false))
   }, [])
 
-  function showToast() {
-    setToast(true)
-    setTimeout(() => setToast(false), 3500)
+  function handleCreado(nuevoItem) {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.id === nuevoItem.id)
+      if (idx >= 0) {
+        // upsert — update existing entry in list
+        const updated = [...prev]
+        updated[idx] = nuevoItem
+        return updated.sort((a, b) => (a.aliasAgric ?? a.productoNombre ?? '').localeCompare(b.aliasAgric ?? b.productoNombre ?? ''))
+      }
+      return [...prev, nuevoItem].sort((a, b) => (a.aliasAgric ?? a.productoNombre ?? '').localeCompare(b.aliasAgric ?? b.productoNombre ?? ''))
+    })
+    setModal(false)
   }
 
   const sinStock = items.filter(i => i.stockAct <= 0).length
@@ -146,7 +156,7 @@ export default function InventarioAgricultor() {
 
       {/* ── FAB ── */}
       <button
-        onClick={showToast}
+        onClick={() => setModal(true)}
         style={{
           position: 'fixed', bottom: 80,
           right: 'max(24px, calc((100vw - 480px) / 2 + 24px))',
@@ -158,20 +168,12 @@ export default function InventarioAgricultor() {
         }}
       >+</button>
 
-      {/* ── Toast ── */}
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: 88, left: '50%', transform: 'translateX(-50%)',
-          maxWidth: 320, width: 'calc(100% - 48px)',
-          background: '#1c3829', borderRadius: 14, padding: '13px 18px',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.20)',
-          display: 'flex', alignItems: 'center', gap: 10, zIndex: 95,
-        }}>
-          <FlaskConical size={16} color="#a8e890" style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#fff' }}>
-            Añadir producto al stock — Próximamente
-          </span>
-        </div>
+      {/* ── Modal ── */}
+      {modal && (
+        <ModalNuevoInventario
+          onClose={() => setModal(false)}
+          onCreado={handleCreado}
+        />
       )}
     </AgricultorLayout>
   )
