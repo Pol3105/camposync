@@ -53,6 +53,12 @@ export const auth = {
       method: 'POST',
       body: JSON.stringify({ username, password, nombre }),
     }),
+
+  forgotPassword: (email) =>
+    request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  resetPassword: (token, newPassword) =>
+    request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
 }
 
 export const invitaciones = {
