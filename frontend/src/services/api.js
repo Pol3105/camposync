@@ -59,8 +59,8 @@ export const invitaciones = {
   aceptar: (token) =>
     request(`/invitaciones/${token}/aceptar`, { method: 'POST' }),
 
-  crear: (emailInvitado) =>
-    request('/invitaciones', { method: 'POST', body: JSON.stringify({ emailInvitado }) }),
+  crear: (emailInvitado, rolDestino = 'AGRICULTOR') =>
+    request('/invitaciones', { method: 'POST', body: JSON.stringify({ emailInvitado, rolDestino }) }),
 
   listar:   () => request('/asesor/invitaciones'),
   cancelar: (token) => request(`/invitaciones/${token}`, { method: 'DELETE' }),

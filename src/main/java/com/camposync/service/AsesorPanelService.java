@@ -599,7 +599,8 @@ public class AsesorPanelService {
                 i.getExpiraEn(),
                 i.getAsesoria().getId(),
                 i.getAsesoria().getNombre(),
-                i.getCreatedAt()
+                i.getCreatedAt(),
+                i.getRolDestino()
         );
     }
 

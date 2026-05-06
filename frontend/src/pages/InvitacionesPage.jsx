@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Mail, CheckCircle2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import InvitacionModal from '../components/InvitacionModal'
-import { invitaciones as invAPI } from '../services/api'
+import { invitaciones as invAPI, asesor as asesorAPI } from '../services/api'
 
 /* ── design tokens ── */
 const TABLE_BORDER  = '#eceef5'
@@ -72,12 +72,15 @@ export default function InvitacionesPage() {
   const [showToast,       setShowToast]       = useState(false)
   const [showReenviarToast, setShowReenviarToast] = useState(false)
   const [actioningToken, setActioningToken] = useState(null)
+  const [esJefe, setEsJefe] = useState(false)
+  const [lastRol, setLastRol] = useState('AGRICULTOR')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await invAPI.listar()
+      const [data, perfil] = await Promise.all([invAPI.listar(), asesorAPI.getPerfil()])
       setRows(data ?? [])
+      setEsJefe(perfil?.esJefe ?? false)
     } catch { /* errors handled globally */ }
     finally { setLoading(false) }
   }, [])
@@ -103,11 +106,12 @@ export default function InvitacionesPage() {
     finally { setActioningToken(null) }
   }
 
-  async function handleEnviar(emailInvitado) {
+  async function handleEnviar(emailInvitado, rolDestino = 'AGRICULTOR') {
     setSending(true)
     try {
-      const nueva = await invAPI.crear(emailInvitado)
+      const nueva = await invAPI.crear(emailInvitado, rolDestino)
       setRows(prev => [nueva, ...prev])   // optimistic prepend
+      setLastRol(rolDestino)
       setShowModal(false)
       setShowToast(true)
     } catch (err) {
@@ -132,18 +136,18 @@ export default function InvitacionesPage() {
 
   return (
     <>
-      <AppLayout
-        title="Invitaciones"
-        searchPlaceholder="Buscar por email…"
-        notificationDot={pendientes > 0}
-      >
+      <AppLayout title="Invitaciones">
         <div className="flex flex-col gap-5 h-full">
 
           {/* page header */}
           <div className="flex justify-between items-center">
             <div>
               <h1 className="font-bold" style={{ fontSize: 22, color: '#111827', letterSpacing: '-0.4px' }}>Gestión de Invitaciones</h1>
-              <p style={{ fontSize: 13.5, color: '#9ca3af', marginTop: 3 }}>Invita a tus granjeros para que activen su cuenta en Camposync</p>
+              <p style={{ fontSize: 13.5, color: '#9ca3af', marginTop: 3 }}>
+                {esJefe
+                  ? 'Invita a tus agricultores y/o asesores para que activen su cuenta en Camposync'
+                  : 'Invita a tus agricultores para que activen su cuenta en Camposync'}
+              </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
@@ -275,6 +279,7 @@ export default function InvitacionesPage() {
           onClose={() => setShowModal(false)}
           onEnviar={handleEnviar}
           sending={sending}
+          esJefe={esJefe}
         />
       )}
 
@@ -283,7 +288,7 @@ export default function InvitacionesPage() {
         <Toast
           onClose={() => setShowToast(false)}
           titulo="¡Invitación enviada con éxito!"
-          subtitulo="El agricultor recibirá el enlace en su correo"
+          subtitulo={`El ${lastRol === 'ASESOR' ? 'asesor' : 'agricultor'} recibirá el enlace en su correo`}
         />
       )}
       {showReenviarToast && (

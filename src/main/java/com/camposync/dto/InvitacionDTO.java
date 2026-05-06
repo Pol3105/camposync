@@ -11,5 +11,6 @@ public record InvitacionDTO(
         LocalDateTime expiraEn,
         Long asesoriaId,
         String asesoriaNombre,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String rolDestino
 ) {}
