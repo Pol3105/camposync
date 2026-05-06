@@ -1,16 +1,24 @@
 import { useState } from 'react'
-import { X, Mail } from 'lucide-react'
+import { X, Mail, Users } from 'lucide-react'
 
-export default function InvitacionModal({ onClose, onEnviar, sending }) {
-  const [email, setEmail] = useState('')
-  const [err, setErr]     = useState('')
+const TIPOS = [
+  { value: 'AGRICULTOR', label: 'Agricultor', desc: 'Agricultor que registrará sus tratamientos' },
+  { value: 'ASESOR',     label: 'Asesor',     desc: 'Asesor que gestionará explotaciones' },
+]
+
+export default function InvitacionModal({ onClose, onEnviar, sending, esJefe = false }) {
+  const [email, setEmail]       = useState('')
+  const [rolDestino, setRol]    = useState('AGRICULTOR')
+  const [err, setErr]           = useState('')
+
+  const tipoLabel = rolDestino === 'ASESOR' ? 'Asesor' : 'Agricultor'
 
   function handleSubmit(e) {
     e.preventDefault()
     const trimmed = email.trim()
-    if (!trimmed) return setErr('Introduce el email del agricultor.')
+    if (!trimmed) return setErr(`Introduce el email del ${tipoLabel.toLowerCase()}.`)
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return setErr('El formato del email no es válido.')
-    onEnviar(trimmed)
+    onEnviar(trimmed, rolDestino)
   }
 
   return (
@@ -43,14 +51,56 @@ export default function InvitacionModal({ onClose, onEnviar, sending }) {
             </div>
             <div>
               <p className="font-bold" style={{ fontSize: 19, color: '#111827', letterSpacing: '-0.4px' }}>Nueva Invitación</p>
-              <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>Invita a un agricultor a unirse a Camposync</p>
+              <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>
+                Invita a un {esJefe ? 'agricultor o asesor' : 'agricultor'} a unirse a Camposync
+              </p>
             </div>
           </div>
 
-          {/* email field */}
           <form onSubmit={handleSubmit} noValidate>
+
+            {/* Tipo selector — solo visible si es_jefe */}
+            {esJefe && (
+              <div className="mb-5">
+                <label className="block font-semibold mb-2" style={{ fontSize: 12.5, color: '#374151' }}>
+                  Tipo de Invitación
+                </label>
+                <div className="flex gap-3">
+                  {TIPOS.map(({ value, label, desc }) => {
+                    const active = rolDestino === value
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setRol(value)}
+                        className="flex-1 flex items-start gap-2.5 transition"
+                        style={{
+                          padding: '11px 14px',
+                          borderRadius: 12,
+                          border: `1.5px solid ${active ? '#4e9a5f' : '#e5e7eb'}`,
+                          background: active ? '#f0faf3' : '#fafafa',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <div style={{ width: 16, height: 16, borderRadius: '50%', border: `2px solid ${active ? '#4e9a5f' : '#d1d5db'}`, background: active ? '#4e9a5f' : '#fff', flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
+                        </div>
+                        <div>
+                          <p className="font-semibold" style={{ fontSize: 13, color: active ? '#2e5c38' : '#374151' }}>{label}</p>
+                          <p style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 1 }}>{desc}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* email field */}
             <label className="block font-semibold mb-1.5" style={{ fontSize: 12.5, color: '#374151' }}>
-              Email del Agricultor <span style={{ color: '#e07030' }}>*</span>
+              Email del {tipoLabel} <span style={{ color: '#e07030' }}>*</span>
             </label>
             <div className="relative mb-1.5">
               <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -69,7 +119,9 @@ export default function InvitacionModal({ onClose, onEnviar, sending }) {
             {err ? (
               <p className="mb-5" style={{ fontSize: 12, color: '#c03030' }}>{err}</p>
             ) : (
-              <p className="mb-5" style={{ fontSize: 12, color: '#b0b8c4' }}>Introduce el correo electrónico del agricultor a invitar</p>
+              <p className="mb-5" style={{ fontSize: 12, color: '#b0b8c4' }}>
+                Introduce el correo electrónico del {tipoLabel.toLowerCase()} a invitar
+              </p>
             )}
 
             {/* info note */}
@@ -78,7 +130,7 @@ export default function InvitacionModal({ onClose, onEnviar, sending }) {
                 <span style={{ fontSize: 11, color: '#3a7a40', fontWeight: 700 }}>i</span>
               </div>
               <p style={{ fontSize: 12.5, color: '#4a7050', lineHeight: 1.65, margin: 0 }}>
-                El agricultor recibirá un <strong style={{ color: '#2e5c38' }}>enlace único</strong> para activar su cuenta y vincularse a tu asesoría. El enlace expira en <strong style={{ color: '#2e5c38' }}>7 días</strong>.
+                El {tipoLabel.toLowerCase()} recibirá un <strong style={{ color: '#2e5c38' }}>enlace único</strong> para activar su cuenta y vincularse a tu asesoría. El enlace expira en <strong style={{ color: '#2e5c38' }}>7 días</strong>.
               </p>
             </div>
 

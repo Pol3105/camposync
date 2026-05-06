@@ -33,9 +33,14 @@ public class InvitacionService {
         var asesor = asesorRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Asesor", username));
 
+        String rol = (request.rolDestino() != null && !request.rolDestino().isBlank())
+                ? request.rolDestino().toUpperCase()
+                : "AGRICULTOR";
+
         Invitacion invitacion = Invitacion.builder()
                 .token(UUID.randomUUID().toString())
                 .emailInvitado(request.emailInvitado())
+                .rolDestino(rol)
                 .estado(EstadoInvitacion.PENDIENTE)
                 .expiraEn(LocalDateTime.now().plusDays(7))
                 .asesoria(asesor.getAsesoria())
@@ -130,7 +135,8 @@ public class InvitacionService {
                 i.getExpiraEn(),
                 i.getAsesoria().getId(),
                 i.getAsesoria().getNombre(),
-                i.getCreatedAt()
+                i.getCreatedAt(),
+                i.getRolDestino()
         );
     }
 }

@@ -21,6 +21,9 @@ public class Invitacion {
     @Column(nullable = false)
     private EstadoInvitacion estado;
 
+    @Column(name = "rol_destino", nullable = false, length = 20)
+    private String rolDestino;
+
     @Column(name = "expira_en", nullable = false)
     private LocalDateTime expiraEn;
 
