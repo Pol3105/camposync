@@ -4,7 +4,6 @@ import SignUpPage from './pages/SignUpPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
-import DashboardGranjero from './pages/DashboardGranjero'
 import InviteRegisterPage from './pages/InviteRegisterPage'
 import InvitacionesPage from './pages/InvitacionesPage'
 import AgricultoresPage from './pages/AgricultoresPage'
@@ -16,6 +15,13 @@ import ParcelaTratamientosPage from './pages/ParcelaTratamientosPage'
 import ParcelaRecintosPage from './pages/ParcelaRecintosPage'
 import RecintoTratamientosPage from './pages/RecintoTratamientosPage'
 import ConfiguracionPage from './pages/ConfiguracionPage'
+// Agricultor mobile interface
+import DashboardAgricultor  from './pages/agricultor/DashboardAgricultor'
+import CuadernoTratamientos from './pages/agricultor/CuadernoTratamientos'
+import FincasAgricultor     from './pages/agricultor/FincasAgricultor'
+import FincaDetalle         from './pages/agricultor/FincaDetalle'
+import ParcelaDetalle       from './pages/agricultor/ParcelaDetalle'
+import PerfilAgricultor     from './pages/agricultor/PerfilAgricultor'
 
 function PrivateRoute({ children }) {
   return localStorage.getItem('token') ? children : <Navigate to="/login" replace />
@@ -35,7 +41,13 @@ export default function App() {
         <Route path="/forgot-password"        element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token"  element={<ResetPasswordPage />} />
         <Route path="/dashboard"      element={<Private><DashboardPage /></Private>} />
-        <Route path="/cuaderno"       element={<Private><DashboardGranjero /></Private>} />
+        {/* Agricultor mobile routes */}
+        <Route path="/cuaderno"                                          element={<Private><DashboardAgricultor /></Private>} />
+        <Route path="/cuaderno/tratamientos"                             element={<Private><CuadernoTratamientos /></Private>} />
+        <Route path="/cuaderno/fincas"                                   element={<Private><FincasAgricultor /></Private>} />
+        <Route path="/cuaderno/fincas/:expId"                            element={<Private><FincaDetalle /></Private>} />
+        <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId"        element={<Private><ParcelaDetalle /></Private>} />
+        <Route path="/cuaderno/perfil"                                   element={<Private><PerfilAgricultor /></Private>} />
         <Route path="/invitaciones"   element={<Private><InvitacionesPage /></Private>} />
         <Route path="/agricultores"                        element={<Private><AgricultoresPage /></Private>} />
         <Route path="/agricultores/:id/explotaciones"      element={<Private><AgricultorExplotacionesPage /></Private>} />
