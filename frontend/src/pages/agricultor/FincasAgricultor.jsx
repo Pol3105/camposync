@@ -23,11 +23,11 @@ export default function FincasAgricultor() {
       <div
         style={{
           background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)',
-          padding: '24px 20px 28px',
+          padding: '20px 18px 22px',
         }}
       >
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
-          Mis Fincas
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
+          Mis Explotaciones
         </h1>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)' }}>
           {MOCK_EXPLOTACIONES.length} explotaciones · {totalHa} ha totales
@@ -51,7 +51,7 @@ export default function FincasAgricultor() {
             <p style={{ fontSize: 12.5, color: '#c8ccd8', marginTop: 4 }}>Tu asesor aún no ha vinculado ninguna explotación</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             {MOCK_EXPLOTACIONES.map(exp => {
               const oc = ORIENT[exp.orientacion] ?? ORIENT.OT
               return (
@@ -61,7 +61,7 @@ export default function FincasAgricultor() {
                   style={{
                     background: '#fff',
                     borderRadius: 20,
-                    padding: '18px 16px',
+                    padding: '14px 14px',
                     boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -78,8 +78,8 @@ export default function FincasAgricultor() {
                     {/* Emoji avatar */}
                     <div
                       style={{
-                        width: 52,
-                        height: 52,
+                        width: 44,
+                        height: 44,
                         borderRadius: 14,
                         background: `linear-gradient(145deg, ${oc.bg}, ${oc.bg})`,
                         border: `1.5px solid ${oc.border}`,
@@ -94,7 +94,7 @@ export default function FincasAgricultor() {
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.2px' }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.2px' }}>
                         {exp.nombre}
                       </div>
                       <div style={{ fontSize: 12.5, color: '#9ca3af', marginTop: 3 }}>

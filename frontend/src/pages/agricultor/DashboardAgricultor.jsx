@@ -43,7 +43,7 @@ export default function DashboardAgricultor() {
       <div
         style={{
           background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 60%, #3d7a4a 100%)',
-          padding: '28px 22px 36px',
+          padding: '22px 20px 28px',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -57,7 +57,7 @@ export default function DashboardAgricultor() {
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginBottom: 2, textTransform: 'capitalize' }}>
               {todayLabel()}
             </p>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
               {greeting()},{' '}
               <span style={{ color: '#a8e890' }}>{firstName(MOCK_USUARIO.nombre)}</span> 👋
             </h1>
@@ -95,14 +95,14 @@ export default function DashboardAgricultor() {
             style={{
               background: '#fff',
               borderRadius: 18,
-              padding: '16px 18px',
+              padding: '12px 14px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.10)',
             }}
           >
             <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
               Fincas
             </div>
-            <div style={{ fontSize: 34, fontWeight: 800, color: '#111827', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#111827', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
               {MOCK_EXPLOTACIONES.length}
             </div>
             <div style={{ fontSize: 12, color: '#4e9a5f', fontWeight: 500, marginTop: 4 }}>
@@ -115,7 +115,7 @@ export default function DashboardAgricultor() {
             style={{
               background: pendientes.length > 0 ? '#fff8f2' : '#fff',
               borderRadius: 18,
-              padding: '16px 18px',
+              padding: '12px 14px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.10)',
               border: pendientes.length > 0 ? '1.5px solid #fdd8b4' : '1.5px solid transparent',
             }}
@@ -125,7 +125,7 @@ export default function DashboardAgricultor() {
             </div>
             <div
               style={{
-                fontSize: 34,
+                fontSize: 28,
                 fontWeight: 800,
                 color: pendientes.length > 0 ? '#e07830' : '#111827',
                 lineHeight: 1,
@@ -144,7 +144,7 @@ export default function DashboardAgricultor() {
       {/* ── Cuaderno al día ── */}
       <div style={{ padding: '22px 16px 0' }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>
             Cuaderno al día
           </h2>
           <button
@@ -180,7 +180,7 @@ export default function DashboardAgricultor() {
                   style={{
                     background: '#fff',
                     borderRadius: 16,
-                    padding: '14px 16px',
+                    padding: '11px 14px',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                     display: 'flex',
                     alignItems: 'center',
@@ -242,8 +242,8 @@ export default function DashboardAgricultor() {
       {/* ── Fincas resumen ── */}
       <div style={{ padding: '22px 16px 12px' }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>
-            Mis Fincas
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>
+            Mis Explotaciones
           </h2>
           <button
             onClick={() => navigate('/cuaderno/fincas')}
@@ -308,8 +308,8 @@ export default function DashboardAgricultor() {
         onClick={handleFab}
         style={{
           position: 'fixed',
-          bottom: 88,
-          right: 20,
+          bottom: 80,
+          right: 24,
           width: 56,
           height: 56,
           borderRadius: '50%',
@@ -320,7 +320,7 @@ export default function DashboardAgricultor() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 90,
+          zIndex: 200,
           transition: 'transform 0.15s',
         }}
         onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)' }}
@@ -334,7 +334,7 @@ export default function DashboardAgricultor() {
         <div
           style={{
             position: 'fixed',
-            bottom: 88,
+            bottom: 80,
             left: '50%',
             transform: 'translateX(-50%)',
             maxWidth: 340,

@@ -40,7 +40,7 @@ export default function ParcelaDetalle() {
       <div
         style={{
           background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)',
-          padding: '20px 20px 26px',
+          padding: '18px 18px 22px',
         }}
       >
         <button
@@ -130,7 +130,7 @@ export default function ParcelaDetalle() {
                   style={{
                     background: '#fff',
                     borderRadius: 16,
-                    padding: '16px',
+                    padding: '13px 14px',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                   }}
                 >
@@ -139,8 +139,8 @@ export default function ParcelaDetalle() {
                       {/* Recinto number */}
                       <div
                         style={{
-                          width: 38,
-                          height: 38,
+                          width: 32,
+                          height: 32,
                           borderRadius: 11,
                           background: '#1c3829',
                           display: 'flex',
@@ -149,7 +149,7 @@ export default function ParcelaDetalle() {
                           flexShrink: 0,
                         }}
                       >
-                        <span style={{ fontSize: 14, fontWeight: 800, color: '#a8e890' }}>{r.numero}</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#a8e890' }}>{r.numero}</span>
                       </div>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
