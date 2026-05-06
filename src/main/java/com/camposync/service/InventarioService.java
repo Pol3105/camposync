@@ -50,12 +50,16 @@ public class InventarioService {
                     if (req.aliasAgric() != null && !req.aliasAgric().isBlank()) {
                         existing.setAliasAgric(req.aliasAgric());
                     }
+                    if (req.unidadMedida() != null && !req.unidadMedida().isBlank()) {
+                        existing.setUnidadMedida(req.unidadMedida());
+                    }
                     return existing;
                 })
                 .orElseGet(() -> Inventario.builder()
                         .granjero(granjero)
                         .productoFitosanitario(producto)
                         .stockAct(req.stockAct())
+                        .unidadMedida(req.unidadMedida())
                         .aliasAgric(req.aliasAgric())
                         .build());
 
@@ -67,6 +71,7 @@ public class InventarioService {
                 i.getId(),
                 i.getAliasAgric(),
                 i.getStockAct(),
+                i.getUnidadMedida(),
                 i.getProductoFitosanitario().getId(),
                 i.getProductoFitosanitario().getNombre(),
                 i.getProductoFitosanitario().getPrincipioAct()

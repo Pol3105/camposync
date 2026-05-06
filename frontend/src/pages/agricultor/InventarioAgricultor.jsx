@@ -126,7 +126,7 @@ export default function InventarioAgricultor() {
                       <div style={{ fontSize: 22, fontWeight: 900, color: sc.color, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                         {Number.isInteger(item.stockAct) ? item.stockAct : item.stockAct.toFixed(1)}
                       </div>
-                      <div style={{ fontSize: 10, color: sc.color, fontWeight: 600, marginTop: 1 }}>uds.</div>
+                      <div style={{ fontSize: 10, color: sc.color, fontWeight: 600, marginTop: 1 }}>{item.unidadMedida ?? 'uds.'}</div>
                     </div>
                   </div>
 

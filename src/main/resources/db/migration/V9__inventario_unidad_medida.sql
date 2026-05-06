@@ -1,0 +1,1 @@
+ALTER TABLE inventario ADD COLUMN IF NOT EXISTS unidad_medida VARCHAR(10);

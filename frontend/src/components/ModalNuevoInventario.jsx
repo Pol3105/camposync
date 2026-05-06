@@ -15,6 +15,7 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
     productoFitoId: '',
     aliasAgric:     '',
     stockAct:       '',
+    unidadMedida:   'L',
   })
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
       const body = {
         productoFitoId: Number(form.productoFitoId),
         stockAct:       parseFloat(form.stockAct),
+        unidadMedida:   form.unidadMedida || null,
         aliasAgric:     form.aliasAgric.trim() || null,
       }
       const nuevo = await granjero.crearInventario(body)
@@ -137,22 +139,38 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
               </p>
             </Field>
 
-            {/* 3. Stock inicial */}
-            <Field label="Stock inicial (unidades)">
-              <input
-                required
-                type="number"
-                min="0.01"
-                step="any"
-                placeholder="Ej. 50"
-                value={form.stockAct}
-                onChange={e => set('stockAct', e.target.value)}
-                style={inputStyle}
-              />
+            {/* 3. Stock inicial + unidad */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Stock inicial
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                <input
+                  required
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  placeholder="Ej. 50"
+                  value={form.stockAct}
+                  onChange={e => set('stockAct', e.target.value)}
+                  style={inputStyle}
+                />
+                <select
+                  value={form.unidadMedida}
+                  onChange={e => set('unidadMedida', e.target.value)}
+                  style={{ ...selectStyle, width: 90 }}
+                >
+                  <option value="L">L — Litros</option>
+                  <option value="Kg">Kg — Kilos</option>
+                  <option value="ml">ml — Mililitros</option>
+                  <option value="g">g — Gramos</option>
+                  <option value="uds">uds.</option>
+                </select>
+              </div>
               <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
                 Si el producto ya está en tu inventario, esta cantidad se sumará al stock actual.
               </p>
-            </Field>
+            </div>
 
             {error && (
               <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>
