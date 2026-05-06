@@ -42,25 +42,13 @@ public class InventarioService {
         ProductoFitosanitario producto = productoRepository.findById(req.productoFitoId())
                 .orElseThrow(() -> new ResourceNotFoundException("ProductoFitosanitario", req.productoFitoId()));
 
-        // Upsert: if same product already in inventory, add to existing stock
+        // Upsert: same product already in inventory → add to existing stock
         Inventario item = inventarioRepository
                 .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), producto.getId())
                 .map(existing -> {
-                    // Guard: reject if units differ to prevent corrupt stock sums
-                    String existingUnit = existing.getUnidadMedida();
-                    String newUnit      = req.unidadMedida();
-                    if (existingUnit != null && newUnit != null
-                            && !existingUnit.equalsIgnoreCase(newUnit)) {
-                        throw new IllegalArgumentException(
-                                "No puedes sumar " + newUnit +
-                                " a un producto que está registrado en " + existingUnit);
-                    }
                     existing.setStockAct(existing.getStockAct() + req.stockAct());
                     if (req.aliasAgric() != null && !req.aliasAgric().isBlank()) {
                         existing.setAliasAgric(req.aliasAgric());
-                    }
-                    if (newUnit != null && !newUnit.isBlank()) {
-                        existing.setUnidadMedida(newUnit);
                     }
                     return existing;
                 })
@@ -68,22 +56,39 @@ public class InventarioService {
                         .granjero(granjero)
                         .productoFitosanitario(producto)
                         .stockAct(req.stockAct())
-                        .unidadMedida(req.unidadMedida())
                         .aliasAgric(req.aliasAgric())
                         .build());
 
         return toDTO(inventarioRepository.save(item));
     }
 
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * Derives a simple stock unit label from the product's official dose unit.
+     * "kg/ha" → "Kg", "L/ha" → "L", "ml/hl" → "ml", etc.
+     * Falls back to "uds." when no information is available.
+     */
+    static String deriveUnidad(String unidadDosisOficial) {
+        if (unidadDosisOficial == null || unidadDosisOficial.isBlank()) return "uds.";
+        String lower = unidadDosisOficial.toLowerCase();
+        if (lower.contains("kg") || lower.contains(" g/") || lower.startsWith("g/")) return "Kg";
+        if (lower.contains("ml"))   return "ml";
+        if (lower.contains("l/") || lower.contains("l ") || lower.endsWith("l")) return "L";
+        return "uds.";
+    }
+
     private InventarioDTO toDTO(Inventario i) {
+        String udOficial = i.getProductoFitosanitario().getUnidadDosisOficial();
         return new InventarioDTO(
                 i.getId(),
                 i.getAliasAgric(),
                 i.getStockAct(),
-                i.getUnidadMedida(),
+                deriveUnidad(udOficial),
                 i.getProductoFitosanitario().getId(),
                 i.getProductoFitosanitario().getNombre(),
-                i.getProductoFitosanitario().getPrincipioAct()
+                i.getProductoFitosanitario().getPrincipioAct(),
+                udOficial
         );
     }
 }

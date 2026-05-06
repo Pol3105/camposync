@@ -26,7 +26,8 @@ public class ProductoFitosanitarioController {
                         p.getId(),
                         p.getNombre(),
                         p.getPrincipioAct(),
-                        p.getNumReg()))
+                        p.getNumReg(),
+                        p.getUnidadDosisOficial()))
                 .sorted((a, b) -> a.nombre().compareToIgnoreCase(b.nombre()))
                 .toList();
         return ResponseEntity.ok(list);

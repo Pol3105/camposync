@@ -4,5 +4,6 @@ public record ProductoFitosanitarioDTO(
         Long id,
         String nombre,
         String principioAct,
-        String numReg
+        String numReg,
+        String unidadDosisOficial
 ) {}

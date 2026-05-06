@@ -5,6 +5,16 @@ const GREEN_DARK = '#1c3829'
 const GREEN_MID  = '#2e5c38'
 const GREEN_ACT  = '#4e9a5f'
 
+/** Mirror of backend InventarioService.deriveUnidad */
+function deriveUnidad(unidadDosisOficial) {
+  if (!unidadDosisOficial) return null
+  const lower = unidadDosisOficial.toLowerCase()
+  if (lower.includes('kg') || lower.match(/\bg\//)) return 'Kg'
+  if (lower.includes('ml'))  return 'ml'
+  if (lower.includes('l/') || lower.includes('l ') || lower.endsWith('l')) return 'L'
+  return null
+}
+
 export default function ModalNuevoInventario({ onClose, onCreado }) {
   const [productos, setProductos] = useState([])
   const [loading,   setLoading]   = useState(true)
@@ -15,7 +25,6 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
     productoFitoId: '',
     aliasAgric:     '',
     stockAct:       '',
-    unidadMedida:   'L',
   })
 
   useEffect(() => {
@@ -30,6 +39,7 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
   }
 
   const selectedProducto = productos.find(p => String(p.id) === String(form.productoFitoId))
+  const unidadHint       = selectedProducto ? deriveUnidad(selectedProducto.unidadDosisOficial) : null
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -39,7 +49,6 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
       const body = {
         productoFitoId: Number(form.productoFitoId),
         stockAct:       parseFloat(form.stockAct),
-        unidadMedida:   form.unidadMedida || null,
         aliasAgric:     form.aliasAgric.trim() || null,
       }
       const nuevo = await granjero.crearInventario(body)
@@ -118,10 +127,19 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
               )}
             </Field>
 
-            {/* Chip with registration number if selected */}
-            {selectedProducto?.numReg && (
-              <div style={{ marginTop: -6, padding: '6px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
-                Nº Reg. MAPA: {selectedProducto.numReg}
+            {/* Product meta chips */}
+            {selectedProducto && (
+              <div style={{ marginTop: -6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {selectedProducto.numReg && (
+                  <span style={{ padding: '5px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+                    Nº Reg. {selectedProducto.numReg}
+                  </span>
+                )}
+                {selectedProducto.unidadDosisOficial && (
+                  <span style={{ padding: '5px 10px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 12, color: '#2563eb', fontWeight: 600 }}>
+                    Dosis oficial: {selectedProducto.unidadDosisOficial}
+                  </span>
+                )}
               </div>
             )}
 
@@ -139,38 +157,24 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
               </p>
             </Field>
 
-            {/* 3. Stock inicial + unidad */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Stock inicial
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  placeholder="Ej. 50"
-                  value={form.stockAct}
-                  onChange={e => set('stockAct', e.target.value)}
-                  style={inputStyle}
-                />
-                <select
-                  value={form.unidadMedida}
-                  onChange={e => set('unidadMedida', e.target.value)}
-                  style={{ ...selectStyle, width: 90 }}
-                >
-                  <option value="L">L — Litros</option>
-                  <option value="Kg">Kg — Kilos</option>
-                  <option value="ml">ml — Mililitros</option>
-                  <option value="g">g — Gramos</option>
-                  <option value="uds">uds.</option>
-                </select>
-              </div>
+            {/* 3. Stock inicial */}
+            <Field label={unidadHint ? `Stock inicial (${unidadHint})` : 'Stock inicial'}>
+              <input
+                required
+                type="number"
+                min="0.01"
+                step="any"
+                placeholder="Ej. 50"
+                value={form.stockAct}
+                onChange={e => set('stockAct', e.target.value)}
+                style={inputStyle}
+              />
               <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
-                Si el producto ya está en tu inventario, esta cantidad se sumará al stock actual.
+                {unidadHint
+                  ? `Stock a añadir en: ${unidadHint}. Si el producto ya existe, se sumará al stock actual.`
+                  : 'Si el producto ya está en tu inventario, esta cantidad se sumará al stock actual.'}
               </p>
-            </div>
+            </Field>
 
             {error && (
               <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>

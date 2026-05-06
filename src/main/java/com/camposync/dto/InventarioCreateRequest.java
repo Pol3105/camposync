@@ -6,6 +6,5 @@ import jakarta.validation.constraints.Positive;
 public record InventarioCreateRequest(
         @NotNull Long productoFitoId,
         @NotNull @Positive Float stockAct,
-        String unidadMedida,
         String aliasAgric
 ) {}

@@ -24,9 +24,6 @@ public class Inventario {
     @Column(name = "stock_act", nullable = false)
     private float stockAct;
 
-    @Column(name = "unidad_medida", length = 10)
-    private String unidadMedida;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Granjero granjero;
