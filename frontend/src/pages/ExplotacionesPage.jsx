@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Map, X, PlusCircle, Info, Pencil, Trash2 } from 'lucide-react'
+import { Map, X, PlusCircle, Info, Pencil, Trash2, Search } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import NuevaParcelaModal from '../components/NuevaParcelaModal'
 import { asesor } from '../services/api'
@@ -265,6 +265,7 @@ export default function ExplotacionesPage() {
   const [expModal,      setExpModal]      = useState(null)  // null=closed, true=create, obj=edit
   const [parcelaModal,  setParcelaModal]  = useState(null)  // explotacion object (create only)
   const [siexModal,     setSiexModal]     = useState(null)
+  const [searchTerm,    setSearchTerm]    = useState('')
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -292,6 +293,11 @@ export default function ExplotacionesPage() {
       setExplotaciones(prev => prev.filter(e => e.id !== exp.id))
     } catch { /* noop */ }
   }
+
+  const filteredExplotaciones = useMemo(() => {
+    const q = searchTerm.toLowerCase()
+    return q ? explotaciones.filter(e => e.nombre?.toLowerCase().includes(q)) : explotaciones
+  }, [explotaciones, searchTerm])
 
   const totalHa = explotaciones.reduce((a, e) => a + (e.superficieTotal ?? 0), 0).toFixed(1)
   const orientacionesDistintas = new Set(explotaciones.map(e => e.orientacionProductiva).filter(Boolean)).size
@@ -336,13 +342,28 @@ export default function ExplotacionesPage() {
             </div>
           )}
 
+          {/* Search bar */}
+          {!loading && explotaciones.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', padding: '14px 20px' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} color="#9ca3af" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                <input
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder="Buscar explotación..."
+                  style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: 9, border: '1.5px solid #e5e7eb', fontSize: 13.5, color: '#111827', fontFamily: 'inherit', background: '#fafafa', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Table card */}
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '16px 22px', borderBottom: '1px solid #eceef5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Listado de Explotaciones</span>
                 {!loading && explotaciones.length > 0 && (
-                  <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>{explotaciones.length} registradas</span>
+                  <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>{filteredExplotaciones.length}{filteredExplotaciones.length !== explotaciones.length ? ` de ${explotaciones.length}` : ''} registradas</span>
                 )}
               </div>
             </div>
@@ -351,6 +372,8 @@ export default function ExplotacionesPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#9ca3af', fontSize: 14 }}>Cargando explotaciones…</div>
             ) : explotaciones.length === 0 ? (
               <EmptyState onCrear={() => setExpModal(true)} />
+            ) : filteredExplotaciones.length === 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160, color: '#9ca3af', fontSize: 14 }}>Sin resultados para "{searchTerm}"</div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -362,7 +385,7 @@ export default function ExplotacionesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {explotaciones.map((exp, i) => {
+                    {filteredExplotaciones.map((exp, i) => {
                       const chip = ORIENTACION_CHIP[exp.orientacionProductiva] ?? DEFAULT_CHIP
                       return (
                         <tr key={exp.id} style={{ background: i % 2 === 1 ? '#fafbfe' : 'transparent' }}>

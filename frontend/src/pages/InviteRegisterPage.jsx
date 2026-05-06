@@ -51,6 +51,7 @@ export default function InviteRegisterPage() {
       const rol = data.rol ?? 'GRANJERO'
       localStorage.setItem('token', data.token)
       localStorage.setItem('username', form.username.trim())
+      localStorage.setItem('nombre', data.nombre ?? form.nombre.trim())
       localStorage.setItem('rol', rol)
       navigate(rol === 'ASESOR' ? '/dashboard' : '/cuaderno')
     } catch (err) {

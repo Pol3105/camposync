@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ExternalLink, Folder } from 'lucide-react'
+import { ExternalLink, Folder, Search } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor } from '../services/api'
 
@@ -52,6 +52,15 @@ export default function AgricultoresPage() {
   const navigate = useNavigate()
   const [granjeros, setGranjeros] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredGranjeros = useMemo(() => {
+    const q = searchTerm.toLowerCase()
+    return q ? granjeros.filter(g =>
+      (g.nombre || '').toLowerCase().includes(q) ||
+      (g.nif || '').toLowerCase().includes(q)
+    ) : granjeros
+  }, [granjeros, searchTerm])
 
   const fetchGranjeros = useCallback(async () => {
     setLoading(true)
@@ -86,12 +95,27 @@ export default function AgricultoresPage() {
           </button>
         </div>
 
+        {/* Search bar */}
+        {!loading && granjeros.length > 0 && (
+          <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', padding: '14px 20px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} color="#9ca3af" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre o NIF..."
+                style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: 9, border: '1.5px solid #e5e7eb', fontSize: 13.5, color: '#111827', fontFamily: 'inherit', background: '#fafafa', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Table card */}
         <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '16px 22px', borderBottom: '1px solid #eceef5', display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Agricultores Activos</span>
             {!loading && granjeros.length > 0 && (
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>{granjeros.length} agricultores</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>{filteredGranjeros.length}{filteredGranjeros.length !== granjeros.length ? ` de ${granjeros.length}` : ''} agricultores</span>
             )}
           </div>
 
@@ -101,6 +125,8 @@ export default function AgricultoresPage() {
             </div>
           ) : granjeros.length === 0 ? (
             <EmptyState onInvitar={() => navigate('/invitaciones')} />
+          ) : filteredGranjeros.length === 0 ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 14 }}>Sin resultados para "{searchTerm}"</div>
           ) : (
             <div style={{ overflowX: 'auto', flex: 1 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -112,7 +138,7 @@ export default function AgricultoresPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {granjeros.map((g, i) => {
+                  {filteredGranjeros.map((g, i) => {
                     const av = AVATAR_COLORS[i % AVATAR_COLORS.length]
                     const numExp = g.numExplotaciones ?? 0
                     return (

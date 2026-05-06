@@ -45,6 +45,7 @@ export default function LoginPage() {
       const data = await auth.login(form.username.trim(), form.password)
       localStorage.setItem('token', data.token)
       localStorage.setItem('username', form.username.trim())
+      localStorage.setItem('nombre', data.nombre ?? form.username.trim())
       localStorage.setItem('rol', data.rol ?? '')
       // Role-based redirect: GRANJERO → /cuaderno, ASESOR (and others) → /dashboard
       navigate(data.rol === 'GRANJERO' ? '/cuaderno' : '/dashboard')
