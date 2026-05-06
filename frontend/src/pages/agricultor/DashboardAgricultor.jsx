@@ -96,8 +96,11 @@ export default function DashboardAgricultor() {
         </div>
       </div>
 
-      {/* ── Stats strip ── */}
-      <div style={{ padding: '0 16px', marginTop: -22 }}>
+      {/* ── Stats strip ──
+          position:relative + zIndex:1 garantiza que las tarjetas pinten
+          por encima del header aunque éste tenga position:relative + overflow:hidden
+      */}
+      <div style={{ padding: '0 16px', marginTop: -22, position: 'relative', zIndex: 1 }}>
         <div className="grid grid-cols-2 gap-3">
           <div style={{ background: '#fff', borderRadius: 18, padding: '12px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
@@ -235,10 +238,25 @@ export default function DashboardAgricultor() {
         )}
       </div>
 
-      {/* ── FAB ── */}
+      {/* ── FAB ──
+          position:fixed + right calculado con max() para respetar el
+          contenedor centrado de 480px en escritorio:
+          max(24px, (100vw - 480px)/2 + 24px)
+          → en móvil (≤480px): 24px del borde del viewport
+          → en escritorio: 24px del borde derecho del contenedor de 480px
+      */}
       <button
         onClick={() => setFabOpen(true)}
-        style={{ position: 'fixed', bottom: 80, right: 24, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#2e5c38,#4e9a5f)', border: 'none', boxShadow: '0 6px 20px rgba(46,92,56,0.45)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, transition: 'transform 0.15s' }}
+        style={{
+          position: 'fixed',
+          bottom: 80,
+          right: 'max(24px, calc((100vw - 480px) / 2 + 24px))',
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'linear-gradient(135deg,#2e5c38,#4e9a5f)',
+          border: 'none', boxShadow: '0 6px 20px rgba(46,92,56,0.45)',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 200, transition: 'transform 0.15s',
+        }}
         onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)' }}
         onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
       >

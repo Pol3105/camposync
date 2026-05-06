@@ -75,6 +75,7 @@ export const invitaciones = {
 
 export const granjero = {
   getPerfil:              () => request('/granjero/perfil'),
+  actualizarPerfil:       (body) => request('/granjero/perfil', { method: 'PUT', body: JSON.stringify(body) }),
   explotaciones:          () => request('/explotaciones'),
   parcelasPorExplotacion: (id) => request(`/parcelas/explotacion/${id}`),
   recintosPorParcela:     (id) => request(`/recintos/parcela/${id}`),

@@ -26,10 +26,17 @@ function AlertCard({ icon: Icon, color, bg, border, title, description }) {
 }
 
 export default function PerfilAgricultor() {
-  const navigate         = useNavigate()
+  const navigate            = useNavigate()
   const [toast, setToast]   = useState(false)
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  // Campos editables
+  const [form, setForm]     = useState({ nif: '', nombreLegal: '' })
+  const [original, setOrig] = useState({ nif: '', nombreLegal: '' })
+  const [saving, setSaving] = useState(false)
+  const [saveOk, setSaveOk] = useState(false)
+  const [saveErr, setSaveErr] = useState(null)
 
   // Fallback from localStorage while API loads
   const nombreLocal = localStorage.getItem('nombre') || localStorage.getItem('username') || 'Agricultor'
@@ -37,20 +44,43 @@ export default function PerfilAgricultor() {
 
   useEffect(() => {
     granjero.getPerfil()
-      .then(data => setPerfil(data))
+      .then(data => {
+        setPerfil(data)
+        const snap = { nif: data.nif ?? '', nombreLegal: data.nombreLegal ?? '' }
+        setForm(snap)
+        setOrig(snap)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  const nombre      = perfil?.nombre      ?? nombreLocal
-  const email       = perfil?.username    ?? emailLocal
-  const nif         = perfil?.nif         ?? null
-  const nombreLegal = perfil?.nombreLegal ?? null
-  const createdAt   = perfil?.createdAt   ?? null
+  const nombre    = perfil?.nombre   ?? nombreLocal
+  const email     = perfil?.username ?? emailLocal
+  const createdAt = perfil?.createdAt ?? null
 
   const createdDate = createdAt
     ? new Date(createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
     : '—'
+
+  const dirty = form.nif !== original.nif || form.nombreLegal !== original.nombreLegal
+
+  async function handleGuardar() {
+    setSaving(true)
+    setSaveErr(null)
+    setSaveOk(false)
+    try {
+      const data = await granjero.actualizarPerfil({ nif: form.nif, nombreLegal: form.nombreLegal })
+      const snap = { nif: data.nif ?? '', nombreLegal: data.nombreLegal ?? '' }
+      setForm(snap)
+      setOrig(snap)
+      setPerfil(data)
+      setSaveOk(true)
+    } catch {
+      setSaveErr('Error al guardar. Inténtalo de nuevo.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function handleCambiarPass() {
     setToast(true)
@@ -65,22 +95,25 @@ export default function PerfilAgricultor() {
     navigate('/login')
   }
 
+  const nifCompleto         = form.nif.trim().length > 0
+  const nombreLegalCompleto = form.nombreLegal.trim().length > 0
+
   const alertas = [
-    !nif && {
+    !nifCompleto && {
       icon: AlertTriangle,
       color: '#e07030',
       bg: '#fff8f2',
       border: '#fdd8b4',
       title: 'NIF / CIF sin completar',
-      description: 'Necesario para el Cuaderno de Campo CUE. Contacta con tu asesor para añadirlo.',
+      description: 'Necesario para el Cuaderno de Campo CUE. Puedes añadirlo tú mismo abajo.',
     },
-    !nombreLegal && {
+    !nombreLegalCompleto && {
       icon: AlertTriangle,
       color: '#d97706',
       bg: '#fefce8',
       border: '#fde68a',
       title: 'Nombre legal pendiente',
-      description: 'El nombre legal es obligatorio para los informes SIEX. Tu asesor puede completarlo.',
+      description: 'Obligatorio para los informes SIEX. Puedes completarlo abajo.',
     },
   ].filter(Boolean)
 
@@ -162,29 +195,61 @@ export default function PerfilAgricultor() {
           </div>
         )}
 
-        {/* Datos fiscales */}
+        {/* Datos fiscales — editables */}
         <div style={{ background: '#fff', borderRadius: 20, padding: '18px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', marginBottom: 16 }}>
           <h2 style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
             Datos fiscales
           </h2>
 
-          {[
-            { label: 'NIF / CIF',    value: nif         },
-            { label: 'Nombre Legal', value: nombreLegal },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>
-                {label}
-              </label>
-              <div style={{ padding: '10px 13px', background: value ? '#f9fafb' : '#fafafa', border: `1.5px solid ${value ? '#e5e7eb' : '#fdd8b4'}`, borderRadius: 12, fontSize: 14, color: value ? '#111827' : '#d1a070', fontWeight: value ? 500 : 400, fontStyle: value ? 'normal' : 'italic' }}>
-                {value ?? 'Sin datos'}
-              </div>
-            </div>
-          ))}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>
+              NIF / CIF
+            </label>
+            <input
+              value={form.nif}
+              onChange={e => { setForm(f => ({ ...f, nif: e.target.value })); setSaveOk(false) }}
+              placeholder="12345678A"
+              style={{ width: '100%', padding: '10px 13px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, fontFamily: 'inherit', color: '#111827', background: '#fff', boxSizing: 'border-box', outline: 'none' }}
+            />
+          </div>
 
-          <p style={{ fontSize: 12, color: '#c8ccd8', marginTop: 4 }}>
-            Estos campos son gestionados por tu asesor.
-          </p>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 5 }}>
+              Nombre Legal
+            </label>
+            <input
+              value={form.nombreLegal}
+              onChange={e => { setForm(f => ({ ...f, nombreLegal: e.target.value })); setSaveOk(false) }}
+              placeholder="Razón social o nombre completo"
+              style={{ width: '100%', padding: '10px 13px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, fontFamily: 'inherit', color: '#111827', background: '#fff', boxSizing: 'border-box', outline: 'none' }}
+            />
+          </div>
+
+          {saveErr && (
+            <p style={{ fontSize: 13, color: '#dc2626', background: '#fef2f2', padding: '9px 13px', borderRadius: 10, marginBottom: 12 }}>
+              {saveErr}
+            </p>
+          )}
+          {saveOk && (
+            <p style={{ fontSize: 13, color: '#16a34a', background: '#f0fdf4', padding: '9px 13px', borderRadius: 10, marginBottom: 12 }}>
+              Datos guardados correctamente.
+            </p>
+          )}
+
+          <button
+            onClick={handleGuardar}
+            disabled={saving || !dirty}
+            style={{
+              width: '100%', padding: '12px', borderRadius: 12, border: 'none',
+              background: dirty ? 'linear-gradient(135deg,#2e5c38,#4e9a5f)' : '#e5e7eb',
+              color: dirty ? '#fff' : '#9ca3af',
+              fontSize: 14, fontWeight: 700, cursor: dirty ? 'pointer' : 'default',
+              fontFamily: 'inherit', transition: 'all 0.2s',
+              boxShadow: dirty ? '0 4px 14px rgba(46,92,56,0.30)' : 'none',
+            }}
+          >
+            {saving ? 'Guardando…' : 'Guardar Cambios'}
+          </button>
         </div>
       </div>
 
