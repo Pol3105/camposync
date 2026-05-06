@@ -1,11 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, BookOpen, Map, User } from 'lucide-react'
+import { Home, BookOpen, Map, FlaskConical, User } from 'lucide-react'
 
 const TABS = [
-  { path: '/cuaderno',             label: 'Inicio',      Icon: Home,     exact: true  },
-  { path: '/cuaderno/tratamientos',label: 'Cuaderno',    Icon: BookOpen, exact: false },
-  { path: '/cuaderno/fincas',      label: 'Explotaciones', Icon: Map,      exact: false },
-  { path: '/cuaderno/perfil',      label: 'Perfil',      Icon: User,     exact: false },
+  { path: '/cuaderno',             label: 'Inicio',    Icon: Home,          exact: true  },
+  { path: '/cuaderno/tratamientos',label: 'Cuaderno',  Icon: BookOpen,      exact: false },
+  { path: '/cuaderno/fincas',      label: 'Fincas',    Icon: Map,           exact: false },
+  { path: '/cuaderno/inventario',  label: 'Inventario',Icon: FlaskConical,  exact: false },
+  { path: '/cuaderno/perfil',      label: 'Perfil',    Icon: User,          exact: false },
 ]
 
 export default function AgricultorLayout({ children }) {
