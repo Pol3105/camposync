@@ -6,17 +6,20 @@ import com.camposync.entity.Asesoria;
 import com.camposync.entity.Granjero;
 import com.camposync.entity.Invitacion;
 import com.camposync.entity.Invitacion.EstadoInvitacion;
+import com.camposync.entity.PasswordResetToken;
 import com.camposync.entity.Plan;
 import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.AsesorRepository;
 import com.camposync.repository.AsesoriaRepository;
 import com.camposync.repository.GranjeroRepository;
 import com.camposync.repository.InvitacionRepository;
+import com.camposync.repository.PasswordResetTokenRepository;
 import com.camposync.repository.PlanRepository;
 import com.camposync.repository.UsuarioRepository;
 import com.camposync.security.JwtService;
 import com.camposync.security.UsuarioPrincipal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,20 +31,24 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UsuarioRepository     usuarioRepository;
-    private final AsesorRepository      asesorRepository;
-    private final GranjeroRepository    granjeroRepository;
-    private final AsesoriaRepository    asesoriaRepository;
-    private final PlanRepository        planRepository;
-    private final InvitacionRepository  invitacionRepository;
-    private final PasswordEncoder       passwordEncoder;
-    private final JwtService            jwtService;
-    private final AuthenticationManager authenticationManager;
+    private final UsuarioRepository            usuarioRepository;
+    private final AsesorRepository             asesorRepository;
+    private final GranjeroRepository           granjeroRepository;
+    private final AsesoriaRepository           asesoriaRepository;
+    private final PlanRepository               planRepository;
+    private final InvitacionRepository         invitacionRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService                 emailService;
+    private final PasswordEncoder              passwordEncoder;
+    private final JwtService                   jwtService;
+    private final AuthenticationManager        authenticationManager;
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +144,51 @@ public class AuthService {
                 .build();
 
         granjeroRepository.save(granjero);
+    }
+
+    // ── Recuperación de contraseña: paso 1 (solicitud) ───────────────────────
+
+    @Transactional
+    public void forgotPassword(String email) {
+        usuarioRepository.findByUsername(email).ifPresent(usuario -> {
+            // Invalida tokens anteriores
+            passwordResetTokenRepository.deleteAllByUsuario(usuario);
+
+            String token = UUID.randomUUID().toString();
+            PasswordResetToken resetToken = PasswordResetToken.builder()
+                    .token(token)
+                    .usuario(usuario)
+                    .expiresAt(LocalDateTime.now().plusHours(1))
+                    .build();
+            passwordResetTokenRepository.save(resetToken);
+
+            try {
+                emailService.enviarCorreoRecuperacion(email, token);
+            } catch (Exception e) {
+                log.warn("Token de recuperación creado pero el correo falló para {}: {}", email, e.getMessage());
+            }
+        });
+        // Si el usuario no existe, devolvemos OK igualmente (evita enumeración)
+    }
+
+    // ── Recuperación de contraseña: paso 2 (reseteo) ─────────────────────────
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Token de recuperación no válido"));
+
+        if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(resetToken);
+            throw new ResponseStatusException(HttpStatus.GONE, "El token ha expirado");
+        }
+
+        var usuario = resetToken.getUsuario();
+        usuario.setPasswd(passwordEncoder.encode(newPassword));
+        usuarioRepository.save(usuario);
+
+        passwordResetTokenRepository.delete(resetToken);
     }
 
     // ── Registro + aceptación de invitación en una sola transacción ───────────

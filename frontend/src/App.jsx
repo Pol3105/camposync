@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import DashboardGranjero from './pages/DashboardGranjero'
 import InviteRegisterPage from './pages/InviteRegisterPage'
@@ -30,6 +32,8 @@ export default function App() {
         <Route path="/login"                  element={<LoginPage />} />
         <Route path="/register"               element={<SignUpPage />} />
         <Route path="/register/invite/:token" element={<InviteRegisterPage />} />
+        <Route path="/forgot-password"        element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token"  element={<ResetPasswordPage />} />
         <Route path="/dashboard"      element={<Private><DashboardPage /></Private>} />
         <Route path="/cuaderno"       element={<Private><DashboardGranjero /></Private>} />
         <Route path="/invitaciones"   element={<Private><InvitacionesPage /></Private>} />

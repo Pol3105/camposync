@@ -140,6 +140,14 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Forgot password */}
+          <div className="text-right mt-1 mb-1">
+            <Link to="/forgot-password" style={{ fontSize: 12.5, color: '#9ca3af', textDecoration: 'none' }}
+              className="hover:underline hover:text-gray-600 transition">
+              ¿Has olvidado tu contraseña?
+            </Link>
+          </div>
+
           {/* Divider */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px" style={{ background: '#f0f0f0' }} />

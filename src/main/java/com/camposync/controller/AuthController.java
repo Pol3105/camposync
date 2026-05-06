@@ -1,9 +1,11 @@
 package com.camposync.controller;
 
+import com.camposync.dto.ForgotPasswordRequest;
 import com.camposync.dto.LoginRequest;
 import com.camposync.dto.LoginResponse;
 import com.camposync.dto.RegisterInviteRequest;
 import com.camposync.dto.RegisterRequest;
+import com.camposync.dto.ResetPasswordRequest;
 import com.camposync.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,5 +69,21 @@ public class AuthController {
                 request.username(), request.nombre(), request.password());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // ── POST /api/auth/forgot-password ────────────────────────────────────────
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    // ── POST /api/auth/reset-password ─────────────────────────────────────────
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok().build();
     }
 }
