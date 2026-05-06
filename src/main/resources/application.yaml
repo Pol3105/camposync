@@ -35,3 +35,6 @@ security:
       host: localhost
       port: 6379
       password: ${REDIS_PASSWORD:CampoSync2024Redis!}
+
+resend:
+  api-key: ${RESEND_API_KEY}

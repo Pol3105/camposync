@@ -10,6 +10,7 @@ import com.camposync.repository.AsesorRepository;
 import com.camposync.repository.GranjeroRepository;
 import com.camposync.repository.InvitacionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,6 +27,7 @@ public class InvitacionService {
     private final InvitacionRepository invitacionRepository;
     private final AsesorRepository asesorRepository;
     private final GranjeroRepository granjeroRepository;
+    private final EmailService emailService;
 
     // ── Asesor: crea una invitación para un granjero ──────────────────────────
 
@@ -46,7 +49,16 @@ public class InvitacionService {
                 .asesoria(asesor.getAsesoria())
                 .build();
 
-        return toDTO(invitacionRepository.save(invitacion));
+        InvitacionDTO dto = toDTO(invitacionRepository.save(invitacion));
+
+        // Envío de correo — fallo no revierte la transacción
+        try {
+            emailService.enviarCorreoInvitacion(request.emailInvitado(), invitacion.getToken(), rol);
+        } catch (Exception e) {
+            log.warn("Invitación guardada pero el correo no se pudo enviar a {}: {}", request.emailInvitado(), e.getMessage());
+        }
+
+        return dto;
     }
 
     // ── Granjero: lista sus invitaciones pendientes ───────────────────────────
