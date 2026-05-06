@@ -15,15 +15,15 @@ function deriveUnidad(unidadDosisOficial) {
   return null
 }
 
-export default function ModalNuevoInventario({ onClose, onCreado }) {
+export default function ModalNuevoInventario({ onClose, onCreado, productoPreseleccionado }) {
   const [productos, setProductos] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [enviando,  setEnviando]  = useState(false)
   const [error,     setError]     = useState(null)
 
   const [form, setForm] = useState({
-    productoFitoId: '',
-    aliasAgric:     '',
+    productoFitoId: productoPreseleccionado ? String(productoPreseleccionado.productoFitosanitarioId) : '',
+    aliasAgric:     productoPreseleccionado ? (productoPreseleccionado.aliasAgric ?? '') : '',
     stockAct:       '',
   })
 
@@ -39,7 +39,9 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
   }
 
   const selectedProducto = productos.find(p => String(p.id) === String(form.productoFitoId))
-  const unidadHint       = selectedProducto ? deriveUnidad(selectedProducto.unidadDosisOficial) : null
+  const unidadHint       = productoPreseleccionado
+    ? deriveUnidad(productoPreseleccionado.unidadDosisOficial)
+    : selectedProducto ? deriveUnidad(selectedProducto.unidadDosisOficial) : null
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -60,7 +62,9 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
     }
   }
 
-  const camposOk = form.productoFitoId && form.stockAct && parseFloat(form.stockAct) > 0
+  const camposOk = productoPreseleccionado
+    ? form.stockAct && parseFloat(form.stockAct) > 0
+    : form.productoFitoId && form.stockAct && parseFloat(form.stockAct) > 0
 
   return (
     <div
@@ -90,7 +94,7 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px 16px' }}>
-          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>Añadir al inventario</p>
+          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>{productoPreseleccionado ? 'Sumar stock' : 'Añadir al inventario'}</p>
           <button
             onClick={onClose}
             style={{ background: '#f3f4f6', border: 'none', borderRadius: 10, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -105,60 +109,75 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
           <form onSubmit={handleSubmit} style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             {/* 1. Producto oficial */}
-            <Field label="Producto oficial (catálogo MAPA)">
-              {productos.length === 0 ? (
-                <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>
-                  No hay productos activos en el catálogo.
-                </p>
-              ) : (
-                <select
-                  required
-                  value={form.productoFitoId}
-                  onChange={e => set('productoFitoId', e.target.value)}
-                  style={selectStyle}
-                >
-                  <option value="">Selecciona un producto…</option>
-                  {productos.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}{p.principioAct ? ` — ${p.principioAct}` : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </Field>
+            {productoPreseleccionado ? (
+              <Field label="Producto oficial (catálogo MAPA)">
+                <div style={{ ...inputStyle, background: '#f3f4f6', color: '#374151' }}>
+                  <div style={{ fontWeight: 700 }}>{productoPreseleccionado.productoNombre}</div>
+                  {productoPreseleccionado.principioAct && (
+                    <div style={{ fontSize: 12, fontStyle: 'italic', marginTop: 2 }}>{productoPreseleccionado.principioAct}</div>
+                  )}
+                </div>
+              </Field>
+            ) : (
+              <>
+                <Field label="Producto oficial (catálogo MAPA)">
+                  {productos.length === 0 ? (
+                    <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>
+                      No hay productos activos en el catálogo.
+                    </p>
+                  ) : (
+                    <select
+                      required
+                      value={form.productoFitoId}
+                      onChange={e => set('productoFitoId', e.target.value)}
+                      style={selectStyle}
+                    >
+                      <option value="">Selecciona un producto…</option>
+                      {productos.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre}{p.principioAct ? ` — ${p.principioAct}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
 
-            {/* Product meta chips */}
-            {selectedProducto && (
-              <div style={{ marginTop: -6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {selectedProducto.numReg && (
-                  <span style={{ padding: '5px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
-                    Nº Reg. {selectedProducto.numReg}
-                  </span>
+                {/* Product meta chips */}
+                {selectedProducto && (
+                  <div style={{ marginTop: -6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {selectedProducto.numReg && (
+                      <span style={{ padding: '5px 10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+                        Nº Reg. {selectedProducto.numReg}
+                      </span>
+                    )}
+                    {selectedProducto.unidadDosisOficial && (
+                      <span style={{ padding: '5px 10px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 12, color: '#2563eb', fontWeight: 600 }}>
+                        Dosis oficial: {selectedProducto.unidadDosisOficial}
+                      </span>
+                    )}
+                  </div>
                 )}
-                {selectedProducto.unidadDosisOficial && (
-                  <span style={{ padding: '5px 10px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 12, color: '#2563eb', fontWeight: 600 }}>
-                    Dosis oficial: {selectedProducto.unidadDosisOficial}
-                  </span>
-                )}
-              </div>
+
+                {/* 2. Alias propio (opcional) */}
+                <Field label="Nombre propio (opcional)">
+                  <input
+                    type="text"
+                    placeholder="Ej. Veneno para la viña"
+                    value={form.aliasAgric}
+                    onChange={e => set('aliasAgric', e.target.value)}
+                    style={inputStyle}
+                  />
+                  <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
+                    Si lo dejas vacío, se usará el nombre oficial del catálogo.
+                  </p>
+                </Field>
+              </>
             )}
 
-            {/* 2. Alias propio (opcional) */}
-            <Field label="Nombre propio (opcional)">
-              <input
-                type="text"
-                placeholder="Ej. Veneno para la viña"
-                value={form.aliasAgric}
-                onChange={e => set('aliasAgric', e.target.value)}
-                style={inputStyle}
-              />
-              <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
-                Si lo dejas vacío, se usará el nombre oficial del catálogo.
-              </p>
-            </Field>
-
-            {/* 3. Stock inicial */}
-            <Field label={unidadHint ? `Stock inicial (${unidadHint})` : 'Stock inicial'}>
+            {/* 3. Stock inicial / Cantidad a añadir */}
+            <Field label={productoPreseleccionado
+              ? (unidadHint ? `Cantidad a añadir (${unidadHint})` : 'Cantidad a añadir')
+              : (unidadHint ? `Stock inicial (${unidadHint})` : 'Stock inicial')}>
               <input
                 required
                 type="number"
@@ -198,7 +217,7 @@ export default function ModalNuevoInventario({ onClose, onCreado }) {
                 transition: 'background 0.2s',
               }}
             >
-              {enviando ? 'Guardando…' : 'Añadir al inventario'}
+              {enviando ? 'Guardando…' : productoPreseleccionado ? 'Sumar unidades' : 'Añadir al inventario'}
             </button>
 
             {/* Spacer so button clears the bottom nav */}
