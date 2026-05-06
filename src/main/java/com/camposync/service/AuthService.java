@@ -182,21 +182,40 @@ public class AuthService {
                     HttpStatus.CONFLICT, "El email ya está registrado");
         }
 
-        // 6. Crear Granjero ya vinculado a la Asesoría
-        Granjero granjero = Granjero.builder()
-                .username(username)
-                .nombre(nombre)
-                .passwd(passwordEncoder.encode(rawPassword))
-                .asesoria(invitacion.getAsesoria())
-                .build();
-        granjeroRepository.save(granjero);
+        // 6. Crear usuario según rolDestino de la invitación
+        String rolDestino = invitacion.getRolDestino();
+        com.camposync.entity.Usuario nuevoUsuario;
+        String rolRespuesta;
+
+        if ("ASESOR".equalsIgnoreCase(rolDestino)) {
+            Asesor asesor = Asesor.builder()
+                    .username(username)
+                    .nombre(nombre)
+                    .passwd(passwordEncoder.encode(rawPassword))
+                    .asesoria(invitacion.getAsesoria())
+                    .esJefe(false)
+                    .build();
+            asesorRepository.save(asesor);
+            nuevoUsuario = asesor;
+            rolRespuesta = "ASESOR";
+        } else {
+            Granjero granjero = Granjero.builder()
+                    .username(username)
+                    .nombre(nombre)
+                    .passwd(passwordEncoder.encode(rawPassword))
+                    .asesoria(invitacion.getAsesoria())
+                    .build();
+            granjeroRepository.save(granjero);
+            nuevoUsuario = granjero;
+            rolRespuesta = "GRANJERO";
+        }
 
         // 7. Marcar invitación como ACEPTADA
         invitacion.setEstado(EstadoInvitacion.ACEPTADA);
         invitacionRepository.save(invitacion);
 
         // 8. Generar JWT directamente (sin pasar por AuthenticationManager)
-        String jwt = jwtService.generateToken(new UsuarioPrincipal(granjero));
-        return new LoginResponse(jwt, "GRANJERO");
+        String jwt = jwtService.generateToken(new UsuarioPrincipal(nuevoUsuario));
+        return new LoginResponse(jwt, rolRespuesta);
     }
 }
