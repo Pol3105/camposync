@@ -25,7 +25,7 @@ export default function FincaDetalle() {
       <div
         style={{
           background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)',
-          padding: '20px 20px 26px',
+          padding: '18px 18px 22px',
         }}
       >
         <button
@@ -47,10 +47,10 @@ export default function FincaDetalle() {
           }}
         >
           <ArrowLeft size={14} />
-          Mis Fincas
+          Mis Explotaciones
         </button>
 
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
           {exp.nombre}
         </h1>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)' }}>
@@ -85,7 +85,7 @@ export default function FincaDetalle() {
                 style={{
                   background: '#fff',
                   borderRadius: 16,
-                  padding: '14px 16px',
+                  padding: '11px 14px',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                   display: 'flex',
                   alignItems: 'center',

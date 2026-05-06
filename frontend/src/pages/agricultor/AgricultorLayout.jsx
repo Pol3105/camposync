@@ -4,7 +4,7 @@ import { Home, BookOpen, Map, User } from 'lucide-react'
 const TABS = [
   { path: '/cuaderno',             label: 'Inicio',      Icon: Home,     exact: true  },
   { path: '/cuaderno/tratamientos',label: 'Cuaderno',    Icon: BookOpen, exact: false },
-  { path: '/cuaderno/fincas',      label: 'Fincas',      Icon: Map,      exact: false },
+  { path: '/cuaderno/fincas',      label: 'Explotaciones', Icon: Map,      exact: false },
   { path: '/cuaderno/perfil',      label: 'Perfil',      Icon: User,     exact: false },
 ]
 
@@ -68,11 +68,11 @@ export default function AgricultorLayout({ children }) {
                       transition: 'background 0.15s',
                     }}
                   >
-                    <Icon size={20} color={active ? '#4e9a5f' : '#9ca3af'} strokeWidth={active ? 2.5 : 2} />
+                    <Icon size={18} color={active ? '#4e9a5f' : '#9ca3af'} strokeWidth={active ? 2.5 : 2} />
                   </div>
                   <span
                     style={{
-                      fontSize: 10.5,
+                      fontSize: 10,
                       fontWeight: active ? 700 : 500,
                       color: active ? '#4e9a5f' : '#9ca3af',
                       letterSpacing: '-0.1px',

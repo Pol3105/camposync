@@ -46,10 +46,10 @@ export default function CuadernoTratamientos() {
       <div
         style={{
           background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)',
-          padding: '24px 20px 28px',
+          padding: '20px 18px 22px',
         }}
       >
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
           Cuaderno de Campo
         </h1>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)' }}>
@@ -64,7 +64,7 @@ export default function CuadernoTratamientos() {
             { label: 'Validados',  value: counts.validado,  color: '#86efac' },
           ].map(k => (
             <div key={k.label} style={{ background: 'rgba(255,255,255,0.10)', borderRadius: 12, padding: '8px 14px', flex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: k.color, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{k.value}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: k.color, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{k.value}</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.50)', marginTop: 3 }}>{k.label}</div>
             </div>
           ))}
@@ -89,12 +89,12 @@ export default function CuadernoTratamientos() {
               onClick={() => setFiltro(f.key)}
               style={{
                 flex: 1,
-                padding: '8px 4px',
+                padding: '7px 4px',
                 borderRadius: 10,
                 border: 'none',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: 700,
                 transition: 'all 0.15s',
                 background: filtro === f.key ? '#4e9a5f' : 'transparent',
@@ -139,14 +139,14 @@ export default function CuadernoTratamientos() {
                       style={{
                         background: '#fff',
                         borderRadius: 16,
-                        padding: '14px 16px',
+                        padding: '11px 13px',
                         boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                         borderLeft: `3.5px solid ${t.validado ? '#4e9a5f' : '#fbbf24'}`,
                       }}
                     >
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14.5, fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {t.producto}
                           </div>
                           <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
