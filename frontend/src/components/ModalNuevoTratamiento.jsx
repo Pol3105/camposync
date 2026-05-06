@@ -352,26 +352,33 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
 
               {/* 9. Motivo del tratamiento */}
               <Field label="Motivo del tratamiento">
-                <input
-                  type="text"
-                  placeholder="Ej. Preventivo, Curativo…"
+                <select
                   value={form.motivoTratamiento}
                   onChange={e => set('motivoTratamiento', e.target.value)}
-                  style={inputStyle}
-                />
+                  style={selectStyle}
+                >
+                  <option value="">Sin especificar</option>
+                  <option value="PR">PR — Preventivo</option>
+                  <option value="CU">CU — Curativo</option>
+                  <option value="ER">ER — Erradicante</option>
+                  <option value="OT">OT — Otro</option>
+                </select>
               </Field>
 
               <div style={{ height: 10 }} />
 
               {/* 10. Tipo de equipo */}
               <Field label="Tipo de equipo">
-                <input
-                  type="text"
-                  placeholder="Ej. Pulverizador de arrastre…"
+                <select
                   value={form.tipoEquipo}
                   onChange={e => set('tipoEquipo', e.target.value)}
-                  style={inputStyle}
-                />
+                  style={selectStyle}
+                >
+                  <option value="">Sin especificar</option>
+                  <option value="PULV_TRAC">PULV_TRAC — Pulverizador tractor</option>
+                  <option value="MOCHILA">MOCHILA — Mochila manual</option>
+                  <option value="ATOMIZ">ATOMIZ — Atomizador</option>
+                </select>
               </Field>
 
               <div style={{ height: 10 }} />
