@@ -117,12 +117,6 @@ export default function LoginPage() {
               }
             />
 
-            <div className="text-right -mt-1">
-              <span className="cursor-pointer text-sm font-medium" style={{ color: '#4e9a5f', fontSize: 13 }}>
-                ¿Olvidaste tu contraseña?
-              </span>
-            </div>
-
             {error && (
               <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fff3e6', border: '1px solid #fdd8b4', color: '#c25c10', fontSize: 13 }}>
                 {error}

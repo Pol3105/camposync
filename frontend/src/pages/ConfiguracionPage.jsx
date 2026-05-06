@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { FlaskConical, Users, Lock, Check, Pencil, Plus, Building2, CreditCard } from 'lucide-react'
+import { FlaskConical, Users, Lock, Check, Pencil, Plus, Building2, CreditCard, CheckCircle2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
-import { asesor } from '../services/api'
+import { asesor, auth } from '../services/api'
 
 /* ── Design tokens ── */
 const S = {
@@ -378,6 +378,8 @@ export default function ConfiguracionPage() {
   const [asesoriaProv, setAsesoriaProv] = useState('')
   const [saving,       setSaving]       = useState(false)
   const [saveMsg,      setSaveMsg]      = useState('')
+  const [passToast,    setPassToast]    = useState(false)
+  const [passLoading,  setPassLoading]  = useState(false)
 
   useEffect(() => {
     asesor.getPerfil().then(data => {
@@ -391,6 +393,19 @@ export default function ConfiguracionPage() {
       setAsesoriaProv(data.asesoriaProvinciaAsesoria ?? '')
     }).catch(() => {})
   }, [])
+
+  async function handleCambiarPassword() {
+    if (!email || passLoading) return
+    setPassLoading(true)
+    try {
+      await auth.forgotPassword(email)
+    } catch { /* silenciar — siempre mostramos éxito */ }
+    finally {
+      setPassLoading(false)
+      setPassToast(true)
+      setTimeout(() => setPassToast(false), 5000)
+    }
+  }
 
   const showSiexAlert = !nif || !nombreLegal
   const incomplete    = [nif, nombreLegal].filter(v => !v).length
@@ -432,6 +447,31 @@ export default function ConfiguracionPage() {
 
   return (
     <AppLayout title="Configuración">
+      {/* Toast cambio de contraseña */}
+      {passToast && (
+        <div
+          className="fixed flex items-center gap-3"
+          style={{ bottom: 32, right: 32, zIndex: 200, padding: '14px 20px', background: '#1c3829', borderRadius: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', border: '1px solid rgba(124,201,74,0.3)', minWidth: 340, fontFamily: "'Inter',system-ui,sans-serif" }}
+        >
+          <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 34, height: 34, background: 'rgba(124,201,74,0.18)' }}>
+            <CheckCircle2 size={16} color="#7cc94a" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold" style={{ fontSize: 13.5, color: '#d4f1b0', letterSpacing: '-0.1px' }}>Correo enviado</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+              Te hemos enviado un correo seguro con el enlace para cambiar tu contraseña.
+            </p>
+          </div>
+          <button
+            onClick={() => setPassToast(false)}
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer' }}
+          >
+            <X size={13} color="rgba(255,255,255,0.45)" />
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 900 }}>
 
         {/* Page header */}
@@ -568,9 +608,13 @@ export default function ConfiguracionPage() {
                 <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 2 }}>Última actualización hace 3 meses</div>
               </div>
               <div style={{ paddingTop: 18 }}>
-                <button style={S.btn.outlineGreen}>
+                <button
+                  onClick={handleCambiarPassword}
+                  disabled={passLoading}
+                  style={{ ...S.btn.outlineGreen, opacity: passLoading ? 0.7 : 1, cursor: passLoading ? 'not-allowed' : 'pointer' }}
+                >
                   <Lock size={14} color="#3a7a40" />
-                  Cambiar contraseña
+                  {passLoading ? 'Enviando…' : 'Cambiar contraseña'}
                 </button>
               </div>
             </div>
