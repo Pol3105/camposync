@@ -46,12 +46,21 @@ public class InventarioService {
         Inventario item = inventarioRepository
                 .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), producto.getId())
                 .map(existing -> {
+                    // Guard: reject if units differ to prevent corrupt stock sums
+                    String existingUnit = existing.getUnidadMedida();
+                    String newUnit      = req.unidadMedida();
+                    if (existingUnit != null && newUnit != null
+                            && !existingUnit.equalsIgnoreCase(newUnit)) {
+                        throw new IllegalArgumentException(
+                                "No puedes sumar " + newUnit +
+                                " a un producto que está registrado en " + existingUnit);
+                    }
                     existing.setStockAct(existing.getStockAct() + req.stockAct());
                     if (req.aliasAgric() != null && !req.aliasAgric().isBlank()) {
                         existing.setAliasAgric(req.aliasAgric());
                     }
-                    if (req.unidadMedida() != null && !req.unidadMedida().isBlank()) {
-                        existing.setUnidadMedida(req.unidadMedida());
+                    if (newUnit != null && !newUnit.isBlank()) {
+                        existing.setUnidadMedida(newUnit);
                     }
                     return existing;
                 })
