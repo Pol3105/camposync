@@ -23,10 +23,12 @@ export default function AppLayout({ title, greeting = false, children }) {
   const navigate  = useNavigate()
   const location  = useLocation()
   const username  = localStorage.getItem('username') ?? 'Asesoría'
+  const nombre    = localStorage.getItem('nombre') || username
 
   function logout() {
     localStorage.removeItem('token')
     localStorage.removeItem('username')
+    localStorage.removeItem('nombre')
     navigate('/login')
   }
 
@@ -75,10 +77,10 @@ export default function AppLayout({ title, greeting = false, children }) {
 
         <div className="flex items-center gap-2.5" style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex-shrink-0 flex items-center justify-center rounded-full" style={{ width: 34, height: 34, background: '#3a6b2e', border: '2px solid rgba(255,255,255,0.18)' }}>
-            <span className="font-bold" style={{ fontSize: 14, color: '#b8e898' }}>{username[0]?.toUpperCase()}</span>
+            <span className="font-bold" style={{ fontSize: 14, color: '#b8e898' }}>{nombre[0]?.toUpperCase()}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate" style={{ fontSize: 13, color: '#c8e8a8' }}>{username}</p>
+            <p className="font-semibold truncate" style={{ fontSize: 13, color: '#c8e8a8' }}>{nombre}</p>
             <p className="truncate" style={{ fontSize: 11, color: S.sidebar.textMuted }}>Asesor</p>
           </div>
           <button onClick={logout} className="transition hover:opacity-70 flex-shrink-0" title="Cerrar sesión">
@@ -95,7 +97,7 @@ export default function AppLayout({ title, greeting = false, children }) {
           <div className="flex-1">
             {greeting ? (
               <>
-                <span className="font-bold" style={{ fontSize: 18, color: '#1a1e1a', letterSpacing: '-0.3px' }}>Hola, {username}</span>
+                <span className="font-bold" style={{ fontSize: 18, color: '#1a1e1a', letterSpacing: '-0.3px' }}>Hola, {nombre}</span>
                 <span style={{ fontSize: 18, marginLeft: 6 }}>👋</span>
               </>
             ) : (

@@ -64,7 +64,8 @@ public class AuthService {
                     .findFirst()
                     .map(a -> a.getAuthority().replace("ROLE_", ""))
                     .orElse("ASESOR");
-            return new LoginResponse(token, rol);
+            String nombre = principal.getUsuario().getNombre();
+            return new LoginResponse(token, rol, nombre);
         } catch (AuthenticationException e) {
             // Prevent ExceptionTranslationFilter from swallowing this as 403.
             // Return a proper 401 instead.
@@ -268,6 +269,6 @@ public class AuthService {
 
         // 8. Generar JWT directamente (sin pasar por AuthenticationManager)
         String jwt = jwtService.generateToken(new UsuarioPrincipal(nuevoUsuario));
-        return new LoginResponse(jwt, rolRespuesta);
+        return new LoginResponse(jwt, rolRespuesta, nuevoUsuario.getNombre());
     }
 }
