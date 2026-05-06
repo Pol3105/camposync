@@ -139,7 +139,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <AppLayout greeting searchPlaceholder="Buscar agricultor" notificationDot={pendientes.length > 0}>
+      <AppLayout greeting>
         <div className="flex flex-col gap-5 h-full">
 
           {/* KPI cards */}
