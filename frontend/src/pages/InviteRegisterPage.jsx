@@ -48,10 +48,11 @@ export default function InviteRegisterPage() {
         password: form.password,
         nombre: form.nombre.trim()
       })
+      const rol = data.rol ?? 'GRANJERO'
       localStorage.setItem('token', data.token)
       localStorage.setItem('username', form.username.trim())
-      localStorage.setItem('rol', data.rol ?? 'GRANJERO')
-      navigate('/cuaderno')
+      localStorage.setItem('rol', rol)
+      navigate(rol === 'ASESOR' ? '/dashboard' : '/cuaderno')
     } catch (err) {
       setError(
         ERROR_MESSAGES[err.status] ??
@@ -88,7 +89,7 @@ export default function InviteRegisterPage() {
         <div style={{ width: 480, background: '#fff', borderRadius: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.10)', padding: '40px 44px 38px' }}>
 
           <div className="text-center mb-6">
-            <h1 className="font-bold mb-2" style={{ fontSize: 22, color: '#111827', letterSpacing: '-0.4px' }}>Activa tu cuenta de Granjero</h1>
+            <h1 className="font-bold mb-2" style={{ fontSize: 22, color: '#111827', letterSpacing: '-0.4px' }}>Activa tu cuenta</h1>
             <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.6 }}>
               Tu asesoría te ha invitado a Camposync. Completa tu registro para gestionar tu cuaderno de campo.
             </p>
@@ -108,7 +109,7 @@ export default function InviteRegisterPage() {
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3.5">
 
             <AuthField
-              label="Tu nombre completo"
+              label="Nombre"
               name="nombre"
               placeholder="Ej. Juan Pérez"
               value={form.nombre}
