@@ -21,6 +21,7 @@ import CuadernoTratamientos from './pages/agricultor/CuadernoTratamientos'
 import FincasAgricultor     from './pages/agricultor/FincasAgricultor'
 import FincaDetalle         from './pages/agricultor/FincaDetalle'
 import ParcelaDetalle       from './pages/agricultor/ParcelaDetalle'
+import TratamientosRecinto  from './pages/agricultor/TratamientosRecinto'
 import PerfilAgricultor     from './pages/agricultor/PerfilAgricultor'
 
 function PrivateRoute({ children }) {
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/cuaderno/fincas"                                   element={<Private><FincasAgricultor /></Private>} />
         <Route path="/cuaderno/fincas/:expId"                            element={<Private><FincaDetalle /></Private>} />
         <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId"        element={<Private><ParcelaDetalle /></Private>} />
+        <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId/recintos/:recintoId/tratamientos" element={<Private><TratamientosRecinto /></Private>} />
         <Route path="/cuaderno/perfil"                                   element={<Private><PerfilAgricultor /></Private>} />
         <Route path="/invitaciones"   element={<Private><InvitacionesPage /></Private>} />
         <Route path="/agricultores"                        element={<Private><AgricultoresPage /></Private>} />

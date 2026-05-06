@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { ArrowLeft, AlertCircle, FlaskConical } from 'lucide-react'
 import AgricultorLayout from './AgricultorLayout'
 import { granjero } from '../../services/api'
 
@@ -145,6 +145,20 @@ export default function ParcelaDetalle() {
                       ✓ Cuaderno al día
                     </div>
                   )}
+
+                  <button
+                    onClick={() => navigate(`/cuaderno/fincas/${expId}/parcelas/${parcelaId}/recintos/${r.id}/tratamientos`)}
+                    style={{
+                      marginTop: 8, width: '100%', padding: '8px 0',
+                      borderRadius: 10, border: '1.5px solid #e5e7eb',
+                      background: '#f9fafb', color: '#374151',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <FlaskConical size={13} color="#6b7280" />
+                    Ver tratamientos
+                  </button>
                 </div>
               )
             })}

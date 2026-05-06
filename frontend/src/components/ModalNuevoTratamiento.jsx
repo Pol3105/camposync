@@ -7,7 +7,7 @@ const GREEN_ACT  = '#4e9a5f'
 
 const UNIDADES = ['L/ha', 'kg/ha', 'mL/ha', 'g/ha', 'L', 'kg']
 
-export default function ModalNuevoTratamiento({ onClose, onCreado }) {
+export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) {
   const [explotaciones, setExplotaciones] = useState([])
   const [parcelas,      setParcelas]      = useState([])
   const [recintos,      setRecintos]      = useState([])
@@ -22,9 +22,9 @@ export default function ModalNuevoTratamiento({ onClose, onCreado }) {
   const today = new Date().toISOString().split('T')[0]
 
   const [form, setForm] = useState({
-    explotacionId: '',
-    parcelaId:     '',
-    recintoId:     '',
+    explotacionId: preselect?.explotacionId ?? '',
+    parcelaId:     preselect?.parcelaId     ?? '',
+    recintoId:     preselect?.recintoId     ?? '',
     inventarioId:  '',
     dosis:         '',
     unidades:      'L/ha',
@@ -34,10 +34,27 @@ export default function ModalNuevoTratamiento({ onClose, onCreado }) {
   })
 
   useEffect(() => {
-    Promise.all([granjero.explotaciones(), granjero.inventario()])
-      .then(([exp, inv]) => { setExplotaciones(exp); setInventario(inv) })
-      .catch(() => setError('No se pudieron cargar los datos del formulario.'))
-      .finally(() => setLoading(false))
+    if (preselect) {
+      Promise.all([
+        granjero.explotaciones(),
+        granjero.inventario(),
+        granjero.parcelasPorExplotacion(preselect.explotacionId),
+        granjero.recintosPorParcela(preselect.parcelaId),
+      ])
+        .then(([exp, inv, parcs, recs]) => {
+          setExplotaciones(exp)
+          setInventario(inv)
+          setParcelas(parcs)
+          setRecintos(recs)
+        })
+        .catch(() => setError('No se pudieron cargar los datos del formulario.'))
+        .finally(() => setLoading(false))
+    } else {
+      Promise.all([granjero.explotaciones(), granjero.inventario()])
+        .then(([exp, inv]) => { setExplotaciones(exp); setInventario(inv) })
+        .catch(() => setError('No se pudieron cargar los datos del formulario.'))
+        .finally(() => setLoading(false))
+    }
   }, [])
 
   function handleExplotacionChange(explotacionId) {
@@ -146,73 +163,101 @@ export default function ModalNuevoTratamiento({ onClose, onCreado }) {
           <form onSubmit={handleSubmit} style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             {/* 1. Explotación */}
-            <Field label="Explotación">
-              <select
-                required
-                value={form.explotacionId}
-                onChange={e => handleExplotacionChange(e.target.value)}
-                style={selectStyle}
-              >
-                <option value="">Selecciona una explotación…</option>
-                {explotaciones.map(e => (
-                  <option key={e.id} value={e.id}>{e.nombre}</option>
-                ))}
-              </select>
-            </Field>
+            {preselect ? (
+              <Field label="🔒 Explotación">
+                <div style={lockedStyle}>
+                  {explotaciones.find(e => String(e.id) === preselect.explotacionId)?.nombre ?? '…'}
+                </div>
+              </Field>
+            ) : (
+              <Field label="Explotación">
+                <select
+                  required
+                  value={form.explotacionId}
+                  onChange={e => handleExplotacionChange(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">Selecciona una explotación…</option>
+                  {explotaciones.map(e => (
+                    <option key={e.id} value={e.id}>{e.nombre}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
 
             {/* 2. Parcela */}
-            <Field label="Parcela SIGPAC">
-              <select
-                required
-                disabled={!form.explotacionId || cargandoParcelas}
-                value={form.parcelaId}
-                onChange={e => handleParcelaChange(e.target.value)}
-                style={{ ...selectStyle, opacity: !form.explotacionId ? 0.5 : 1 }}
-              >
-                <option value="">
-                  {cargandoParcelas
-                    ? 'Cargando parcelas…'
-                    : !form.explotacionId
-                      ? 'Primero selecciona una explotación'
-                      : parcelas.length === 0
-                        ? 'Sin parcelas en esta explotación'
-                        : 'Selecciona una parcela…'}
-                </option>
-                {parcelas.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.refCatastral ?? `Parcela ${p.id}`}{p.municipio ? ` — ${p.municipio}` : ''}
+            {preselect ? (
+              <Field label="🔒 Parcela SIGPAC">
+                <div style={lockedStyle}>
+                  {parcelas.find(p => String(p.id) === preselect.parcelaId)?.refCatastral ?? '…'}
+                </div>
+              </Field>
+            ) : (
+              <Field label="Parcela SIGPAC">
+                <select
+                  required
+                  disabled={!form.explotacionId || cargandoParcelas}
+                  value={form.parcelaId}
+                  onChange={e => handleParcelaChange(e.target.value)}
+                  style={{ ...selectStyle, opacity: !form.explotacionId ? 0.5 : 1 }}
+                >
+                  <option value="">
+                    {cargandoParcelas
+                      ? 'Cargando parcelas…'
+                      : !form.explotacionId
+                        ? 'Primero selecciona una explotación'
+                        : parcelas.length === 0
+                          ? 'Sin parcelas en esta explotación'
+                          : 'Selecciona una parcela…'}
                   </option>
-                ))}
-              </select>
-            </Field>
+                  {parcelas.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.refCatastral ?? `Parcela ${p.id}`}{p.municipio ? ` — ${p.municipio}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
 
             {/* 3. Recinto */}
-            <Field label="Recinto">
-              <select
-                required
-                disabled={!form.parcelaId || cargandoRecintos}
-                value={form.recintoId}
-                onChange={e => set('recintoId', e.target.value)}
-                style={{ ...selectStyle, opacity: !form.parcelaId ? 0.5 : 1 }}
-              >
-                <option value="">
-                  {cargandoRecintos
-                    ? 'Cargando recintos…'
-                    : !form.parcelaId
-                      ? 'Primero selecciona una parcela'
-                      : recintos.length === 0
-                        ? 'Sin recintos en esta parcela'
-                        : 'Selecciona un recinto…'}
-                </option>
-                {recintos.map(r => (
-                  <option key={r.id} value={r.id}>
-                    Recinto {r.numeroRecinto}
-                    {r.cultivo ? ` · ${r.cultivo}` : ''}
-                    {r.superficie ? ` · ${Number(r.superficie).toFixed(2)} ha` : ''}
+            {preselect ? (
+              <Field label="🔒 Recinto">
+                <div style={lockedStyle}>
+                  {(() => {
+                    const r = recintos.find(r => String(r.id) === preselect.recintoId)
+                    if (!r) return '…'
+                    return `Recinto ${r.numeroRecinto}${r.cultivo ? ' · ' + r.cultivo : ''}${r.superficie ? ' · ' + Number(r.superficie).toFixed(2) + ' ha' : ''}`
+                  })()}
+                </div>
+              </Field>
+            ) : (
+              <Field label="Recinto">
+                <select
+                  required
+                  disabled={!form.parcelaId || cargandoRecintos}
+                  value={form.recintoId}
+                  onChange={e => set('recintoId', e.target.value)}
+                  style={{ ...selectStyle, opacity: !form.parcelaId ? 0.5 : 1 }}
+                >
+                  <option value="">
+                    {cargandoRecintos
+                      ? 'Cargando recintos…'
+                      : !form.parcelaId
+                        ? 'Primero selecciona una parcela'
+                        : recintos.length === 0
+                          ? 'Sin recintos en esta parcela'
+                          : 'Selecciona un recinto…'}
                   </option>
-                ))}
-              </select>
-            </Field>
+                  {recintos.map(r => (
+                    <option key={r.id} value={r.id}>
+                      Recinto {r.numeroRecinto}
+                      {r.cultivo ? ` · ${r.cultivo}` : ''}
+                      {r.superficie ? ` · ${Number(r.superficie).toFixed(2)} ha` : ''}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
 
             {/* 4. Producto desde inventario */}
             <Field label="Producto (tu inventario)">
@@ -354,4 +399,16 @@ const selectStyle = {
   backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right 12px center',
   paddingRight: 32,
+}
+
+const lockedStyle = {
+  padding: '11px 13px',
+  borderRadius: 12,
+  border: '1.5px solid #e5e7eb',
+  fontSize: 14,
+  color: '#111827',
+  background: '#f3f4f6',
+  width: '100%',
+  boxSizing: 'border-box',
+  cursor: 'default',
 }
