@@ -74,6 +74,7 @@ export const invitaciones = {
 }
 
 export const granjero = {
+  getPerfil:              () => request('/granjero/perfil'),
   explotaciones:          () => request('/explotaciones'),
   parcelasPorExplotacion: (id) => request(`/parcelas/explotacion/${id}`),
   recintosPorParcela:     (id) => request(`/recintos/parcela/${id}`),
