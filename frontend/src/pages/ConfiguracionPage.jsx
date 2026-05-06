@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { FlaskConical, Users, Lock, Check, Pencil, Plus, Building2, CreditCard, CheckCircle2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor, auth } from '../services/api'
+import { validateNif } from '../utils/validations'
 
 /* ── Design tokens ── */
 const S = {
@@ -183,10 +184,6 @@ const S = {
   },
 }
 
-/* NIF: exactly 8 digits + 1 uppercase letter */
-function validateNif(value) {
-  return /^\d{8}[A-Z]$/.test(value)
-}
 
 /* ── FiscalField: required fields (nif, nombreLegal) ── */
 function FiscalField({ label, helper, value, onChange, validate }) {

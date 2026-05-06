@@ -54,7 +54,7 @@ export default function DashboardAgricultor() {
       <div
         style={{
           background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 60%, #3d7a4a 100%)',
-          padding: '22px 20px 28px',
+          padding: '22px 20px 16px',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -100,7 +100,7 @@ export default function DashboardAgricultor() {
           position:relative + zIndex:1 garantiza que las tarjetas pinten
           por encima del header aunque éste tenga position:relative + overflow:hidden
       */}
-      <div style={{ padding: '0 16px', marginTop: -22, position: 'relative', zIndex: 1 }}>
+      <div style={{ padding: '0 16px', marginTop: 8, position: 'relative', zIndex: 1 }}>
         <div className="grid grid-cols-2 gap-3">
           <div style={{ background: '#fff', borderRadius: 18, padding: '12px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>

@@ -3,6 +3,7 @@ import { Lock, AlertTriangle, CheckCircle2, X, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import AgricultorLayout from './AgricultorLayout'
 import { granjero } from '../../services/api'
+import { nifError } from '../../utils/validations'
 
 function initials(nombre) {
   const p = (nombre ?? '').trim().split(' ')
@@ -37,6 +38,7 @@ export default function PerfilAgricultor() {
   const [saving, setSaving] = useState(false)
   const [saveOk, setSaveOk] = useState(false)
   const [saveErr, setSaveErr] = useState(null)
+  const [nifErrMsg, setNifErrMsg] = useState('')
 
   // Fallback from localStorage while API loads
   const nombreLocal = localStorage.getItem('nombre') || localStorage.getItem('username') || 'Agricultor'
@@ -62,7 +64,8 @@ export default function PerfilAgricultor() {
     ? new Date(createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
     : '—'
 
-  const dirty = form.nif !== original.nif || form.nombreLegal !== original.nombreLegal
+  const dirty    = form.nif !== original.nif || form.nombreLegal !== original.nombreLegal
+  const nifValid = nifErrMsg === ''
 
   async function handleGuardar() {
     setSaving(true)
@@ -120,7 +123,7 @@ export default function PerfilAgricultor() {
   return (
     <AgricultorLayout>
       {/* ── Header ── */}
-      <div style={{ background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)', padding: '28px 20px 48px', textAlign: 'center', position: 'relative' }}>
+      <div style={{ background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)', padding: '28px 20px 24px', textAlign: 'center', position: 'relative' }}>
         <button
           onClick={handleLogout}
           style={{ position: 'absolute', top: 20, right: 16, display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.10)', border: 'none', borderRadius: 10, padding: '6px 12px', color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -144,7 +147,7 @@ export default function PerfilAgricultor() {
       </div>
 
       {/* ── Content ── */}
-      <div style={{ padding: '0 16px', marginTop: -22 }}>
+      <div style={{ padding: '0 16px', marginTop: 16 }}>
 
         {/* Datos de acceso */}
         <div style={{ background: '#fff', borderRadius: 20, padding: '18px', boxShadow: '0 4px 20px rgba(0,0,0,0.10)', marginBottom: 16 }}>
@@ -207,10 +210,18 @@ export default function PerfilAgricultor() {
             </label>
             <input
               value={form.nif}
-              onChange={e => { setForm(f => ({ ...f, nif: e.target.value })); setSaveOk(false) }}
+              onChange={e => {
+                const v = e.target.value
+                setForm(f => ({ ...f, nif: v }))
+                setNifErrMsg(nifError(v))
+                setSaveOk(false)
+              }}
               placeholder="12345678A"
-              style={{ width: '100%', padding: '10px 13px', borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, fontFamily: 'inherit', color: '#111827', background: '#fff', boxSizing: 'border-box', outline: 'none' }}
+              style={{ width: '100%', padding: '10px 13px', borderRadius: 12, border: `1.5px solid ${nifErrMsg ? '#ef4444' : '#e5e7eb'}`, fontSize: 14, fontFamily: 'inherit', color: '#111827', background: '#fff', boxSizing: 'border-box', outline: 'none' }}
             />
+            {nifErrMsg && (
+              <p style={{ fontSize: 12, color: '#ef4444', marginTop: 5 }}>{nifErrMsg}</p>
+            )}
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -238,12 +249,12 @@ export default function PerfilAgricultor() {
 
           <button
             onClick={handleGuardar}
-            disabled={saving || !dirty}
+            disabled={saving || !dirty || !nifValid}
             style={{
               width: '100%', padding: '12px', borderRadius: 12, border: 'none',
-              background: dirty ? 'linear-gradient(135deg,#2e5c38,#4e9a5f)' : '#e5e7eb',
-              color: dirty ? '#fff' : '#9ca3af',
-              fontSize: 14, fontWeight: 700, cursor: dirty ? 'pointer' : 'default',
+              background: dirty && nifValid ? 'linear-gradient(135deg,#2e5c38,#4e9a5f)' : '#e5e7eb',
+              color: dirty && nifValid ? '#fff' : '#9ca3af',
+              fontSize: 14, fontWeight: 700, cursor: dirty && nifValid ? 'pointer' : 'default',
               fontFamily: 'inherit', transition: 'all 0.2s',
               boxShadow: dirty ? '0 4px 14px rgba(46,92,56,0.30)' : 'none',
             }}
