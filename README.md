@@ -12,6 +12,11 @@
 - [Stack técnico](#stack-técnico)
 - [Modelo de datos](#modelo-de-datos)
 - [App del Agricultor — Funcionalidades](#app-del-agricultor--funcionalidades)
+  - [Gestión de Inventario Inteligente](#gestión-de-inventario-inteligente)
+  - [Módulo de Recursos: Maquinaria y Personal](#módulo-de-recursos-maquinaria-y-personal)
+  - [Normalización de Datos en Tratamientos](#normalización-de-datos-en-tratamientos)
+  - [Inteligencia de Inventario](#inteligencia-de-inventario)
+  - [UX y Seguridad](#ux-y-seguridad)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Puesta en marcha](#puesta-en-marcha)
 - [Variables de entorno](#variables-de-entorno)
@@ -139,7 +144,7 @@ PLAN ──┐
 | Entidad | Campos SIEX |
 |---------|-------------|
 | `Explotacion` | `codigoRea`, `tipoExplotacion` (PF/SC/SA/SL), `orientacionProductiva` (CE/VI/OL/FS/HO/PA), `provinciaExplotacion`, `municipioExplotacion`, `anioDeclaracion` |
-| `Tratamiento` | `motivoTratamiento` (PR/CU/ED), `codigoPlaga` (EPPO), `tipoEquipo`, `numRegistroIteaf`, `fechaIteaf`, `volumenCaldo`, `nifAplicador`, `numeroRopo`, `nivelCapacitacionRopo` |
+| `Tratamiento` | `motivoTratamiento` (PR/CU/ER/OT), `codigoPlaga` (EPPO), `volumenCaldo` (L/ha), FK `aplicador_id` → `Aplicador`, FK `equipamiento_id` → `Equipamiento` |
 | `ProductoFitosanitario` | `dosisMin`, `dosisMax`, `unidadDosisOficial` |
 
 ## App del Agricultor — Funcionalidades
@@ -196,6 +201,116 @@ Cada tarjeta del inventario incluye un botón `+` circular que abre el modal en 
 - Al confirmar, el upsert del backend suma automáticamente al stock existente.
 
 El FAB flotante de la vista abre el mismo modal en modo creación estándar (catálogo completo disponible).
+
+---
+
+### Módulo de Recursos: Maquinaria y Personal
+
+La sección **Recursos** agrupa tres pestañas bajo una única ruta (`/cuaderno/recursos`):
+
+| Pestaña | Entidad | Propósito |
+|---------|---------|-----------|
+| **Inventario** | `Inventario` | Stock de fitosanitarios |
+| **Maquinaria** | `Equipamiento` | Máquinas con número de registro ITEAF |
+| **Personal** | `Aplicador` | Personas con número ROPO y nivel de capacitación |
+
+Cada sección dispone de CRUD completo (listar, crear, editar, eliminar) con:
+
+- **Edición en línea**: botón lápiz abre el modal pre-rellenado (`itemAEditar` prop); el submit llama `PUT` en lugar de `POST`.
+- **Borrado confirmado**: diálogo modal estilizado con icono de alerta, nombre del recurso y dos botones (Cancelar / Eliminar). Evita borrados accidentales en campo.
+- **Atajo "Soy Aplicador"**: en la pantalla de Perfil, un banner verde invita al agricultor a registrarse como aplicador con un clic. El modal simplificado (`ModalSoyAplicador`) solo pide ROPO y nivel de capacitación; Nombre Legal y NIF se copian automáticamente del perfil. El endpoint `POST /api/aplicadores/yo` valida que ambos datos fiscales estén completos y que no exista ya un aplicador con el mismo NIF/nombre antes de crear el registro.
+
+---
+
+### Normalización de Datos en Tratamientos
+
+**Motivación**: la primera versión de `Tratamiento` almacenaba los datos del aplicador y la maquinaria como campos de texto plano (`nif_aplicador`, `numero_ropo`, `tipo_equipo`, `num_registro_iteaf`, etc.). Esto generaba redundancia y hacía imposible validar la coherencia de los datos o cruzar información con las entidades maestras.
+
+**Migración (V13)**: se eliminaron los 6 campos de texto plano y se sustituyeron por dos FK opcionales hacia las entidades normalizadas:
+
+```sql
+ALTER TABLE tratamiento
+  DROP COLUMN IF EXISTS nif_aplicador,
+  DROP COLUMN IF EXISTS numero_ropo,
+  DROP COLUMN IF EXISTS nivel_capacitacion_ropo,
+  DROP COLUMN IF EXISTS num_registro_iteaf,
+  DROP COLUMN IF EXISTS tipo_equipo,
+  DROP COLUMN IF EXISTS fecha_iteaf,
+  ADD COLUMN IF NOT EXISTS aplicador_id    BIGINT REFERENCES aplicador(id),
+  ADD COLUMN IF NOT EXISTS equipamiento_id BIGINT REFERENCES equipamiento(id);
+```
+
+**Impacto en la capa de servicio**: `TratamientoService` resuelve opcionalmente `Aplicador` y `Equipamiento` por ID antes de construir la entidad. `TratamientoDTO` expone `aplicadorId`, `aplicadorNombre`, `equipamientoId` y `equipamientoAlias` para que el frontend muestre los datos sin nuevas llamadas.
+
+---
+
+### Inteligencia de Inventario
+
+#### Deducción automática de stock al registrar tratamientos
+
+Al confirmar un tratamiento, `TratamientoService.crear()` calcula el gasto y actualiza el inventario en la misma transacción:
+
+```
+cantidadGastada = dosis (L/ha o Kg/ha) × superficieTratada (ha)
+```
+
+Si no hay registro de inventario para ese producto y granjero, la deducción se omite silenciosamente (el inventario es opcional).
+
+#### Regla del "Bote Vacío"
+
+Para evitar remanentes flotantes por errores de precisión de coma flotante (p. ej. `0.01999` de un envase que debería estar vacío), se aplica un umbral de limpieza:
+
+```java
+inv.setStockAct(nuevoStock <= 0.1f ? 0f : nuevoStock);
+```
+
+Cualquier remanente ≤ 0.1 L/Kg se fuerza a `0.0` exacto. El agricultor ve el bote como vacío, no con un residuo inútil.
+
+#### Botón "Vaciar Stock"
+
+Cuando el agricultor selecciona un producto y ha introducido la superficie tratada, aparece un enlace accionable debajo del campo de dosis:
+
+> 🪄 Gastar todo el stock (X L)
+
+Al pulsar, la dosis se calcula y rellena automáticamente:
+
+```
+dosis = stockActual / superficieTratada   → redondeado a 3 decimales
+```
+
+Solo es visible cuando hay producto seleccionado, superficie > 0 y no hay error de stock insuficiente activo.
+
+#### Ajuste manual de stock
+
+El icono lápiz en cada tarjeta de inventario abre `ModalAjusteStock`, que permite escribir el stock exacto actual (útil tras un derrame, pérdida o corrección de error). El endpoint `PATCH /api/inventario/{id}/stock` aplica el nuevo valor con clamp a `≥ 0`.
+
+---
+
+### UX y Seguridad
+
+#### Validación de superficie máxima por recinto
+
+El modal de nuevo/editar tratamiento consulta la superficie del recinto seleccionado y bloquea el envío si `superficieTratada > recinto.superficie`. El campo muestra borde rojo y el mensaje de error en tiempo real, sin necesidad de submit.
+
+#### Sistema de edición de tratamientos pendientes
+
+Los tratamientos en estado `PENDIENTE` muestran un icono lápiz azul. Al pulsar, `ModalNuevoTratamiento` se abre en modo edición con todos los campos pre-rellenados (explotación/parcela/recinto bloqueados, resto editable). El flujo de stock en backend es:
+
+1. **Revertir gasto anterior**: `inventario.stock += dosis_vieja × superficie_vieja`
+2. **Validar stock disponible**: si `dosis_nueva × superficie_nueva > stockDisponible` → 400 Bad Request
+3. **Aplicar nuevo gasto**: `inventario.stock -= dosis_nueva × superficie_nueva`
+
+En el frontend, la validación de "stock insuficiente" suma virtualmente el consumo original para no bloquear al agricultor al corregir una dosis sin salirse del stock disponible real:
+
+```js
+stockEfectivo = stockAct + (dosisOriginal × superficieOriginal)
+```
+
+Los tratamientos en estado `VALIDADO` no pueden editarse (el backend devuelve 400 con mensaje descriptivo).
+
+#### Validación de stock en tiempo real
+
+El campo de dosis muestra borde rojo y mensaje de error en tiempo real cuando `cantidadGastada > stockEfectivo`. El botón de envío permanece deshabilitado hasta que la dosis sea compatible con el stock disponible.
 
 ---
 
@@ -392,13 +507,13 @@ Los `GrantedAuthority` se generan en función de la subclase concreta del usuari
 
 ### Implementado
 
-- [x] Configuración de Maven, Docker y Flyway (V1–V12)
+- [x] Configuración de Maven, Docker y Flyway (V1–V13)
 - [x] Modelo de datos completo — 14 entidades + esquema jerárquico Explotacion → Parcela → Recinto → Tratamiento
 - [x] Campos SIEX/SIGPAC en Explotacion, Recinto, Tratamiento y ProductoFitosanitario
-- [x] Capa de repositorios Spring Data (12 interfaces)
+- [x] Capa de repositorios Spring Data (14 interfaces)
 - [x] Seguridad JWT (filtro, servicio, configuración)
 - [x] Endpoints de autenticación (`POST /api/auth/login`, registro, onboarding por invitación)
-- [x] **Capa de servicios** — lógica de negocio básica (8 servicios)
+- [x] **Capa de servicios** — lógica de negocio (10 servicios)
 - [x] **CRUD de explotaciones, parcelas y recintos** — endpoints REST securizados
 - [x] Panel del asesor — endpoints `/api/asesor/**` con verificación de pertenencia a asesoría
 - [x] Nuevos endpoints: `GET /asesor/parcelas/{id}/recintos` y `GET /asesor/recintos/{id}/tratamientos`
@@ -413,15 +528,18 @@ Los `GrantedAuthority` se generan en función de la subclase concreta del usuari
 - [x] **App del Agricultor mobile-first** — SPA React funcional
   - Dashboard con KPIs y acceso directo al cuaderno
   - Navegación jerárquica: Fincas → Explotación → Parcela → Recinto → Tratamientos del recinto
-  - Modal de nuevo tratamiento con campos SIEX opcionales (motivo, equipo, volumen caldo) y preselección de contexto
-  - **Gestión de Inventario** completa: vista de tarjetas, catálogo MAPA, upsert de stock, deducción automática de unidades, suma rápida por tarjeta
-  - Entidades `Aplicador` y `Equipamiento` (persistencia lista, API pendiente)
-  - Validación de NIF en pantalla de perfil
+  - Modal de nuevo/editar tratamiento con campos SIEX opcionales, preselección de contexto y validaciones en tiempo real
+  - **Gestión de Inventario** completa: vista de tarjetas, catálogo MAPA, upsert de stock, deducción automática, suma rápida, ajuste manual, botón "Vaciar Stock"
+  - **Módulo de Recursos** (sección unificada con pestañas): CRUD completo de Aplicadores y Equipamiento con edición en línea y borrado confirmado
+  - **Normalización V13**: eliminación de campos de texto plano en Tratamiento → relaciones `@ManyToOne` con `Aplicador` y `Equipamiento`
+  - **Inteligencia de stock**: deducción automática (dosis × superficie), regla del bote vacío (≤ 0.1 → 0.0), validación en tiempo real, recalculo en edición
+  - **Edición de tratamientos pendientes**: reversión de gasto anterior + validación + aplicación de nuevo gasto en la misma transacción
+  - **Atajo "Soy Aplicador"**: registro de agricultor como aplicador desde perfil con autocompletado de datos fiscales
+  - Validación de NIF en pantalla de perfil; validación de superficie máxima por recinto
 
 ### Pendiente (orden previsto)
 
 - [ ] **Exportador SIEX (XML reglamentario)** — botón ya presente en UI, lógica de generación no implementada
-- [ ] API y UI de Maquinaria y Aplicadores (persistencia ya implementada en V12)
 - [ ] Validador RETO (productos autorizados por cultivo)
 - [ ] Integración SIGPAC (validación geográfica de recintos)
 - [ ] Filtro multi-tenant estricto por asesoría en todos los endpoints
@@ -454,6 +572,7 @@ Esta sección documenta los problemas no triviales resueltos durante el desarrol
 | `V10__fix_unidades_nulas_inventario.sql` | Rellena nulos de `unidad_medida` con valor por defecto |
 | `V11__drop_unidad_medida_inventario.sql` | Elimina `unidad_medida` — la unidad se deduce de `ProductoFitosanitario` |
 | `V12__create_aplicador_equipamiento.sql` | Tablas `aplicador` y `equipamiento` (maquinaria y personal ROPO del granjero) |
+| `V13__refactor_tratamiento_recursos.sql` | Elimina campos de texto plano (`nif_aplicador`, `numero_ropo`, etc.) en `tratamiento`; añade FK `aplicador_id` y `equipamiento_id` |
 
 El paso más crítico fue V5: la migración debía ser idempotente (uso de `IF NOT EXISTS` y bloques `DO $$`) para no romper entornos ya inicializados.
 
@@ -510,6 +629,21 @@ Este patrón defensivo se aplicó a todas las llamadas del cliente, eliminando l
 | `unidad_dosis_oficial` | `producto_fitosanitario` | 20 |
 
 **Solución**: Aplicación de los tipos correctos en V6 vía `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` con la precisión exacta requerida por la normativa. En el seeder, se adoptaron los códigos de 2 caracteres normalizados (p. ej. `CE`, `VI`, `OL` para `orientacionProductiva`) en lugar de los códigos CNAE de 4 caracteres que se usaban por error en la iteración anterior.
+
+---
+
+### 5. Normalización de Tratamiento — gestión de stock transaccional
+
+**Problema**: la entidad `Tratamiento` almacenaba datos del aplicador y la maquinaria como texto plano (`nif_aplicador`, `numero_ropo`, `tipo_equipo`, `num_registro_iteaf`, etc.), duplicando información ya disponible en las entidades `Aplicador` y `Equipamiento`. Además, `TratamientoService.toDTO()` era un método `static`, lo que impedía el uso de `this::toDTO` como referencia de método en los streams de `listarPorGranjero()`.
+
+**Solución V13**: migración DDL para eliminar los 6 campos redundantes y añadir dos FK opcionales. Actualización en cascada de `TratamientoDTO` (nuevo campo `explotacionId`), `TratamientoCreateRequest`, `AsesorPanelService` y `DataSeeder`. `toDTO()` se declaró `private` en lugar de `static`.
+
+**Stock transaccional en edición**: el método `actualizar()` de `TratamientoService` opera en tres pasos atómicos dentro de la misma transacción `@Transactional`:
+1. Revertir el gasto del tratamiento anterior (suma al inventario).
+2. Validar que el nuevo gasto no supere el stock disponible tras el revert.
+3. Aplicar el nuevo gasto (resta al inventario con regla bote vacío).
+
+Esto garantiza que el inventario nunca quede en un estado inconsistente incluso si la petición falla a mitad del proceso.
 
 ---
 
