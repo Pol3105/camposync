@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import { User, Trash2 } from 'lucide-react'
+import { User, Trash2, Pencil } from 'lucide-react'
 import ModalNuevoAplicador from '../../components/ModalNuevoAplicador'
+import ConfirmDialog       from '../../components/ConfirmDialog'
 import { granjero } from '../../services/api'
 
 const NIVEL_LABEL = { BASICO: 'Básico', CUALIFICADO: 'Cualificado', FUMIGADOR: 'Fumigador' }
 
 export default function AplicadoresAgricultor() {
-  const [items,   setItems]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal,   setModal]   = useState(false)
+  const [items,       setItems]       = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [modal,       setModal]       = useState(false)       // false | null(new) | item(edit)
+  const [confirmItem, setConfirmItem] = useState(null)        // item pending delete
 
   useEffect(() => {
     granjero.getAplicadores()
@@ -22,11 +24,18 @@ export default function AplicadoresAgricultor() {
     setModal(false)
   }
 
-  async function handleEliminar(id) {
+  function handleActualizado(updated) {
+    setItems(prev => prev.map(i => i.id === updated.id ? updated : i).sort((a, b) => a.nombre.localeCompare(b.nombre)))
+    setModal(false)
+  }
+
+  async function handleEliminarConfirmado() {
+    if (!confirmItem) return
     try {
-      await granjero.eliminarAplicador(id)
-      setItems(prev => prev.filter(i => i.id !== id))
+      await granjero.eliminarAplicador(confirmItem.id)
+      setItems(prev => prev.filter(i => i.id !== confirmItem.id))
     } catch {}
+    finally { setConfirmItem(null) }
   }
 
   return (
@@ -81,12 +90,22 @@ export default function AplicadoresAgricultor() {
                       </span>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleEliminar(item.id)}
-                    style={{ flexShrink: 0, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                  >
-                    <Trash2 size={15} color="#dc2626" />
-                  </button>
+
+                  {/* Action buttons */}
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <button
+                      onClick={() => setModal(item)}
+                      style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <Pencil size={15} color="#2563eb" />
+                    </button>
+                    <button
+                      onClick={() => setConfirmItem(item)}
+                      style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={15} color="#dc2626" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -96,7 +115,7 @@ export default function AplicadoresAgricultor() {
 
       {/* ── FAB ── */}
       <button
-        onClick={() => setModal(true)}
+        onClick={() => setModal(null)}
         style={{
           position: 'fixed', bottom: 80,
           right: 'max(24px, calc((100vw - 480px) / 2 + 24px))',
@@ -108,7 +127,25 @@ export default function AplicadoresAgricultor() {
         }}
       >+</button>
 
-      {modal && <ModalNuevoAplicador onClose={() => setModal(false)} onCreado={handleCreado} />}
+      {/* ── Modal crear/editar ── */}
+      {modal !== false && (
+        <ModalNuevoAplicador
+          itemAEditar={modal ?? undefined}
+          onClose={() => setModal(false)}
+          onCreado={handleCreado}
+          onActualizado={handleActualizado}
+        />
+      )}
+
+      {/* ── Confirm delete ── */}
+      {confirmItem && (
+        <ConfirmDialog
+          title="¿Eliminar aplicador?"
+          message={`Se eliminará "${confirmItem.nombre}" de tu lista de personal. Esta acción no se puede deshacer.`}
+          onConfirm={handleEliminarConfirmado}
+          onCancel={() => setConfirmItem(null)}
+        />
+      )}
     </>
   )
 }

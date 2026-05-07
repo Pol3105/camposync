@@ -2,6 +2,7 @@ package com.camposync.service;
 
 import com.camposync.dto.AplicadorCreateRequest;
 import com.camposync.dto.AplicadorDTO;
+import com.camposync.dto.AplicadorUpdateRequest;
 import com.camposync.entity.Aplicador;
 import com.camposync.entity.Granjero;
 import com.camposync.exception.ResourceNotFoundException;
@@ -41,6 +42,21 @@ public class AplicadorService {
                 .nivelCapacitacion(req.nivelCapacitacion())
                 .granjero(granjero)
                 .build();
+        return toDTO(aplicadorRepository.save(aplicador));
+    }
+
+    @Transactional
+    public AplicadorDTO actualizar(String username, Long id, AplicadorUpdateRequest req) {
+        Granjero granjero = resolveGranjero(username);
+        Aplicador aplicador = aplicadorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Aplicador", id));
+        if (!aplicador.getGranjero().getId().equals(granjero.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para editar este aplicador");
+        }
+        aplicador.setNombre(req.nombre());
+        aplicador.setNif(req.nif());
+        aplicador.setNumeroRopo(req.numeroRopo());
+        aplicador.setNivelCapacitacion(req.nivelCapacitacion());
         return toDTO(aplicadorRepository.save(aplicador));
     }
 

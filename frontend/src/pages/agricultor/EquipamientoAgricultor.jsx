@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Tractor, Trash2 } from 'lucide-react'
+import { Tractor, Trash2, Pencil } from 'lucide-react'
 import ModalNuevoEquipamiento from '../../components/ModalNuevoEquipamiento'
+import ConfirmDialog          from '../../components/ConfirmDialog'
 import { granjero } from '../../services/api'
 
 const TIPO_LABEL = {
@@ -12,9 +13,10 @@ const TIPO_LABEL = {
 }
 
 export default function EquipamientoAgricultor() {
-  const [items,   setItems]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal,   setModal]   = useState(false)
+  const [items,       setItems]       = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [modal,       setModal]       = useState(false)       // false | null(new) | item(edit)
+  const [confirmItem, setConfirmItem] = useState(null)        // item pending delete
 
   useEffect(() => {
     granjero.getEquipamiento()
@@ -28,11 +30,18 @@ export default function EquipamientoAgricultor() {
     setModal(false)
   }
 
-  async function handleEliminar(id) {
+  function handleActualizado(updated) {
+    setItems(prev => prev.map(i => i.id === updated.id ? updated : i).sort((a, b) => a.alias.localeCompare(b.alias)))
+    setModal(false)
+  }
+
+  async function handleEliminarConfirmado() {
+    if (!confirmItem) return
     try {
-      await granjero.eliminarEquipamiento(id)
-      setItems(prev => prev.filter(i => i.id !== id))
+      await granjero.eliminarEquipamiento(confirmItem.id)
+      setItems(prev => prev.filter(i => i.id !== confirmItem.id))
     } catch {}
+    finally { setConfirmItem(null) }
   }
 
   return (
@@ -87,12 +96,22 @@ export default function EquipamientoAgricultor() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleEliminar(item.id)}
-                    style={{ flexShrink: 0, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                  >
-                    <Trash2 size={15} color="#dc2626" />
-                  </button>
+
+                  {/* Action buttons */}
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <button
+                      onClick={() => setModal(item)}
+                      style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <Pencil size={15} color="#2563eb" />
+                    </button>
+                    <button
+                      onClick={() => setConfirmItem(item)}
+                      style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={15} color="#dc2626" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -102,7 +121,7 @@ export default function EquipamientoAgricultor() {
 
       {/* ── FAB ── */}
       <button
-        onClick={() => setModal(true)}
+        onClick={() => setModal(null)}
         style={{
           position: 'fixed', bottom: 80,
           right: 'max(24px, calc((100vw - 480px) / 2 + 24px))',
@@ -114,7 +133,25 @@ export default function EquipamientoAgricultor() {
         }}
       >+</button>
 
-      {modal && <ModalNuevoEquipamiento onClose={() => setModal(false)} onCreado={handleCreado} />}
+      {/* ── Modal crear/editar ── */}
+      {modal !== false && (
+        <ModalNuevoEquipamiento
+          itemAEditar={modal ?? undefined}
+          onClose={() => setModal(false)}
+          onCreado={handleCreado}
+          onActualizado={handleActualizado}
+        />
+      )}
+
+      {/* ── Confirm delete ── */}
+      {confirmItem && (
+        <ConfirmDialog
+          title="¿Eliminar equipamiento?"
+          message={`Se eliminará "${confirmItem.alias}" de tu maquinaria. Esta acción no se puede deshacer.`}
+          onConfirm={handleEliminarConfirmado}
+          onCancel={() => setConfirmItem(null)}
+        />
+      )}
     </>
   )
 }

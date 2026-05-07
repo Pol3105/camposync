@@ -6,16 +6,23 @@ const GREEN_MID  = '#2e5c38'
 const GREEN_ACT  = '#4e9a5f'
 
 const NIVELES = [
-  { value: '',           label: 'Selecciona nivel…' },
-  { value: 'BASICO',     label: 'Básico' },
-  { value: 'CUALIFICADO',label: 'Cualificado' },
-  { value: 'FUMIGADOR',  label: 'Fumigador' },
+  { value: '',            label: 'Selecciona nivel…' },
+  { value: 'BASICO',      label: 'Básico' },
+  { value: 'CUALIFICADO', label: 'Cualificado' },
+  { value: 'FUMIGADOR',   label: 'Fumigador' },
 ]
 
-export default function ModalNuevoAplicador({ onClose, onCreado }) {
+export default function ModalNuevoAplicador({ onClose, onCreado, onActualizado, itemAEditar }) {
+  const editando = !!itemAEditar
+
   const [enviando, setEnviando] = useState(false)
   const [error,    setError]    = useState(null)
-  const [form, setForm] = useState({ nombre: '', nif: '', numeroRopo: '', nivelCapacitacion: '' })
+  const [form, setForm] = useState({
+    nombre:            itemAEditar?.nombre            ?? '',
+    nif:               itemAEditar?.nif               ?? '',
+    numeroRopo:        itemAEditar?.numeroRopo         ?? '',
+    nivelCapacitacion: itemAEditar?.nivelCapacitacion ?? '',
+  })
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })) }
 
@@ -25,13 +32,18 @@ export default function ModalNuevoAplicador({ onClose, onCreado }) {
     setEnviando(true)
     try {
       const body = {
-        nombre:             form.nombre.trim(),
-        nif:                form.nif.trim() || null,
-        numeroRopo:         form.numeroRopo.trim() || null,
-        nivelCapacitacion:  form.nivelCapacitacion || null,
+        nombre:            form.nombre.trim(),
+        nif:               form.nif.trim()        || null,
+        numeroRopo:        form.numeroRopo.trim()  || null,
+        nivelCapacitacion: form.nivelCapacitacion  || null,
       }
-      const nuevo = await granjero.crearAplicador(body)
-      onCreado(nuevo)
+      if (editando) {
+        const updated = await granjero.editarAplicador(itemAEditar.id, body)
+        onActualizado?.(updated)
+      } else {
+        const nuevo = await granjero.crearAplicador(body)
+        onCreado?.(nuevo)
+      }
     } catch (err) {
       setError(err?.message ?? 'Error al guardar el aplicador.')
     } finally {
@@ -57,7 +69,9 @@ export default function ModalNuevoAplicador({ onClose, onCreado }) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px 16px' }}>
-          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>Nuevo aplicador</p>
+          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>
+            {editando ? 'Editar aplicador' : 'Nuevo aplicador'}
+          </p>
           <button onClick={onClose} style={{ background: '#f3f4f6', border: 'none', borderRadius: 10, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
         </div>
 
@@ -88,7 +102,7 @@ export default function ModalNuevoAplicador({ onClose, onCreado }) {
             disabled={!camposOk || enviando}
             style={{ marginTop: 4, padding: '14px 0', borderRadius: 14, border: 'none', background: camposOk && !enviando ? `linear-gradient(135deg, ${GREEN_MID}, ${GREEN_ACT})` : '#e5e7eb', color: camposOk && !enviando ? '#fff' : '#9ca3af', fontSize: 15, fontWeight: 700, cursor: camposOk && !enviando ? 'pointer' : 'default', transition: 'background 0.2s' }}
           >
-            {enviando ? 'Guardando…' : 'Añadir aplicador'}
+            {enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Añadir aplicador'}
           </button>
 
           <div style={{ height: 72 }} />

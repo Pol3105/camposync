@@ -2,6 +2,7 @@ package com.camposync.service;
 
 import com.camposync.dto.EquipamientoCreateRequest;
 import com.camposync.dto.EquipamientoDTO;
+import com.camposync.dto.EquipamientoUpdateRequest;
 import com.camposync.entity.Equipamiento;
 import com.camposync.entity.Granjero;
 import com.camposync.exception.ResourceNotFoundException;
@@ -41,6 +42,21 @@ public class EquipamientoService {
                 .numRegistroIteaf(req.numRegistroIteaf())
                 .granjero(granjero)
                 .build();
+        return toDTO(equipamientoRepository.save(equipamiento));
+    }
+
+    @Transactional
+    public EquipamientoDTO actualizar(String username, Long id, EquipamientoUpdateRequest req) {
+        Granjero granjero = resolveGranjero(username);
+        Equipamiento equipamiento = equipamientoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipamiento", id));
+        if (!equipamiento.getGranjero().getId().equals(granjero.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para editar este equipamiento");
+        }
+        equipamiento.setAlias(req.alias());
+        equipamiento.setTipoMaquina(req.tipoMaquina());
+        equipamiento.setMarcaModelo(req.marcaModelo());
+        equipamiento.setNumRegistroIteaf(req.numRegistroIteaf());
         return toDTO(equipamientoRepository.save(equipamiento));
     }
 

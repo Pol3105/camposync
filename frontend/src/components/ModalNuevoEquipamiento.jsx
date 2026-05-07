@@ -6,18 +6,25 @@ const GREEN_MID  = '#2e5c38'
 const GREEN_ACT  = '#4e9a5f'
 
 const TIPOS = [
-  { value: '',             label: 'Selecciona tipo…' },
-  { value: 'PULV_TRAC',   label: 'Pulverizador de tractor' },
-  { value: 'ATOMIZADOR',  label: 'Atomizador' },
-  { value: 'MOCHILA',     label: 'Mochila' },
-  { value: 'DRONE',       label: 'Drone' },
-  { value: 'OTRO',        label: 'Otro' },
+  { value: '',            label: 'Selecciona tipo…' },
+  { value: 'PULV_TRAC',  label: 'Pulverizador de tractor' },
+  { value: 'ATOMIZADOR', label: 'Atomizador' },
+  { value: 'MOCHILA',    label: 'Mochila' },
+  { value: 'DRONE',      label: 'Drone' },
+  { value: 'OTRO',       label: 'Otro' },
 ]
 
-export default function ModalNuevoEquipamiento({ onClose, onCreado }) {
+export default function ModalNuevoEquipamiento({ onClose, onCreado, onActualizado, itemAEditar }) {
+  const editando = !!itemAEditar
+
   const [enviando, setEnviando] = useState(false)
   const [error,    setError]    = useState(null)
-  const [form, setForm] = useState({ alias: '', tipoMaquina: '', marcaModelo: '', numRegistroIteaf: '' })
+  const [form, setForm] = useState({
+    alias:            itemAEditar?.alias            ?? '',
+    tipoMaquina:      itemAEditar?.tipoMaquina      ?? '',
+    marcaModelo:      itemAEditar?.marcaModelo       ?? '',
+    numRegistroIteaf: itemAEditar?.numRegistroIteaf ?? '',
+  })
 
   function set(field, value) { setForm(f => ({ ...f, [field]: value })) }
 
@@ -28,12 +35,17 @@ export default function ModalNuevoEquipamiento({ onClose, onCreado }) {
     try {
       const body = {
         alias:            form.alias.trim(),
-        tipoMaquina:      form.tipoMaquina || null,
-        marcaModelo:      form.marcaModelo.trim() || null,
+        tipoMaquina:      form.tipoMaquina      || null,
+        marcaModelo:      form.marcaModelo.trim()      || null,
         numRegistroIteaf: form.numRegistroIteaf.trim() || null,
       }
-      const nuevo = await granjero.crearEquipamiento(body)
-      onCreado(nuevo)
+      if (editando) {
+        const updated = await granjero.editarEquipamiento(itemAEditar.id, body)
+        onActualizado?.(updated)
+      } else {
+        const nuevo = await granjero.crearEquipamiento(body)
+        onCreado?.(nuevo)
+      }
     } catch (err) {
       setError(err?.message ?? 'Error al guardar el equipamiento.')
     } finally {
@@ -59,7 +71,9 @@ export default function ModalNuevoEquipamiento({ onClose, onCreado }) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px 16px' }}>
-          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>Nuevo equipamiento</p>
+          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>
+            {editando ? 'Editar equipamiento' : 'Nuevo equipamiento'}
+          </p>
           <button onClick={onClose} style={{ background: '#f3f4f6', border: 'none', borderRadius: 10, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
         </div>
 
@@ -91,7 +105,7 @@ export default function ModalNuevoEquipamiento({ onClose, onCreado }) {
             disabled={!camposOk || enviando}
             style={{ marginTop: 4, padding: '14px 0', borderRadius: 14, border: 'none', background: camposOk && !enviando ? `linear-gradient(135deg, ${GREEN_MID}, ${GREEN_ACT})` : '#e5e7eb', color: camposOk && !enviando ? '#fff' : '#9ca3af', fontSize: 15, fontWeight: 700, cursor: camposOk && !enviando ? 'pointer' : 'default', transition: 'background 0.2s' }}
           >
-            {enviando ? 'Guardando…' : 'Añadir equipamiento'}
+            {enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Añadir equipamiento'}
           </button>
 
           <div style={{ height: 72 }} />

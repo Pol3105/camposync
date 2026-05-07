@@ -2,6 +2,7 @@ package com.camposync.controller;
 
 import com.camposync.dto.AplicadorCreateRequest;
 import com.camposync.dto.AplicadorDTO;
+import com.camposync.dto.AplicadorUpdateRequest;
 import com.camposync.service.AplicadorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ public class AplicadorController {
     public ResponseEntity<AplicadorDTO> crear(@Valid @RequestBody AplicadorCreateRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(aplicadorService.crear(currentUsername(), req));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<AplicadorDTO> actualizar(@PathVariable Long id, @Valid @RequestBody AplicadorUpdateRequest req) {
+        return ResponseEntity.ok(aplicadorService.actualizar(currentUsername(), id, req));
     }
 
     @DeleteMapping("/{id}")

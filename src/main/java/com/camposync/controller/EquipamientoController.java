@@ -2,6 +2,7 @@ package com.camposync.controller;
 
 import com.camposync.dto.EquipamientoCreateRequest;
 import com.camposync.dto.EquipamientoDTO;
+import com.camposync.dto.EquipamientoUpdateRequest;
 import com.camposync.service.EquipamientoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ public class EquipamientoController {
     public ResponseEntity<EquipamientoDTO> crear(@Valid @RequestBody EquipamientoCreateRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(equipamientoService.crear(currentUsername(), req));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EquipamientoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody EquipamientoUpdateRequest req) {
+        return ResponseEntity.ok(equipamientoService.actualizar(currentUsername(), id, req));
     }
 
     @DeleteMapping("/{id}")
