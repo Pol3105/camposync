@@ -5,7 +5,15 @@ const GREEN_DARK = '#1c3829'
 const GREEN_MID  = '#2e5c38'
 const GREEN_ACT  = '#4e9a5f'
 
-const UNIDADES = ['L/ha', 'kg/ha', 'mL/ha', 'g/ha', 'L', 'kg']
+/** Mapea la unidad de stock del inventario a la unidad de dosis por hectárea */
+function unidadToDosisPorHa(unidad) {
+  if (!unidad) return 'L/ha'
+  const u = unidad.toLowerCase()
+  if (u === 'l')  return 'L/ha'
+  if (u === 'kg') return 'kg/ha'
+  if (u === 'ml') return 'mL/ha'
+  return 'L/ha'
+}
 
 export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) {
   const [explotaciones, setExplotaciones] = useState([])
@@ -15,11 +23,12 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
   const [aplicadores,   setAplicadores]   = useState([])
   const [equipamiento,  setEquipamiento]  = useState([])
 
-  const [cargandoParcelas, setCargandoParcelas] = useState(false)
-  const [cargandoRecintos, setCargandoRecintos] = useState(false)
-  const [loading,   setLoading]   = useState(true)
-  const [enviando,  setEnviando]  = useState(false)
-  const [error,     setError]     = useState(null)
+  const [cargandoParcelas,  setCargandoParcelas]  = useState(false)
+  const [cargandoRecintos,  setCargandoRecintos]  = useState(false)
+  const [loading,           setLoading]           = useState(true)
+  const [enviando,          setEnviando]           = useState(false)
+  const [error,             setError]              = useState(null)
+  const [superficieError,   setSuperficieError]    = useState(null)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -111,9 +120,29 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
     setForm(f => ({ ...f, [field]: value }))
   }
 
+  // ── Derived values ───────────────────────────────────────────────────────
+  const selectedRecinto = recintos.find(r => String(r.id) === String(form.recintoId))
+    ?? (preselect ? recintos.find(r => String(r.id) === String(preselect.recintoId)) : null)
+  const recintoMaxHa = selectedRecinto?.superficie != null ? Number(selectedRecinto.superficie) : null
+
+  function handleInventarioChange(inventarioId) {
+    set('inventarioId', inventarioId)
+    const item = inventario.find(i => String(i.id) === String(inventarioId))
+    if (item?.unidad) set('unidades', unidadToDosisPorHa(item.unidad))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+    setSuperficieError(null)
+
+    // Validación superficie
+    const sup = parseFloat(form.superficieTratada)
+    if (recintoMaxHa !== null && sup > recintoMaxHa) {
+      setSuperficieError(`No puede superar la superficie del recinto (${recintoMaxHa.toFixed(2)} ha).`)
+      return
+    }
+
     setEnviando(true)
     try {
       const itemInv = inventario.find(i => String(i.id) === String(form.inventarioId))
@@ -141,7 +170,8 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
 
   const camposOk =
     form.recintoId && form.inventarioId &&
-    form.dosis && form.superficieTratada && form.fecha
+    form.dosis && form.superficieTratada && form.fecha &&
+    !superficieError
 
   return (
     <div
@@ -292,7 +322,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                 <select
                   required
                   value={form.inventarioId}
-                  onChange={e => set('inventarioId', e.target.value)}
+                  onChange={e => handleInventarioChange(e.target.value)}
                   style={selectStyle}
                 >
                   <option value="">Selecciona un producto de tu stock…</option>
@@ -319,13 +349,9 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                 />
               </Field>
               <Field label="Unidades">
-                <select
-                  value={form.unidades}
-                  onChange={e => set('unidades', e.target.value)}
-                  style={selectStyle}
-                >
-                  {UNIDADES.map(u => <option key={u}>{u}</option>)}
-                </select>
+                <div style={{ ...lockedStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#2e5c38' }}>
+                  {form.unidades}
+                </div>
               </Field>
             </div>
 
@@ -335,9 +361,19 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                 required type="number" min="0.01" step="any"
                 placeholder="Ej. 1.2"
                 value={form.superficieTratada}
-                onChange={e => set('superficieTratada', e.target.value)}
-                style={inputStyle}
+                onChange={e => { set('superficieTratada', e.target.value); setSuperficieError(null) }}
+                style={{ ...inputStyle, borderColor: superficieError ? '#fca5a5' : '#e5e7eb', background: superficieError ? '#fef2f2' : '#f9fafb' }}
               />
+              {recintoMaxHa !== null && !superficieError && (
+                <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
+                  Máximo disponible: {recintoMaxHa.toFixed(2)} ha
+                </p>
+              )}
+              {superficieError && (
+                <p style={{ fontSize: 12, color: '#dc2626', fontWeight: 600, margin: '3px 0 0 2px' }}>
+                  {superficieError}
+                </p>
+              )}
             </Field>
 
             {/* 7. Fecha */}
