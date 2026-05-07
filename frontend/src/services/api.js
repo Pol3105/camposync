@@ -88,6 +88,7 @@ export const granjero = {
   crearAplicador:         (body) => request('/aplicadores', { method: 'POST', body: JSON.stringify(body) }),
   editarAplicador:        (id, body) => request(`/aplicadores/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   eliminarAplicador:      (id) => request(`/aplicadores/${id}`, { method: 'DELETE' }),
+  registrarmeComoAplicador: (body) => request('/aplicadores/yo', { method: 'POST', body: JSON.stringify(body ?? {}) }),
   getEquipamiento:        () => request('/equipamiento'),
   crearEquipamiento:      (body) => request('/equipamiento', { method: 'POST', body: JSON.stringify(body) }),
   editarEquipamiento:     (id, body) => request(`/equipamiento/${id}`, { method: 'PUT', body: JSON.stringify(body) }),

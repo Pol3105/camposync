@@ -3,6 +3,7 @@ package com.camposync.service;
 import com.camposync.dto.AplicadorCreateRequest;
 import com.camposync.dto.AplicadorDTO;
 import com.camposync.dto.AplicadorUpdateRequest;
+import com.camposync.dto.RegistrarmeComoAplicadorRequest;
 import com.camposync.entity.Aplicador;
 import com.camposync.entity.Granjero;
 import com.camposync.exception.ResourceNotFoundException;
@@ -57,6 +58,44 @@ public class AplicadorService {
         aplicador.setNif(req.nif());
         aplicador.setNumeroRopo(req.numeroRopo());
         aplicador.setNivelCapacitacion(req.nivelCapacitacion());
+        return toDTO(aplicadorRepository.save(aplicador));
+    }
+
+    @Transactional
+    public AplicadorDTO registrarmeComoAplicador(String username, RegistrarmeComoAplicadorRequest req) {
+        Granjero granjero = resolveGranjero(username);
+
+        // Usa nombreLegal como nombre del aplicador; cae a nombre si no hay
+        String nombreAplicador = (granjero.getNombreLegal() != null && !granjero.getNombreLegal().isBlank())
+                ? granjero.getNombreLegal()
+                : granjero.getNombre();
+
+        if (nombreAplicador == null || nombreAplicador.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Completa tu nombre legal en el perfil antes de registrarte como aplicador.");
+        }
+
+        String nifAplicador = granjero.getNif();
+
+        // Comprobación de duplicado por NIF
+        if (nifAplicador != null && !nifAplicador.isBlank()
+                && aplicadorRepository.existsByGranjero_IdAndNif(granjero.getId(), nifAplicador)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Ya tienes un aplicador registrado con tu NIF.");
+        }
+        // Comprobación de duplicado por nombre
+        if (aplicadorRepository.existsByGranjero_IdAndNombre(granjero.getId(), nombreAplicador)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Ya tienes un aplicador registrado con tu nombre.");
+        }
+
+        Aplicador aplicador = Aplicador.builder()
+                .nombre(nombreAplicador)
+                .nif(nifAplicador)
+                .numeroRopo(req != null ? req.numeroRopo() : null)
+                .nivelCapacitacion(req != null ? req.nivelCapacitacion() : null)
+                .granjero(granjero)
+                .build();
         return toDTO(aplicadorRepository.save(aplicador));
     }
 

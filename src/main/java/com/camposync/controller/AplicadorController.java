@@ -3,6 +3,7 @@ package com.camposync.controller;
 import com.camposync.dto.AplicadorCreateRequest;
 import com.camposync.dto.AplicadorDTO;
 import com.camposync.dto.AplicadorUpdateRequest;
+import com.camposync.dto.RegistrarmeComoAplicadorRequest;
 import com.camposync.service.AplicadorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,13 @@ public class AplicadorController {
     public ResponseEntity<AplicadorDTO> crear(@Valid @RequestBody AplicadorCreateRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(aplicadorService.crear(currentUsername(), req));
+    }
+
+    @PostMapping("/yo")
+    public ResponseEntity<AplicadorDTO> registrarmeComoAplicador(
+            @RequestBody(required = false) RegistrarmeComoAplicadorRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(aplicadorService.registrarmeComoAplicador(currentUsername(), req));
     }
 
     @PutMapping("/{id}")

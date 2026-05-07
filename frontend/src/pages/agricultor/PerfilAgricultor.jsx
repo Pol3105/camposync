@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Lock, AlertTriangle, CheckCircle2, X, LogOut } from 'lucide-react'
+import { Lock, AlertTriangle, CheckCircle2, X, LogOut, UserCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import AgricultorLayout from './AgricultorLayout'
 import { granjero } from '../../services/api'
 import { nifError } from '../../utils/validations'
+import ModalSoyAplicador from '../../components/ModalSoyAplicador'
 
 function initials(nombre) {
   const p = (nombre ?? '').trim().split(' ')
@@ -28,9 +29,11 @@ function AlertCard({ icon: Icon, color, bg, border, title, description }) {
 
 export default function PerfilAgricultor() {
   const navigate            = useNavigate()
-  const [toast, setToast]   = useState(false)
-  const [perfil, setPerfil] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [toast, setToast]                 = useState(false)
+  const [perfil, setPerfil]               = useState(null)
+  const [loading, setLoading]             = useState(true)
+  const [modalSoyAplicador, setModalSoyAplicador] = useState(false)
+  const [yaRegistrado, setYaRegistrado]   = useState(false)
 
   // Campos editables
   const [form, setForm]     = useState({ nif: '', nombreLegal: '' })
@@ -262,7 +265,66 @@ export default function PerfilAgricultor() {
             {saving ? 'Guardando…' : 'Guardar Cambios'}
           </button>
         </div>
+
+        {/* Banner: ¿Aplicas tú mismo? */}
+        {!loading && !yaRegistrado && (
+          <div style={{ background: '#edf7e8', border: '1.5px solid #bbf7d0', borderRadius: 20, padding: '16px 18px', marginBottom: 16, display: 'flex', gap: 14, alignItems: 'center' }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <UserCheck size={20} color="#16a34a" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13.5, fontWeight: 700, color: '#1c3829', marginBottom: 3 }}>
+                ¿Aplicas tú mismo los tratamientos?
+              </p>
+              <p style={{ fontSize: 12, color: '#4b7a56', lineHeight: 1.45 }}>
+                Regístrate como aplicador con un solo clic para asignarte en el cuaderno.
+              </p>
+            </div>
+            <button
+              onClick={() => setModalSoyAplicador(true)}
+              style={{
+                flexShrink: 0,
+                padding: '9px 14px',
+                borderRadius: 12,
+                border: 'none',
+                background: 'linear-gradient(135deg,#2e5c38,#4e9a5f)',
+                color: '#fff',
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                lineHeight: 1.3,
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Añadir mis<br />datos
+            </button>
+          </div>
+        )}
+
+        {yaRegistrado && (
+          <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 16, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
+            <CheckCircle2 size={18} color="#16a34a" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#16a34a' }}>
+              ¡Listo! Ya apareces como aplicador en tus tratamientos.
+            </span>
+          </div>
+        )}
+
       </div>
+
+      {/* Modal soy aplicador */}
+      {modalSoyAplicador && (
+        <ModalSoyAplicador
+          perfil={perfil}
+          onClose={() => setModalSoyAplicador(false)}
+          onCreado={() => {
+            setModalSoyAplicador(false)
+            setYaRegistrado(true)
+          }}
+        />
+      )}
 
       {/* Toast */}
       {toast && (
