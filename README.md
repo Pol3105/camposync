@@ -11,6 +11,7 @@
 - [Arquitectura](#arquitectura)
 - [Stack técnico](#stack-técnico)
 - [Modelo de datos](#modelo-de-datos)
+- [App del Agricultor — Funcionalidades](#app-del-agricultor--funcionalidades)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Puesta en marcha](#puesta-en-marcha)
 - [Variables de entorno](#variables-de-entorno)
@@ -41,9 +42,9 @@ Cada asesoría es un *tenant* independiente. La facturación se gestiona via Str
 
 ```
 ┌──────────────────────────┐        ┌──────────────────────────┐
-│  App del Granjero (PWA)  │        │  Panel del Asesor (SPA)  │
-│  React · offline-first   │        │  React · funcional       │
-│  (planificada)           │        │  (implementado)          │
+│  App del Agricultor      │        │  Panel del Asesor (SPA)  │
+│  React · mobile-first    │        │  React · funcional       │
+│  (implementado)          │        │  (implementado)          │
 └────────────┬─────────────┘        └────────────┬─────────────┘
              │                                   │
              └────────────────┬──────────────────┘
@@ -76,7 +77,7 @@ Cada asesoría es un *tenant* independiente. La facturación se gestiona via Str
 | Hibernate | — | ORM |
 | PostgreSQL | 15 | Base de datos principal |
 | Redis | 7 | Caché y sesiones |
-| Flyway | — | Migraciones de BD (V1–V6) |
+| Flyway | — | Migraciones de BD (V1–V12) |
 | MapStruct | 1.5.5 | Mapeo Entity ↔ DTO |
 | Lombok | — | Reducción de boilerplate |
 | JJWT | 0.12.5 | Generación y validación de JWT |
@@ -87,7 +88,7 @@ Cada asesoría es un *tenant* independiente. La facturación se gestiona via Str
 ### Frontend
 
 - **Panel del Asesor**: React SPA, funcional — navegación jerárquica Explotación → Parcela → Recinto → Tratamiento, modales SIEX/SIGPAC con datos reales de BD
-- **App del Granjero**: React PWA, offline-first con sincronización en background *(planificada)*
+- **App del Agricultor**: React SPA mobile-first (max-width 480px), funcional — cuaderno de campo, gestión de inventario de fitosanitarios, navegación Explotación → Parcela → Recinto → Tratamientos con modal pre-rellenado
 
 ## Modelo de datos
 
@@ -106,11 +107,15 @@ PLAN ──┐
                        │
                        ▼
                   TRATAMIENTO ──► PRODUCTO_FITOSANITARIO ◄── INVENTARIO ◄── GRANJERO
+                                                                              │
+                                                              ┌───────────────┴───────────────┐
+                                                              ▼                               ▼
+                                                          APLICADOR                     EQUIPAMIENTO
 ```
 
 **Herencia JPA**: `USUARIO` es una entidad abstracta con estrategia `JOINED`. Las subclases `ASESOR` y `GRANJERO` tienen tabla propia unida por FK al `usuario` padre, con discriminador en la columna `discrimi`.
 
-**Entidades implementadas (12)**:
+**Entidades implementadas (14)**:
 
 | Entidad | Propósito |
 |---------|-----------|
@@ -126,6 +131,8 @@ PLAN ──┐
 | `ProductoFitosanitario` | Catálogo de productos con dosis oficiales MAPA (dosisMin, dosisMax, unidadDosisOficial) |
 | `Tratamiento` | Aplicación registrada de un producto en un recinto — campos SIEX completos (motivo, plaga EPPO, ITEAF, ROPO, aplicador) |
 | `Inventario` | Stock de productos por granjero |
+| `Aplicador` | Persona autorizada para aplicar fitosanitarios (ROPO, NIF, nivel capacitación) |
+| `Equipamiento` | Maquinaria de tratamiento del granjero (alias, tipo, Nº registro ITEAF) |
 
 ### Campos SIEX implementados
 
@@ -134,6 +141,63 @@ PLAN ──┐
 | `Explotacion` | `codigoRea`, `tipoExplotacion` (PF/SC/SA/SL), `orientacionProductiva` (CE/VI/OL/FS/HO/PA), `provinciaExplotacion`, `municipioExplotacion`, `anioDeclaracion` |
 | `Tratamiento` | `motivoTratamiento` (PR/CU/ED), `codigoPlaga` (EPPO), `tipoEquipo`, `numRegistroIteaf`, `fechaIteaf`, `volumenCaldo`, `nifAplicador`, `numeroRopo`, `nivelCapacitacionRopo` |
 | `ProductoFitosanitario` | `dosisMin`, `dosisMax`, `unidadDosisOficial` |
+
+## App del Agricultor — Funcionalidades
+
+La interfaz del agricultor es una SPA React mobile-first (contenedor máximo 480 px) con navegación por barra inferior fija. Agrupa cinco secciones: Inicio, Cuaderno, Fincas, Inventario y Perfil.
+
+### Gestión de Inventario Inteligente
+
+#### Vista principal — Mi Inventario
+
+Cada producto aparece en una tarjeta con:
+
+- **Borde de color** dinámico: rojo (sin stock), ámbar (stock bajo, < 5 unidades), verde (disponible).
+- **Badge de stock** con valor numérico y unidad deducida automáticamente.
+- **Barra de estado** con icono y mensaje contextual por tarjeta.
+- **KPIs en cabecera**: total de productos, productos con stock bajo y productos sin stock.
+
+#### Integración con el catálogo oficial MAPA
+
+Al añadir un producto el agricultor no escribe su nombre: selecciona desde el catálogo oficial de productos fitosanitarios registrados (`ProductoFitosanitario`) cargado desde el backend. El modal muestra el Nº de registro y la dosis oficial como chips informativos.
+
+#### Lógica de Upsert en backend
+
+`InventarioService.crear()` implementa un upsert atómico:
+
+```
+findByGranjero_IdAndProductoFitosanitario_Id → existe → suma stock
+                                             → no existe → crea registro
+```
+
+Esto evita duplicados sin lógica adicional en el cliente.
+
+#### Gestión de unidades sin redundancia
+
+La tabla `inventario` no almacena la unidad de medida. El servicio backend deduce la unidad en tiempo de consulta mediante `deriveUnidad(String unidadDosisOficial)`:
+
+| Patrón en dosis oficial | Unidad deducida |
+|-------------------------|-----------------|
+| contiene `kg` o `g/`    | `Kg`            |
+| contiene `ml`           | `ml`            |
+| contiene `l/`, `l ` o termina en `l` | `L` |
+| resto                   | `uds.`          |
+
+La misma lógica se replica en el frontend (`deriveUnidad` en `ModalNuevoInventario.jsx`) para mostrar la unidad correcta en el label del input antes de enviar el formulario.
+
+#### UX Avanzada — Suma rápida de stock
+
+Cada tarjeta del inventario incluye un botón `+` circular que abre el modal en modo **"Sumar stock"**:
+
+- El producto aparece bloqueado (no hay selector, no se puede cambiar).
+- El alias y la unidad se pre-cargan desde el item seleccionado.
+- El título cambia a **"Sumar stock"** y el botón de envío a **"Sumar unidades"**.
+- El label del campo numérico pasa de *"Stock inicial"* a *"Cantidad a añadir"*.
+- Al confirmar, el upsert del backend suma automáticamente al stock existente.
+
+El FAB flotante de la vista abre el mismo modal en modo creación estándar (catálogo completo disponible).
+
+---
 
 ## Estructura del proyecto
 
@@ -246,7 +310,7 @@ El frontend de desarrollo en `http://localhost:5173`.
 docker exec camposync-postgres psql -U admin_saas -d agro_data -c "\dt"
 ```
 
-Debe listar 12 tablas + `flyway_schema_history`.
+Debe listar 14 tablas + `flyway_schema_history`.
 
 ## Variables de entorno
 
@@ -328,8 +392,8 @@ Los `GrantedAuthority` se generan en función de la subclase concreta del usuari
 
 ### Implementado
 
-- [x] Configuración de Maven, Docker y Flyway (V1–V6)
-- [x] Modelo de datos completo — 12 entidades + esquema jerárquico Explotacion → Parcela → Recinto → Tratamiento
+- [x] Configuración de Maven, Docker y Flyway (V1–V12)
+- [x] Modelo de datos completo — 14 entidades + esquema jerárquico Explotacion → Parcela → Recinto → Tratamiento
 - [x] Campos SIEX/SIGPAC en Explotacion, Recinto, Tratamiento y ProductoFitosanitario
 - [x] Capa de repositorios Spring Data (12 interfaces)
 - [x] Seguridad JWT (filtro, servicio, configuración)
@@ -346,11 +410,18 @@ Los `GrantedAuthority` se generan en función de la subclase concreta del usuari
   - Breadcrumb completo en todas las vistas de detalle
   - Botón "Exportar SIEX (XML)" integrado en la UI — **lógica de generación pendiente**
 - [x] Seed de datos realistas: 10 granjeros, 25 explotaciones, 50 parcelas/recintos, 20 tratamientos con campos SIEX completos
+- [x] **App del Agricultor mobile-first** — SPA React funcional
+  - Dashboard con KPIs y acceso directo al cuaderno
+  - Navegación jerárquica: Fincas → Explotación → Parcela → Recinto → Tratamientos del recinto
+  - Modal de nuevo tratamiento con campos SIEX opcionales (motivo, equipo, volumen caldo) y preselección de contexto
+  - **Gestión de Inventario** completa: vista de tarjetas, catálogo MAPA, upsert de stock, deducción automática de unidades, suma rápida por tarjeta
+  - Entidades `Aplicador` y `Equipamiento` (persistencia lista, API pendiente)
+  - Validación de NIF en pantalla de perfil
 
 ### Pendiente (orden previsto)
 
 - [ ] **Exportador SIEX (XML reglamentario)** — botón ya presente en UI, lógica de generación no implementada
-- [ ] App PWA del granjero (registro de tratamientos en campo, offline-first)
+- [ ] API y UI de Maquinaria y Aplicadores (persistencia ya implementada en V12)
 - [ ] Validador RETO (productos autorizados por cultivo)
 - [ ] Integración SIGPAC (validación geográfica de recintos)
 - [ ] Filtro multi-tenant estricto por asesoría en todos los endpoints
@@ -377,6 +448,12 @@ Esta sección documenta los problemas no triviales resueltos durante el desarrol
 | `V4__siex_fields.sql` | Primeros campos SIEX |
 | `V5__recinto.sql` | Introducción de la entidad `Recinto` con migración de datos (`parcela_id → recinto_id` en tratamientos) |
 | `V6__siex_compliance.sql` | Campos SIEX completos, renombrado `superficie_ha → superficie_total`, calibración de VARCHAR |
+| `V7__invitacion_rol_destino.sql` | Campo `rol_destino` en invitaciones |
+| `V8__password_reset_token.sql` | Tabla de tokens de reset de contraseña |
+| `V9__inventario_unidad_medida.sql` | Añade `unidad_medida` a inventario (revertido en V11) |
+| `V10__fix_unidades_nulas_inventario.sql` | Rellena nulos de `unidad_medida` con valor por defecto |
+| `V11__drop_unidad_medida_inventario.sql` | Elimina `unidad_medida` — la unidad se deduce de `ProductoFitosanitario` |
+| `V12__create_aplicador_equipamiento.sql` | Tablas `aplicador` y `equipamiento` (maquinaria y personal ROPO del granjero) |
 
 El paso más crítico fue V5: la migración debía ser idempotente (uso de `IF NOT EXISTS` y bloques `DO $$`) para no romper entornos ya inicializados.
 
