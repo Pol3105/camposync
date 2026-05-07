@@ -82,7 +82,7 @@ public class TratamientoService {
                 .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), producto.getId())
                 .ifPresent(inv -> {
                     float nuevoStock = inv.getStockAct() - cantidadGastada;
-                    inv.setStockAct(nuevoStock < 0f ? 0f : nuevoStock);
+                    inv.setStockAct(nuevoStock <= 0.1f ? 0f : nuevoStock);
                     inventarioRepository.save(inv);
                 });
 
