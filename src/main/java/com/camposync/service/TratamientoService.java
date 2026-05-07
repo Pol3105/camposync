@@ -121,6 +121,18 @@ public class TratamientoService {
         ProductoFitosanitario newProducto = productoRepository.findById(request.productoFitosanitarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("ProductoFitosanitario", request.productoFitosanitarioId()));
 
+        // Validación de stock disponible (tras el revert del gasto anterior)
+        float newGasto = request.dosis() * request.superficieTratada().floatValue();
+        float stockDisponible = inventarioRepository
+                .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), newProducto.getId())
+                .map(Inventario::getStockAct)
+                .orElse(0f);
+        if (newGasto > stockDisponible + 0.001f) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Stock insuficiente. Necesitas " + String.format("%.2f", newGasto)
+                    + " pero solo tienes " + String.format("%.2f", stockDisponible) + ".");
+        }
+
         // 7. Resolve new Recinto and verify ownership
         Recinto newRecinto = getRecintoDelGranjero(request.recintoId(), granjero);
 
@@ -154,7 +166,6 @@ public class TratamientoService {
         Tratamiento saved = tratamientoRepository.save(tratamiento);
 
         // 11. Apply new stock deduction
-        float newGasto = request.dosis() * request.superficieTratada().floatValue();
         inventarioRepository
                 .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), newProducto.getId())
                 .ifPresent(inv -> {

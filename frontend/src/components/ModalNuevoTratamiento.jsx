@@ -159,8 +159,17 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect, tr
   const dosisNum = parseFloat(form.dosis)
   const supNum   = parseFloat(form.superficieTratada)
   const cantidadGastada = (!isNaN(dosisNum) && !isNaN(supNum)) ? dosisNum * supNum : null
+
+  // En edición, el stock que se ve reducido por este tratamiento ya fue descontado.
+  // Lo recuperamos virtualmente para que la validación sea correcta.
+  const consumoOriginal = editando && tratamientoAEditar
+    ? (Number(tratamientoAEditar.dosis) || 0) * (Number(tratamientoAEditar.superficieTratada) || 0)
+    : 0
+  const stockEfectivo = selectedInventarioItem
+    ? selectedInventarioItem.stockAct + consumoOriginal
+    : 0
   const stockInsuficiente = cantidadGastada !== null && selectedInventarioItem !== null
-    && cantidadGastada > selectedInventarioItem.stockAct
+    && cantidadGastada > stockEfectivo
 
   function handleInventarioChange(inventarioId) {
     set('inventarioId', inventarioId)
@@ -395,7 +404,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect, tr
             </div>
             {stockInsuficiente && (
               <p style={{ fontSize: 12, color: '#dc2626', fontWeight: 600, margin: '-6px 0 0 2px' }}>
-                Stock insuficiente. Necesitas {cantidadGastada.toFixed(2)} {selectedInventarioItem.unidad} pero solo tienes {selectedInventarioItem.stockAct} {selectedInventarioItem.unidad}.
+                Stock insuficiente. Necesitas {cantidadGastada.toFixed(2)} {selectedInventarioItem.unidad} pero solo tienes {stockEfectivo.toFixed(2)} {selectedInventarioItem.unidad}.
               </p>
             )}
             {!stockInsuficiente && selectedInventarioItem && supNum > 0 && (
