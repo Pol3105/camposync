@@ -581,13 +581,11 @@ public class AsesorPanelService {
                 t.getGranjero().getNombre(),
                 t.getMotivoTratamiento(),
                 t.getCodigoPlaga(),
-                t.getTipoEquipo(),
-                t.getNumRegistroIteaf(),
-                t.getFechaIteaf(),
                 t.getVolumenCaldo(),
-                t.getNifAplicador(),
-                t.getNumeroRopo(),
-                t.getNivelCapacitacionRopo()
+                t.getAplicador()    != null ? t.getAplicador().getId()       : null,
+                t.getAplicador()    != null ? t.getAplicador().getNombre()    : null,
+                t.getEquipamiento() != null ? t.getEquipamiento().getId()     : null,
+                t.getEquipamiento() != null ? t.getEquipamiento().getAlias()  : null
         );
     }
 

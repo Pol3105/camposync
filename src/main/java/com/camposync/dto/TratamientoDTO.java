@@ -36,11 +36,10 @@ public record TratamientoDTO(
         // SIEX
         String motivoTratamiento,
         String codigoPlaga,
-        String tipoEquipo,
-        String numRegistroIteaf,
-        LocalDate fechaIteaf,
         BigDecimal volumenCaldo,
-        String nifAplicador,
-        String numeroRopo,
-        String nivelCapacitacionRopo
+        // Recursos vinculados
+        Long aplicadorId,
+        String aplicadorNombre,
+        Long equipamientoId,
+        String equipamientoAlias
 ) {}

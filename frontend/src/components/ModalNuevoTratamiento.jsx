@@ -12,6 +12,8 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
   const [parcelas,      setParcelas]      = useState([])
   const [recintos,      setRecintos]      = useState([])
   const [inventario,    setInventario]    = useState([])
+  const [aplicadores,   setAplicadores]   = useState([])
+  const [equipamiento,  setEquipamiento]  = useState([])
 
   const [cargandoParcelas, setCargandoParcelas] = useState(false)
   const [cargandoRecintos, setCargandoRecintos] = useState(false)
@@ -22,39 +24,53 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
   const today = new Date().toISOString().split('T')[0]
 
   const [form, setForm] = useState({
-    explotacionId: preselect?.explotacionId ?? '',
-    parcelaId:     preselect?.parcelaId     ?? '',
-    recintoId:     preselect?.recintoId     ?? '',
-    inventarioId:  '',
-    dosis:         '',
-    unidades:      'L/ha',
-    fecha:         today,
+    explotacionId:     preselect?.explotacionId ?? '',
+    parcelaId:         preselect?.parcelaId     ?? '',
+    recintoId:         preselect?.recintoId     ?? '',
+    inventarioId:      '',
+    dosis:             '',
+    unidades:          'L/ha',
+    fecha:             today,
     superficieTratada: '',
     plagaObjetivo:     '',
     motivoTratamiento: '',
-    tipoEquipo:        '',
     volumenCaldo:      '',
+    aplicadorId:       '',
+    equipamientoId:    '',
   })
 
   useEffect(() => {
+    const base = [
+      granjero.explotaciones(),
+      granjero.inventario(),
+      granjero.getAplicadores(),
+      granjero.getEquipamiento(),
+    ]
+
     if (preselect) {
       Promise.all([
-        granjero.explotaciones(),
-        granjero.inventario(),
+        ...base,
         granjero.parcelasPorExplotacion(preselect.explotacionId),
         granjero.recintosPorParcela(preselect.parcelaId),
       ])
-        .then(([exp, inv, parcs, recs]) => {
+        .then(([exp, inv, apls, equip, parcs, recs]) => {
           setExplotaciones(exp)
           setInventario(inv)
+          setAplicadores(apls ?? [])
+          setEquipamiento(equip ?? [])
           setParcelas(parcs)
           setRecintos(recs)
         })
         .catch(() => setError('No se pudieron cargar los datos del formulario.'))
         .finally(() => setLoading(false))
     } else {
-      Promise.all([granjero.explotaciones(), granjero.inventario()])
-        .then(([exp, inv]) => { setExplotaciones(exp); setInventario(inv) })
+      Promise.all(base)
+        .then(([exp, inv, apls, equip]) => {
+          setExplotaciones(exp)
+          setInventario(inv)
+          setAplicadores(apls ?? [])
+          setEquipamiento(equip ?? [])
+        })
         .catch(() => setError('No se pudieron cargar los datos del formulario.'))
         .finally(() => setLoading(false))
     }
@@ -110,8 +126,9 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
         superficieTratada:       parseFloat(form.superficieTratada),
         plagaObjetivo:           form.plagaObjetivo     || null,
         motivoTratamiento:       form.motivoTratamiento || null,
-        tipoEquipo:              form.tipoEquipo        || null,
         volumenCaldo:            form.volumenCaldo ? parseFloat(form.volumenCaldo) : null,
+        aplicadorId:             form.aplicadorId   ? Number(form.aplicadorId)   : null,
+        equipamientoId:          form.equipamientoId ? Number(form.equipamientoId) : null,
       }
       const nuevo = await granjero.crearTratamiento(body)
       onCreado(nuevo)
@@ -344,13 +361,59 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
               />
             </Field>
 
-            {/* ── Sección opcional SIEX ── */}
+            {/* ── Sección opcional: Recursos y SIEX ── */}
             <div style={{ borderTop: '1px dashed #e5e7eb', paddingTop: 10, marginTop: -2 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#c8ccd8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
                 Datos adicionales (opcional)
               </p>
 
-              {/* 9. Motivo del tratamiento */}
+              {/* 9. Quién aplica */}
+              <Field label="¿Quién aplica el tratamiento?">
+                <select
+                  value={form.aplicadorId}
+                  onChange={e => set('aplicadorId', e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">Sin especificar</option>
+                  {aplicadores.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombre}{a.numeroRopo ? ` — ROPO: ${a.numeroRopo}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {aplicadores.length === 0 && (
+                  <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
+                    Añade personal en la sección Recursos → Personal.
+                  </p>
+                )}
+              </Field>
+
+              <div style={{ height: 10 }} />
+
+              {/* 10. Con qué maquinaria */}
+              <Field label="¿Con qué maquinaria?">
+                <select
+                  value={form.equipamientoId}
+                  onChange={e => set('equipamientoId', e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">Sin especificar</option>
+                  {equipamiento.map(eq => (
+                    <option key={eq.id} value={eq.id}>
+                      {eq.alias}{eq.tipoMaquina ? ` — ${eq.tipoMaquina}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {equipamiento.length === 0 && (
+                  <p style={{ fontSize: 11.5, color: '#c8ccd8', margin: '3px 0 0 2px' }}>
+                    Añade equipos en la sección Recursos → Maquinaria.
+                  </p>
+                )}
+              </Field>
+
+              <div style={{ height: 10 }} />
+
+              {/* 11. Motivo del tratamiento */}
               <Field label="Motivo del tratamiento">
                 <select
                   value={form.motivoTratamiento}
@@ -367,23 +430,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
 
               <div style={{ height: 10 }} />
 
-              {/* 10. Tipo de equipo */}
-              <Field label="Tipo de equipo">
-                <select
-                  value={form.tipoEquipo}
-                  onChange={e => set('tipoEquipo', e.target.value)}
-                  style={selectStyle}
-                >
-                  <option value="">Sin especificar</option>
-                  <option value="PULV_TRAC">PULV_TRAC — Pulverizador tractor</option>
-                  <option value="MOCHILA">MOCHILA — Mochila manual</option>
-                  <option value="ATOMIZ">ATOMIZ — Atomizador</option>
-                </select>
-              </Field>
-
-              <div style={{ height: 10 }} />
-
-              {/* 11. Volumen de caldo (L/ha) */}
+              {/* 12. Volumen de caldo */}
               <Field label="Volumen de caldo (L/ha)">
                 <input
                   type="number" min="0" step="any"

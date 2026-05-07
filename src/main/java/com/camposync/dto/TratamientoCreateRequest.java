@@ -16,14 +16,11 @@ public record TratamientoCreateRequest(
         @NotNull @Positive Double superficieTratada,
         String textoOriginal,
         String plagaObjetivo,
-        // SIEX (todos opcionales en creación)
+        // SIEX (todos opcionales)
         String motivoTratamiento,
         String codigoPlaga,
-        String tipoEquipo,
-        String numRegistroIteaf,
-        LocalDate fechaIteaf,
         BigDecimal volumenCaldo,
-        String nifAplicador,
-        String numeroRopo,
-        String nivelCapacitacionRopo
+        // Recursos vinculados (opcionales)
+        Long aplicadorId,
+        Long equipamientoId
 ) {}

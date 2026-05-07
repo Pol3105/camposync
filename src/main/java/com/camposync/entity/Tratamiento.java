@@ -59,29 +59,16 @@ public class Tratamiento {
     @Column(name = "codigo_plaga")
     private String codigoPlaga;
 
-    /** Código tabla maestra SIEX de equipos de aplicación */
-    @Column(name = "tipo_equipo")
-    private String tipoEquipo;
-
-    @Column(name = "num_registro_iteaf")
-    private String numRegistroIteaf;
-
-    @Column(name = "fecha_iteaf")
-    private LocalDate fechaIteaf;
-
     @Column(name = "volumen_caldo", precision = 10, scale = 2)
     private BigDecimal volumenCaldo;
 
-    @Column(name = "nif_aplicador", length = 15)
-    private String nifAplicador;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aplicador_id")
+    private Aplicador aplicador;
 
-    /** Número de Registro Oficial de Productores y Operadores */
-    @Column(name = "numero_ropo")
-    private String numeroRopo;
-
-    /** 01=Básico, 02=Cualificado, 03=Fumigador */
-    @Column(name = "nivel_capacitacion_ropo", length = 2)
-    private String nivelCapacitacionRopo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipamiento_id")
+    private Equipamiento equipamiento;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "recinto_id", nullable = false)

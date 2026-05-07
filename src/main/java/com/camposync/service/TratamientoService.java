@@ -2,11 +2,15 @@ package com.camposync.service;
 
 import com.camposync.dto.TratamientoCreateRequest;
 import com.camposync.dto.TratamientoDTO;
+import com.camposync.entity.Aplicador;
+import com.camposync.entity.Equipamiento;
 import com.camposync.entity.Granjero;
 import com.camposync.entity.Recinto;
 import com.camposync.entity.ProductoFitosanitario;
 import com.camposync.entity.Tratamiento;
 import com.camposync.exception.ResourceNotFoundException;
+import com.camposync.repository.AplicadorRepository;
+import com.camposync.repository.EquipamientoRepository;
 import com.camposync.repository.GranjeroRepository;
 import com.camposync.repository.RecintoRepository;
 import com.camposync.repository.ProductoFitosanitarioRepository;
@@ -26,6 +30,8 @@ public class TratamientoService {
     private final RecintoRepository recintoRepository;
     private final GranjeroRepository granjeroRepository;
     private final ProductoFitosanitarioRepository productoRepository;
+    private final AplicadorRepository aplicadorRepository;
+    private final EquipamientoRepository equipamientoRepository;
 
     @Transactional
     public TratamientoDTO crear(String username, TratamientoCreateRequest request) {
@@ -34,6 +40,16 @@ public class TratamientoService {
 
         ProductoFitosanitario producto = productoRepository.findById(request.productoFitosanitarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("ProductoFitosanitario", request.productoFitosanitarioId()));
+
+        Aplicador aplicador = request.aplicadorId() != null
+                ? aplicadorRepository.findById(request.aplicadorId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Aplicador", request.aplicadorId()))
+                : null;
+
+        Equipamiento equipamiento = request.equipamientoId() != null
+                ? equipamientoRepository.findById(request.equipamientoId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Equipamiento", request.equipamientoId()))
+                : null;
 
         Tratamiento tratamiento = Tratamiento.builder()
                 .fecha(request.fecha())
@@ -47,13 +63,9 @@ public class TratamientoService {
                 .aiConfidence(0f)
                 .motivoTratamiento(request.motivoTratamiento())
                 .codigoPlaga(request.codigoPlaga())
-                .tipoEquipo(request.tipoEquipo())
-                .numRegistroIteaf(request.numRegistroIteaf())
-                .fechaIteaf(request.fechaIteaf())
                 .volumenCaldo(request.volumenCaldo())
-                .nifAplicador(request.nifAplicador())
-                .numeroRopo(request.numeroRopo())
-                .nivelCapacitacionRopo(request.nivelCapacitacionRopo())
+                .aplicador(aplicador)
+                .equipamiento(equipamiento)
                 .recinto(recinto)
                 .granjero(granjero)
                 .productoFitosanitario(producto)
@@ -96,7 +108,7 @@ public class TratamientoService {
         return recinto;
     }
 
-    private TratamientoDTO toDTO(Tratamiento t) {
+    static TratamientoDTO toDTO(Tratamiento t) {
         return new TratamientoDTO(
                 t.getId(),
                 t.getFecha(),
@@ -120,18 +132,16 @@ public class TratamientoService {
                 t.getGranjero().getUsername(),
                 t.getCreatedAt(),
                 t.getUpdatedAt(),
-                null, // aliasAgric — no disponible en contexto granjero sin repo inventario
+                null, // aliasAgric — sin contexto de inventario aquí
                 null, // explotacionNombre
                 null, // granjeroNombre
                 t.getMotivoTratamiento(),
                 t.getCodigoPlaga(),
-                t.getTipoEquipo(),
-                t.getNumRegistroIteaf(),
-                t.getFechaIteaf(),
                 t.getVolumenCaldo(),
-                t.getNifAplicador(),
-                t.getNumeroRopo(),
-                t.getNivelCapacitacionRopo()
+                t.getAplicador() != null ? t.getAplicador().getId()      : null,
+                t.getAplicador() != null ? t.getAplicador().getNombre()   : null,
+                t.getEquipamiento() != null ? t.getEquipamiento().getId()    : null,
+                t.getEquipamiento() != null ? t.getEquipamiento().getAlias() : null
         );
     }
 }
