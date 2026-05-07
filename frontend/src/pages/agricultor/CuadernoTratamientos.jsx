@@ -130,9 +130,9 @@ export default function CuadernoTratamientos() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                          {!t.validado && (
+                          {t.estado?.toLowerCase() === 'pendiente' && (
                             <button
-                              onClick={() => setEdit(t)}
+                              onClick={e => { e.stopPropagation(); setEdit(t) }}
                               title="Editar tratamiento"
                               style={{ width: 28, height: 28, borderRadius: '50%', background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                             >
