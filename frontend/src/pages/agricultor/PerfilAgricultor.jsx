@@ -34,6 +34,7 @@ export default function PerfilAgricultor() {
   const [loading, setLoading]             = useState(true)
   const [modalSoyAplicador, setModalSoyAplicador] = useState(false)
   const [yaRegistrado, setYaRegistrado]   = useState(false)
+  const [toastError, setToastError]       = useState(null)
 
   // Campos editables
   const [form, setForm]     = useState({ nif: '', nombreLegal: '' })
@@ -48,12 +49,21 @@ export default function PerfilAgricultor() {
   const emailLocal  = localStorage.getItem('username') || ''
 
   useEffect(() => {
-    granjero.getPerfil()
-      .then(data => {
+    Promise.all([granjero.getPerfil(), granjero.getAplicadores()])
+      .then(([data, aplicadores]) => {
         setPerfil(data)
         const snap = { nif: data.nif ?? '', nombreLegal: data.nombreLegal ?? '' }
         setForm(snap)
         setOrig(snap)
+
+        // Detecta si el granjero ya se registró como aplicador (por NIF o nombreLegal)
+        if (data.nif || data.nombreLegal) {
+          const existe = aplicadores.some(a =>
+            (data.nif         && a.nif         === data.nif) ||
+            (data.nombreLegal && a.nombre       === data.nombreLegal)
+          )
+          if (existe) setYaRegistrado(true)
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -281,7 +291,14 @@ export default function PerfilAgricultor() {
               </p>
             </div>
             <button
-              onClick={() => setModalSoyAplicador(true)}
+              onClick={() => {
+                if (!perfil?.nif?.trim() || !perfil?.nombreLegal?.trim()) {
+                  setToastError('Por favor, rellena y guarda tus Datos Fiscales (NIF y Nombre) antes de registrarte como aplicador.')
+                  setTimeout(() => setToastError(null), 5000)
+                  return
+                }
+                setModalSoyAplicador(true)
+              }}
               style={{
                 flexShrink: 0,
                 padding: '9px 14px',
@@ -313,6 +330,19 @@ export default function PerfilAgricultor() {
         )}
 
       </div>
+
+      {/* Toast error perfil incompleto */}
+      {toastError && (
+        <div style={{ position: 'fixed', bottom: 88, left: '50%', transform: 'translateX(-50%)', maxWidth: 340, width: 'calc(100% - 32px)', background: '#7f1d1d', borderRadius: 14, padding: '13px 18px', boxShadow: '0 8px 30px rgba(0,0,0,0.20)', display: 'flex', alignItems: 'center', gap: 10, zIndex: 95 }}>
+          <AlertTriangle size={18} color="#fca5a5" style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.4 }}>
+            {toastError}
+          </span>
+          <button onClick={() => setToastError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.50)', padding: 0, display: 'flex' }}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Modal soy aplicador */}
       {modalSoyAplicador && (

@@ -65,21 +65,21 @@ public class AplicadorService {
     public AplicadorDTO registrarmeComoAplicador(String username, RegistrarmeComoAplicadorRequest req) {
         Granjero granjero = resolveGranjero(username);
 
-        // Usa nombreLegal como nombre del aplicador; cae a nombre si no hay
-        String nombreAplicador = (granjero.getNombreLegal() != null && !granjero.getNombreLegal().isBlank())
-                ? granjero.getNombreLegal()
-                : granjero.getNombre();
+        // Validación estricta: exige NIF y nombreLegal explícitos en el perfil
+        String nombreAplicador = granjero.getNombreLegal();
+        String nifAplicador    = granjero.getNif();
 
         if (nombreAplicador == null || nombreAplicador.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Completa tu nombre legal en el perfil antes de registrarte como aplicador.");
+                    "Completa tu Nombre Legal en Datos Fiscales antes de registrarte como aplicador.");
+        }
+        if (nifAplicador == null || nifAplicador.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Completa tu NIF en Datos Fiscales antes de registrarte como aplicador.");
         }
 
-        String nifAplicador = granjero.getNif();
-
         // Comprobación de duplicado por NIF
-        if (nifAplicador != null && !nifAplicador.isBlank()
-                && aplicadorRepository.existsByGranjero_IdAndNif(granjero.getId(), nifAplicador)) {
+        if (aplicadorRepository.existsByGranjero_IdAndNif(granjero.getId(), nifAplicador)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Ya tienes un aplicador registrado con tu NIF.");
         }
@@ -89,13 +89,12 @@ public class AplicadorService {
                     "Ya tienes un aplicador registrado con tu nombre.");
         }
 
-        Aplicador aplicador = Aplicador.builder()
-                .nombre(nombreAplicador)
-                .nif(nifAplicador)
-                .numeroRopo(req != null ? req.numeroRopo() : null)
-                .nivelCapacitacion(req != null ? req.nivelCapacitacion() : null)
-                .granjero(granjero)
-                .build();
+        Aplicador aplicador = new Aplicador();
+        aplicador.setNombre(nombreAplicador);
+        aplicador.setNif(nifAplicador);
+        aplicador.setNumeroRopo(req != null ? req.numeroRopo() : null);
+        aplicador.setNivelCapacitacion(req != null ? req.nivelCapacitacion() : null);
+        aplicador.setGranjero(granjero);
         return toDTO(aplicadorRepository.save(aplicador));
     }
 
