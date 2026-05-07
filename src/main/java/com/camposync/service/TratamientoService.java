@@ -108,7 +108,7 @@ public class TratamientoService {
         return recinto;
     }
 
-    static TratamientoDTO toDTO(Tratamiento t) {
+    private TratamientoDTO toDTO(Tratamiento t) {
         return new TratamientoDTO(
                 t.getId(),
                 t.getFecha(),
