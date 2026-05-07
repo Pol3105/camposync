@@ -15,7 +15,17 @@ function unidadToDosisPorHa(unidad) {
   return 'L/ha'
 }
 
-export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) {
+export default function ModalNuevoTratamiento({ onClose, onCreado, preselect, tratamientoAEditar }) {
+  const editando = !!tratamientoAEditar
+
+  // Si viene de edición, construye un preselect sintético para bloquear ubicación
+  const effectivePreselect = tratamientoAEditar
+    ? {
+        explotacionId: String(tratamientoAEditar.explotacionId ?? ''),
+        parcelaId:     String(tratamientoAEditar.parcelaId     ?? ''),
+        recintoId:     String(tratamientoAEditar.recintoId     ?? ''),
+      }
+    : preselect
   const [explotaciones, setExplotaciones] = useState([])
   const [parcelas,      setParcelas]      = useState([])
   const [recintos,      setRecintos]      = useState([])
@@ -33,9 +43,9 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
   const today = new Date().toISOString().split('T')[0]
 
   const [form, setForm] = useState({
-    explotacionId:     preselect?.explotacionId ?? '',
-    parcelaId:         preselect?.parcelaId     ?? '',
-    recintoId:         preselect?.recintoId     ?? '',
+    explotacionId:     effectivePreselect?.explotacionId ?? '',
+    parcelaId:         effectivePreselect?.parcelaId     ?? '',
+    recintoId:         effectivePreselect?.recintoId     ?? '',
     inventarioId:      '',
     dosis:             '',
     unidades:          'L/ha',
@@ -56,11 +66,11 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
       granjero.getEquipamiento(),
     ]
 
-    if (preselect) {
+    if (effectivePreselect) {
       Promise.all([
         ...base,
-        granjero.parcelasPorExplotacion(preselect.explotacionId),
-        granjero.recintosPorParcela(preselect.parcelaId),
+        granjero.parcelasPorExplotacion(effectivePreselect.explotacionId),
+        granjero.recintosPorParcela(effectivePreselect.parcelaId),
       ])
         .then(([exp, inv, apls, equip, parcs, recs]) => {
           setExplotaciones(exp)
@@ -69,6 +79,24 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
           setEquipamiento(equip ?? [])
           setParcelas(parcs)
           setRecintos(recs)
+
+          // Pre-rellena campos desde tratamientoAEditar una vez cargado el inventario
+          if (tratamientoAEditar) {
+            const invItem = inv.find(i => i.productoFitosanitarioId === tratamientoAEditar.productoFitosanitarioId)
+            setForm(f => ({
+              ...f,
+              inventarioId:      invItem ? String(invItem.id) : '',
+              dosis:             tratamientoAEditar.dosis        != null ? String(tratamientoAEditar.dosis)             : '',
+              unidades:          tratamientoAEditar.unidades     ?? 'L/ha',
+              fecha:             tratamientoAEditar.fecha        ?? today,
+              superficieTratada: tratamientoAEditar.superficieTratada != null ? String(tratamientoAEditar.superficieTratada) : '',
+              plagaObjetivo:     tratamientoAEditar.plagaObjetivo     ?? '',
+              motivoTratamiento: tratamientoAEditar.motivoTratamiento ?? '',
+              volumenCaldo:      tratamientoAEditar.volumenCaldo != null ? String(tratamientoAEditar.volumenCaldo) : '',
+              aplicadorId:       tratamientoAEditar.aplicadorId  != null ? String(tratamientoAEditar.aplicadorId)  : '',
+              equipamientoId:    tratamientoAEditar.equipamientoId != null ? String(tratamientoAEditar.equipamientoId) : '',
+            }))
+          }
         })
         .catch(() => setError('No se pudieron cargar los datos del formulario.'))
         .finally(() => setLoading(false))
@@ -122,7 +150,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
 
   // ── Derived values ───────────────────────────────────────────────────────
   const selectedRecinto = recintos.find(r => String(r.id) === String(form.recintoId))
-    ?? (preselect ? recintos.find(r => String(r.id) === String(preselect.recintoId)) : null)
+    ?? (effectivePreselect ? recintos.find(r => String(r.id) === String(effectivePreselect.recintoId)) : null)
   const recintoMaxHa = selectedRecinto?.superficie != null ? Number(selectedRecinto.superficie) : null
 
   const selectedInventarioItem = form.inventarioId
@@ -168,8 +196,10 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
         aplicadorId:             form.aplicadorId   ? Number(form.aplicadorId)   : null,
         equipamientoId:          form.equipamientoId ? Number(form.equipamientoId) : null,
       }
-      const nuevo = await granjero.crearTratamiento(body)
-      onCreado(nuevo)
+      const resultado = editando
+        ? await granjero.actualizarTratamiento(tratamientoAEditar.id, body)
+        : await granjero.crearTratamiento(body)
+      onCreado(resultado)
     } catch (err) {
       setError(err?.message ?? 'Error al guardar el tratamiento.')
     } finally {
@@ -210,7 +240,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px 16px' }}>
-          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>Nuevo tratamiento</p>
+          <p style={{ fontSize: 17, fontWeight: 700, color: GREEN_DARK, margin: 0 }}>{editando ? 'Editar tratamiento' : 'Nuevo tratamiento'}</p>
           <button
             onClick={onClose}
             style={{ background: '#f3f4f6', border: 'none', borderRadius: 10, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -225,10 +255,10 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
           <form onSubmit={handleSubmit} style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             {/* 1. Explotación */}
-            {preselect ? (
+            {effectivePreselect ? (
               <Field label="🔒 Explotación">
                 <div style={lockedStyle}>
-                  {explotaciones.find(e => String(e.id) === preselect.explotacionId)?.nombre ?? '…'}
+                  {explotaciones.find(e => String(e.id) === effectivePreselect.explotacionId)?.nombre ?? '…'}
                 </div>
               </Field>
             ) : (
@@ -248,10 +278,10 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
             )}
 
             {/* 2. Parcela */}
-            {preselect ? (
+            {effectivePreselect ? (
               <Field label="🔒 Parcela SIGPAC">
                 <div style={lockedStyle}>
-                  {parcelas.find(p => String(p.id) === preselect.parcelaId)?.refCatastral ?? '…'}
+                  {parcelas.find(p => String(p.id) === effectivePreselect.parcelaId)?.refCatastral ?? '…'}
                 </div>
               </Field>
             ) : (
@@ -282,11 +312,11 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
             )}
 
             {/* 3. Recinto */}
-            {preselect ? (
+            {effectivePreselect ? (
               <Field label="🔒 Recinto">
                 <div style={lockedStyle}>
                   {(() => {
-                    const r = recintos.find(r => String(r.id) === preselect.recintoId)
+                    const r = recintos.find(r => String(r.id) === effectivePreselect.recintoId)
                     if (!r) return '…'
                     return `Recinto ${r.numeroRecinto}${r.cultivo ? ' · ' + r.cultivo : ''}${r.superficie ? ' · ' + Number(r.superficie).toFixed(2) + ' ha' : ''}`
                   })()}
@@ -522,7 +552,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                 transition: 'background 0.2s',
               }}
             >
-              {enviando ? 'Guardando…' : 'Registrar tratamiento'}
+              {enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Registrar tratamiento'}
             </button>
 
             {/* Spacer so button clears the bottom navigation bar */}

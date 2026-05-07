@@ -2,6 +2,7 @@ package com.camposync.controller;
 
 import com.camposync.dto.TratamientoCreateRequest;
 import com.camposync.dto.TratamientoDTO;
+import com.camposync.dto.TratamientoUpdateRequest;
 import com.camposync.service.TratamientoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,11 @@ public class TratamientoController {
     @GetMapping("/recinto/{recintoId}")
     public ResponseEntity<List<TratamientoDTO>> listarPorRecinto(@PathVariable Long recintoId) {
         return ResponseEntity.ok(tratamientoService.listarPorRecinto(recintoId, currentUsername()));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TratamientoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody TratamientoUpdateRequest request) {
+        return ResponseEntity.ok(tratamientoService.actualizar(currentUsername(), id, request));
     }
 
     private String currentUsername() {

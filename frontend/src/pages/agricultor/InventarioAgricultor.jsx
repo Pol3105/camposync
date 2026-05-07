@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { FlaskConical, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { FlaskConical, AlertTriangle, CheckCircle2, Pencil } from 'lucide-react'
 import ModalNuevoInventario from '../../components/ModalNuevoInventario'
+import ModalAjusteStock from '../../components/ModalAjusteStock'
 import { granjero } from '../../services/api'
 
 const LOW_STOCK_THRESHOLD = 5
@@ -12,9 +13,10 @@ function stockColor(stock) {
 }
 
 export default function InventarioAgricultor() {
-  const [items,   setItems]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal,   setModal]   = useState(null)
+  const [items,     setItems]     = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [modal,     setModal]     = useState(null)
+  const [ajusteItem, setAjusteItem] = useState(null)
 
   useEffect(() => {
     granjero.inventario()
@@ -37,6 +39,11 @@ export default function InventarioAgricultor() {
       return [...prev, nuevoItem].sort((a, b) => (a.aliasAgric ?? a.productoNombre ?? '').localeCompare(b.aliasAgric ?? b.productoNombre ?? ''))
     })
     setModal(null)
+  }
+
+  function handleAjustado(actualizado) {
+    setItems(prev => prev.map(i => i.id === actualizado.id ? actualizado : i))
+    setAjusteItem(null)
   }
 
   const sinStock = items.filter(i => i.stockAct <= 0).length
@@ -128,6 +135,12 @@ export default function InventarioAgricultor() {
                       <div style={{ fontSize: 10, color: sc.color, fontWeight: 600, marginTop: 1 }}>{item.unidad ?? 'uds.'}</div>
                     </div>
 
+                    {/* Adjust stock (edit) */}
+                    <button
+                      onClick={() => setAjusteItem(item)}
+                      title="Ajustar stock"
+                      style={{ width: 28, height: 28, borderRadius: '50%', background: '#f3f4f6', color: '#6b7280', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    ><Pencil size={13} /></button>
                     {/* Quick-add stock button */}
                     <button
                       onClick={() => setModal(item)}
@@ -173,12 +186,21 @@ export default function InventarioAgricultor() {
         }}
       >+</button>
 
-      {/* ── Modal ── */}
+      {/* ── Modal sumar stock ── */}
       {modal !== null && (
         <ModalNuevoInventario
           productoPreseleccionado={modal?.productoFitosanitarioId ? modal : undefined}
           onClose={() => setModal(null)}
           onCreado={handleCreado}
+        />
+      )}
+
+      {/* ── Modal ajuste stock ── */}
+      {ajusteItem !== null && (
+        <ModalAjusteStock
+          item={ajusteItem}
+          onClose={() => setAjusteItem(null)}
+          onAjustado={handleAjustado}
         />
       )}
     </>

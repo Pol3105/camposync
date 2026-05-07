@@ -2,6 +2,7 @@ package com.camposync.service;
 
 import com.camposync.dto.TratamientoCreateRequest;
 import com.camposync.dto.TratamientoDTO;
+import com.camposync.dto.TratamientoUpdateRequest;
 import com.camposync.entity.Aplicador;
 import com.camposync.entity.Equipamiento;
 import com.camposync.entity.Granjero;
@@ -11,6 +12,8 @@ import com.camposync.entity.ProductoFitosanitario;
 import com.camposync.entity.Tratamiento;
 import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.AplicadorRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.camposync.repository.EquipamientoRepository;
 import com.camposync.repository.GranjeroRepository;
 import com.camposync.repository.InventarioRepository;
@@ -89,6 +92,81 @@ public class TratamientoService {
         return toDTO(saved);
     }
 
+    @Transactional
+    public TratamientoDTO actualizar(String username, Long id, TratamientoUpdateRequest request) {
+        Granjero granjero = getGranjero(username);
+
+        Tratamiento tratamiento = tratamientoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tratamiento", id));
+
+        if (!tratamiento.getGranjero().getId().equals(granjero.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para editar este tratamiento.");
+        }
+
+        if ("VALIDADO".equals(tratamiento.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede editar un tratamiento ya validado.");
+        }
+
+        // 5. Revert old stock
+        float oldGasto = tratamiento.getDosis() * (float) tratamiento.getSuperficieTratada();
+        inventarioRepository
+                .findByGranjero_IdAndProductoFitosanitario_Id(
+                        granjero.getId(), tratamiento.getProductoFitosanitario().getId())
+                .ifPresent(inv -> {
+                    inv.setStockAct(inv.getStockAct() + oldGasto);
+                    inventarioRepository.save(inv);
+                });
+
+        // 6. Resolve new ProductoFitosanitario
+        ProductoFitosanitario newProducto = productoRepository.findById(request.productoFitosanitarioId())
+                .orElseThrow(() -> new ResourceNotFoundException("ProductoFitosanitario", request.productoFitosanitarioId()));
+
+        // 7. Resolve new Recinto and verify ownership
+        Recinto newRecinto = getRecintoDelGranjero(request.recintoId(), granjero);
+
+        // 8. Resolve optional Aplicador and Equipamiento
+        Aplicador newAplicador = request.aplicadorId() != null
+                ? aplicadorRepository.findById(request.aplicadorId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Aplicador", request.aplicadorId()))
+                : null;
+
+        Equipamiento newEquipamiento = request.equipamientoId() != null
+                ? equipamientoRepository.findById(request.equipamientoId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Equipamiento", request.equipamientoId()))
+                : null;
+
+        // 9. Update fields
+        tratamiento.setFecha(request.fecha());
+        tratamiento.setTextoOriginal(request.textoOriginal());
+        tratamiento.setDosis(request.dosis());
+        tratamiento.setUnidades(request.unidades());
+        tratamiento.setSuperficieTratada(request.superficieTratada());
+        tratamiento.setPlagaObjetivo(request.plagaObjetivo());
+        tratamiento.setMotivoTratamiento(request.motivoTratamiento());
+        tratamiento.setCodigoPlaga(request.codigoPlaga());
+        tratamiento.setVolumenCaldo(request.volumenCaldo());
+        tratamiento.setAplicador(newAplicador);
+        tratamiento.setEquipamiento(newEquipamiento);
+        tratamiento.setRecinto(newRecinto);
+        tratamiento.setProductoFitosanitario(newProducto);
+
+        // 10. Save
+        Tratamiento saved = tratamientoRepository.save(tratamiento);
+
+        // 11. Apply new stock deduction
+        float newGasto = request.dosis() * request.superficieTratada().floatValue();
+        inventarioRepository
+                .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), newProducto.getId())
+                .ifPresent(inv -> {
+                    float nuevoStock = inv.getStockAct() - newGasto;
+                    inv.setStockAct(nuevoStock <= 0.1f ? 0f : nuevoStock);
+                    inventarioRepository.save(inv);
+                });
+
+        // 12. Return DTO
+        return toDTO(saved);
+    }
+
     public List<TratamientoDTO> listarPorGranjero(String username) {
         Granjero granjero = getGranjero(username);
         return tratamientoRepository.findByGranjero_Id(granjero.getId())
@@ -141,6 +219,7 @@ public class TratamientoService {
                 t.getRecinto().getParcela().getId(),
                 t.getRecinto().getParcela().getRefCatastral(),
                 t.getRecinto().getParcela().getMunicipio(),
+                t.getRecinto().getParcela().getExplotacion().getId(),
                 t.getProductoFitosanitario().getId(),
                 t.getProductoFitosanitario().getNombre(),
                 t.getProductoFitosanitario().getPrincipioAct(),

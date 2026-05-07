@@ -570,6 +570,7 @@ public class AsesorPanelService {
                 t.getRecinto().getParcela().getId(),
                 t.getRecinto().getParcela().getRefCatastral(),
                 t.getRecinto().getParcela().getMunicipio(),
+                null, // explotacionId — no aplica en contexto asesor
                 t.getProductoFitosanitario().getId(),
                 t.getProductoFitosanitario().getNombre(),
                 t.getProductoFitosanitario().getPrincipioAct(),

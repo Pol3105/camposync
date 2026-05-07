@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import { CheckCircle, Clock, FlaskConical } from 'lucide-react'
+import { CheckCircle, Clock, FlaskConical, Pencil } from 'lucide-react'
 import AgricultorLayout from './AgricultorLayout'
+import ModalNuevoTratamiento from '../../components/ModalNuevoTratamiento'
 import { granjero } from '../../services/api'
 
 const FILTROS = [
@@ -25,9 +26,10 @@ function groupByMonth(list) {
 }
 
 export default function CuadernoTratamientos() {
-  const [filtro, setFiltro]       = useState('TODOS')
-  const [tratamientos, setTrat]   = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [filtro, setFiltro]             = useState('TODOS')
+  const [tratamientos, setTrat]         = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [tratamientoEditando, setEdit]  = useState(null)
 
   useEffect(() => {
     granjero.tratamientos()
@@ -127,12 +129,23 @@ export default function CuadernoTratamientos() {
                             {t.plagaObjetivo ?? '—'}
                           </div>
                         </div>
-                        <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: t.validado ? '#edf7e8' : '#fef9ed', color: t.validado ? '#267a40' : '#8a6010', border: `1px solid ${t.validado ? '#c0e8b0' : '#f5d878'}` }}>
-                          {t.validado
-                            ? <><CheckCircle size={10} />&nbsp;Validado</>
-                            : <><Clock size={10} />&nbsp;Pendiente</>
-                          }
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          {!t.validado && (
+                            <button
+                              onClick={() => setEdit(t)}
+                              title="Editar tratamiento"
+                              style={{ width: 28, height: 28, borderRadius: '50%', background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                            >
+                              <Pencil size={13} />
+                            </button>
+                          )}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: t.validado ? '#edf7e8' : '#fef9ed', color: t.validado ? '#267a40' : '#8a6010', border: `1px solid ${t.validado ? '#c0e8b0' : '#f5d878'}` }}>
+                            {t.validado
+                              ? <><CheckCircle size={10} />&nbsp;Validado</>
+                              : <><Clock size={10} />&nbsp;Pendiente</>
+                            }
+                          </span>
+                        </div>
                       </div>
 
                       {/* Meta row */}
@@ -154,6 +167,20 @@ export default function CuadernoTratamientos() {
           </div>
         )}
       </div>
+      {/* ── Modal editar tratamiento ── */}
+      {tratamientoEditando && (
+        <ModalNuevoTratamiento
+          tratamientoAEditar={tratamientoEditando}
+          onClose={() => setEdit(null)}
+          onCreado={actualizado => {
+            setTrat(prev =>
+              prev.map(t => t.id === actualizado.id ? actualizado : t)
+                  .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+            )
+            setEdit(null)
+          }}
+        />
+      )}
     </AgricultorLayout>
   )
 }

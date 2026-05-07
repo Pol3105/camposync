@@ -7,6 +7,8 @@ import com.camposync.entity.Inventario;
 import com.camposync.entity.ProductoFitosanitario;
 import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.GranjeroRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.camposync.repository.InventarioRepository;
 import com.camposync.repository.ProductoFitosanitarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +61,19 @@ public class InventarioService {
                         .aliasAgric(req.aliasAgric())
                         .build());
 
+        return toDTO(inventarioRepository.save(item));
+    }
+
+    @Transactional
+    public InventarioDTO ajustarStock(String username, Long inventarioId, float nuevoStock) {
+        Granjero granjero = granjeroRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Granjero", username));
+        Inventario item = inventarioRepository.findById(inventarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Inventario", inventarioId));
+        if (!item.getGranjero().getId().equals(granjero.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para ajustar este inventario.");
+        }
+        item.setStockAct(Math.max(0f, nuevoStock));
         return toDTO(inventarioRepository.save(item));
     }
 

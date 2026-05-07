@@ -22,6 +22,7 @@ public record TratamientoDTO(
         Long parcelaId,
         String parcelaRefCatastral,
         String parcelaMunicipio,
+        Long explotacionId,
         // Producto
         Long productoFitosanitarioId,
         String productoNombre,
