@@ -125,6 +125,15 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
     ?? (preselect ? recintos.find(r => String(r.id) === String(preselect.recintoId)) : null)
   const recintoMaxHa = selectedRecinto?.superficie != null ? Number(selectedRecinto.superficie) : null
 
+  const selectedInventarioItem = form.inventarioId
+    ? inventario.find(i => String(i.id) === String(form.inventarioId)) ?? null
+    : null
+  const dosisNum = parseFloat(form.dosis)
+  const supNum   = parseFloat(form.superficieTratada)
+  const cantidadGastada = (!isNaN(dosisNum) && !isNaN(supNum)) ? dosisNum * supNum : null
+  const stockInsuficiente = cantidadGastada !== null && selectedInventarioItem !== null
+    && cantidadGastada > selectedInventarioItem.stockAct
+
   function handleInventarioChange(inventarioId) {
     set('inventarioId', inventarioId)
     const item = inventario.find(i => String(i.id) === String(inventarioId))
@@ -171,7 +180,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
   const camposOk =
     form.recintoId && form.inventarioId &&
     form.dosis && form.superficieTratada && form.fecha &&
-    !superficieError
+    !superficieError && !stockInsuficiente
 
   return (
     <div
@@ -330,7 +339,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                     <option key={item.id} value={item.id}>
                       {item.productoNombre}
                       {item.aliasAgric ? ` (${item.aliasAgric})` : ''}
-                      {' — '}{item.stockAct} uds. en stock
+                      {' — '}{item.stockAct} {item.unidad ?? 'uds.'} en stock
                     </option>
                   ))}
                 </select>
@@ -345,7 +354,7 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                   placeholder="Ej. 2.5"
                   value={form.dosis}
                   onChange={e => set('dosis', e.target.value)}
-                  style={inputStyle}
+                  style={{ ...inputStyle, borderColor: stockInsuficiente ? '#fca5a5' : '#e5e7eb', background: stockInsuficiente ? '#fef2f2' : '#f9fafb' }}
                 />
               </Field>
               <Field label="Unidades">
@@ -354,6 +363,19 @@ export default function ModalNuevoTratamiento({ onClose, onCreado, preselect }) 
                 </div>
               </Field>
             </div>
+            {stockInsuficiente && (
+              <p style={{ fontSize: 12, color: '#dc2626', fontWeight: 600, margin: '-6px 0 0 2px' }}>
+                Stock insuficiente. Necesitas {cantidadGastada.toFixed(2)} {selectedInventarioItem.unidad} pero solo tienes {selectedInventarioItem.stockAct} {selectedInventarioItem.unidad}.
+              </p>
+            )}
+            {!stockInsuficiente && selectedInventarioItem && supNum > 0 && (
+              <p
+                onClick={() => set('dosis', (selectedInventarioItem.stockAct / supNum).toFixed(3))}
+                style={{ fontSize: 12, color: '#16a34a', fontWeight: 600, margin: '-6px 0 0 2px', cursor: 'pointer', userSelect: 'none' }}
+              >
+                🪄 Gastar todo el stock ({selectedInventarioItem.stockAct} {selectedInventarioItem.unidad})
+              </p>
+            )}
 
             {/* 6. Superficie */}
             <Field label="Superficie tratada (ha)">

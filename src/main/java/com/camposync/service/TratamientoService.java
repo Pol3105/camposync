@@ -5,6 +5,7 @@ import com.camposync.dto.TratamientoDTO;
 import com.camposync.entity.Aplicador;
 import com.camposync.entity.Equipamiento;
 import com.camposync.entity.Granjero;
+import com.camposync.entity.Inventario;
 import com.camposync.entity.Recinto;
 import com.camposync.entity.ProductoFitosanitario;
 import com.camposync.entity.Tratamiento;
@@ -12,6 +13,7 @@ import com.camposync.exception.ResourceNotFoundException;
 import com.camposync.repository.AplicadorRepository;
 import com.camposync.repository.EquipamientoRepository;
 import com.camposync.repository.GranjeroRepository;
+import com.camposync.repository.InventarioRepository;
 import com.camposync.repository.RecintoRepository;
 import com.camposync.repository.ProductoFitosanitarioRepository;
 import com.camposync.repository.TratamientoRepository;
@@ -32,6 +34,7 @@ public class TratamientoService {
     private final ProductoFitosanitarioRepository productoRepository;
     private final AplicadorRepository aplicadorRepository;
     private final EquipamientoRepository equipamientoRepository;
+    private final InventarioRepository inventarioRepository;
 
     @Transactional
     public TratamientoDTO crear(String username, TratamientoCreateRequest request) {
@@ -71,7 +74,19 @@ public class TratamientoService {
                 .productoFitosanitario(producto)
                 .build();
 
-        return toDTO(tratamientoRepository.save(tratamiento));
+        Tratamiento saved = tratamientoRepository.save(tratamiento);
+
+        // Descontar stock del inventario
+        float cantidadGastada = request.dosis() * request.superficieTratada().floatValue();
+        inventarioRepository
+                .findByGranjero_IdAndProductoFitosanitario_Id(granjero.getId(), producto.getId())
+                .ifPresent(inv -> {
+                    float nuevoStock = inv.getStockAct() - cantidadGastada;
+                    inv.setStockAct(nuevoStock < 0f ? 0f : nuevoStock);
+                    inventarioRepository.save(inv);
+                });
+
+        return toDTO(saved);
     }
 
     public List<TratamientoDTO> listarPorGranjero(String username) {
