@@ -84,6 +84,12 @@ export const granjero = {
   productosOficiales:     () => request('/productos'),
   tratamientos:           () => request('/tratamientos'),
   crearTratamiento:       (body) => request('/tratamientos', { method: 'POST', body: JSON.stringify(body) }),
+  getAplicadores:         () => request('/aplicadores'),
+  crearAplicador:         (body) => request('/aplicadores', { method: 'POST', body: JSON.stringify(body) }),
+  eliminarAplicador:      (id) => request(`/aplicadores/${id}`, { method: 'DELETE' }),
+  getEquipamiento:        () => request('/equipamiento'),
+  crearEquipamiento:      (body) => request('/equipamiento', { method: 'POST', body: JSON.stringify(body) }),
+  eliminarEquipamiento:   (id) => request(`/equipamiento/${id}`, { method: 'DELETE' }),
 }
 
 export const asesor = {

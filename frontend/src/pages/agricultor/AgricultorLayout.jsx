@@ -5,7 +5,7 @@ const TABS = [
   { path: '/cuaderno',             label: 'Inicio',    Icon: Home,          exact: true  },
   { path: '/cuaderno/tratamientos',label: 'Cuaderno',  Icon: BookOpen,      exact: false },
   { path: '/cuaderno/fincas',      label: 'Fincas',    Icon: Map,           exact: false },
-  { path: '/cuaderno/inventario',  label: 'Inventario',Icon: FlaskConical,  exact: false },
+  { path: '/cuaderno/recursos',    label: 'Recursos',  Icon: FlaskConical,  exact: false },
   { path: '/cuaderno/perfil',      label: 'Perfil',    Icon: User,          exact: false },
 ]
 

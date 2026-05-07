@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { FlaskConical, AlertTriangle, CheckCircle2 } from 'lucide-react'
-import AgricultorLayout from './AgricultorLayout'
 import ModalNuevoInventario from '../../components/ModalNuevoInventario'
 import { granjero } from '../../services/api'
 
@@ -15,7 +14,7 @@ function stockColor(stock) {
 export default function InventarioAgricultor() {
   const [items,   setItems]   = useState([])
   const [loading, setLoading] = useState(true)
-  const [modal,   setModal]   = useState(false)
+  const [modal,   setModal]   = useState(null)
 
   useEffect(() => {
     granjero.inventario()
@@ -37,14 +36,14 @@ export default function InventarioAgricultor() {
       }
       return [...prev, nuevoItem].sort((a, b) => (a.aliasAgric ?? a.productoNombre ?? '').localeCompare(b.aliasAgric ?? b.productoNombre ?? ''))
     })
-    setModal(false)
+    setModal(null)
   }
 
   const sinStock = items.filter(i => i.stockAct <= 0).length
   const bajoStock = items.filter(i => i.stockAct > 0 && i.stockAct < LOW_STOCK_THRESHOLD).length
 
   return (
-    <AgricultorLayout>
+    <>
       {/* ── Header ── */}
       <div style={{ background: 'linear-gradient(145deg, #1c3829 0%, #2e5c38 100%)', padding: '20px 18px 24px' }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', marginBottom: 2 }}>
@@ -128,6 +127,12 @@ export default function InventarioAgricultor() {
                       </div>
                       <div style={{ fontSize: 10, color: sc.color, fontWeight: 600, marginTop: 1 }}>{item.unidad ?? 'uds.'}</div>
                     </div>
+
+                    {/* Quick-add stock button */}
+                    <button
+                      onClick={() => setModal(item)}
+                      style={{ width: 28, height: 28, borderRadius: '50%', background: '#2e5c38', color: '#fff', fontSize: 16, border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >+</button>
                   </div>
 
                   {/* Status bar */}
@@ -156,7 +161,7 @@ export default function InventarioAgricultor() {
 
       {/* ── FAB ── */}
       <button
-        onClick={() => setModal(true)}
+        onClick={() => setModal({})}
         style={{
           position: 'fixed', bottom: 80,
           right: 'max(24px, calc((100vw - 480px) / 2 + 24px))',
@@ -169,12 +174,13 @@ export default function InventarioAgricultor() {
       >+</button>
 
       {/* ── Modal ── */}
-      {modal && (
+      {modal !== null && (
         <ModalNuevoInventario
-          onClose={() => setModal(false)}
+          productoPreseleccionado={modal?.productoFitosanitarioId ? modal : undefined}
+          onClose={() => setModal(null)}
           onCreado={handleCreado}
         />
       )}
-    </AgricultorLayout>
+    </>
   )
 }
