@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Users, Map, FlaskConical, CheckCircle2, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor } from '../services/api'
@@ -99,6 +100,8 @@ export default function DashboardPage() {
   const [loading, setLoading]             = useState(true)
   const [modalTrat, setModalTrat]         = useState(null)
   const [saving, setSaving]               = useState(false)
+
+  const navigate = useNavigate()
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -212,7 +215,7 @@ export default function DashboardPage() {
                           <td style={{ padding: '11px 18px', borderBottom: `1px solid ${S.table.border}` }}>
                             {isPending ? (
                               <button
-                                onClick={() => setModalTrat(t)}
+                                onClick={() => navigate(`/tratamientos/${t.id}/revision`, { state: { tratamiento: t } })}
                                 className="inline-flex items-center gap-1.5 whitespace-nowrap font-semibold text-white transition active:scale-95"
                                 style={{ padding: '7px 14px', background: S.cta.bg, border: 'none', borderRadius: S.cta.radius, boxShadow: S.cta.shadow, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '-0.1px' }}
                               >

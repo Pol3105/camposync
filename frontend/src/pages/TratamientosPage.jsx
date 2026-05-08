@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CheckCircle, Clock, FlaskConical, Search, ChevronDown } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor } from '../services/api'
@@ -19,7 +20,7 @@ function ValidarModal({ tratamiento, onClose, onValidado }) {
   async function handleValidar() {
     setSaving(true)
     try {
-      await asesor.validarTratamiento(tratamiento.id, true, obs)
+      await asesor.validarTratamiento(tratamiento.id, { validado: true, observacionesValidador: obs })
       setDone(true)
       setTimeout(() => { onValidado(tratamiento.id, obs); onClose() }, 600)
     } catch { setSaving(false) }
@@ -82,6 +83,7 @@ export default function TratamientosPage() {
   const [tratamientos, setTratamientos] = useState([])
   const [loading, setLoading] = useState(true)
   const [validarTarget, setValidarTarget] = useState(null)
+  const navigate = useNavigate()
 
   // Filters
   const [filtroGranjero, setFiltroGranjero] = useState('')
@@ -334,7 +336,7 @@ export default function TratamientosPage() {
                           <td style={{ padding: rp, borderBottom: '1px solid #eceef5' }}>
                             {!t.validado && (
                               <button
-                                onClick={() => setValidarTarget(t)}
+                                onClick={() => navigate(`/tratamientos/${t.id}/revision`, { state: { tratamiento: t } })}
                                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 13px', background: 'linear-gradient(135deg,#2e5c38,#4e9a5f)', border: 'none', borderRadius: 9, color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(46,92,56,0.25)' }}
                               >
                                 <CheckCircle size={13} color="#fff" />
