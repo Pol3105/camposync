@@ -1,4 +1,4 @@
-const BASE = 'http://192.168.1.24:8080/api'
+const BASE = 'http://localhost:8080/api'
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
@@ -104,11 +104,13 @@ export const asesor = {
   parcelasDeExplotacion: (id) => request(`/asesor/explotaciones/${id}/parcelas`),
   recintosPorParcela:    (id) => request(`/asesor/parcelas/${id}/recintos`),
   tratamientosPorRecinto: (id) => request(`/asesor/recintos/${id}/tratamientos`),
-  validarTratamiento: (id, validado, observaciones) =>
+  validarTratamiento: (id, payload) =>
     request(`/asesor/tratamientos/${id}/validar`, {
       method: 'PATCH',
-      body: JSON.stringify({ validado, observacionesValidador: observaciones }),
+      body: JSON.stringify(payload),
     }),
+  aplicadoresDeGranjero: (username) => request(`/asesor/granjeros/${username}/aplicadores`),
+  equipamientoDeGranjero: (username) => request(`/asesor/granjeros/${username}/equipamiento`),
   crearExplotacion: (body) =>
     request('/asesor/explotaciones', { method: 'POST', body: JSON.stringify(body) }),
   crearParcela: (explotacionId, body) =>

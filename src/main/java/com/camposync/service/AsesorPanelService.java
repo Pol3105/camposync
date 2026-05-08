@@ -12,6 +12,14 @@ import com.camposync.dto.ParcelaDTO;
 import com.camposync.dto.RecintoDTO;
 import com.camposync.dto.TratamientoDTO;
 import com.camposync.dto.TratamientoValidarRequest;
+
+import com.camposync.entity.Aplicador;
+import com.camposync.entity.Equipamiento;
+import com.camposync.repository.AplicadorRepository;
+import com.camposync.repository.EquipamientoRepository;
+import com.camposync.dto.AplicadorDTO;
+import com.camposync.dto.EquipamientoDTO;
+
 import com.camposync.entity.Asesor;
 import com.camposync.entity.Asesoria;
 import com.camposync.repository.AsesoriaRepository;
@@ -50,6 +58,9 @@ public class AsesorPanelService {
     private final TratamientoRepository tratamientoRepository;
     private final InvitacionRepository invitacionRepository;
     private final InventarioRepository inventarioRepository;
+    private final AplicadorRepository aplicadorRepository;
+    private final EquipamientoRepository equipamientoRepository;
+
 
     // ── Granjeros ─────────────────────────────────────────────────────────────
 
@@ -186,7 +197,74 @@ public class AsesorPanelService {
         tratamiento.setValidado(request.validado());
         tratamiento.setObservacionesValidador(request.observacionesValidador());
 
+        if (request.plagaObjetivo() != null) {
+            tratamiento.setPlagaObjetivo(request.plagaObjetivo());
+        }
+
+        if (request.aplicadorId() != null) {
+            Aplicador aplicador = aplicadorRepository.findById(request.aplicadorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Aplicador", request.aplicadorId()));
+            tratamiento.setAplicador(aplicador);
+        }
+
+        if (request.equipamientoId() != null) {
+            Equipamiento equipamiento = equipamientoRepository.findById(request.equipamientoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipamiento", request.equipamientoId()));
+            tratamiento.setEquipamiento(equipamiento);
+        }
+
         return toTratamientoDTO(tratamientoRepository.save(tratamiento));
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<AplicadorDTO> listarAplicadoresDeGranjero(String asesorUsername, String granjeroUsername) {
+        Asesor asesor = getAsesor(asesorUsername);
+        Granjero granjero = granjeroRepository.findByUsername(granjeroUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Granjero", 0L)); // Using 0L as we searched by username
+
+        if (granjero.getAsesoria() == null || !granjero.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new RuntimeException("El granjero no pertenece a tu asesoría");
+        }
+
+        return aplicadorRepository.findByGranjero_Id(granjero.getId()).stream()
+                .map(this::toAplicadorDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EquipamientoDTO> listarEquipamientoDeGranjero(String asesorUsername, String granjeroUsername) {
+        Asesor asesor = getAsesor(asesorUsername);
+        Granjero granjero = granjeroRepository.findByUsername(granjeroUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Granjero", 0L));
+
+        if (granjero.getAsesoria() == null || !granjero.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new RuntimeException("El granjero no pertenece a tu asesoría");
+        }
+
+        return equipamientoRepository.findByGranjero_Id(granjero.getId()).stream()
+                .map(this::toEquipamientoDTO)
+                .toList();
+    }
+
+    private AplicadorDTO toAplicadorDTO(Aplicador a) {
+        return new AplicadorDTO(
+                a.getId(),
+                a.getNombre(),
+                a.getNif(),
+                a.getNumeroRopo(),
+                a.getNivelCapacitacion()
+        );
+    }
+
+    private EquipamientoDTO toEquipamientoDTO(Equipamiento e) {
+        return new EquipamientoDTO(
+                e.getId(),
+                e.getAlias(),
+                e.getTipoMaquina(),
+                e.getMarcaModelo(),
+                e.getNumRegistroIteaf()
+        );
     }
 
     // ── Vinculación de explotaciones a granjero ───────────────────────────────
