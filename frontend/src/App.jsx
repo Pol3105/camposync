@@ -10,6 +10,7 @@ import AgricultoresPage from './pages/AgricultoresPage'
 import ExplotacionesPage from './pages/ExplotacionesPage'
 import AgricultorExplotacionesPage from './pages/AgricultorExplotacionesPage'
 import TratamientosPage from './pages/TratamientosPage'
+import RevisionTratamientoPage from './pages/RevisionTratamientoPage'
 import ExplotacionParcelasPage from './pages/ExplotacionParcelasPage'
 import ParcelaTratamientosPage from './pages/ParcelaTratamientosPage'
 import ParcelaRecintosPage from './pages/ParcelaRecintosPage'
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/parcelas/:id/recintos"              element={<Private><ParcelaRecintosPage /></Private>} />
         <Route path="/recintos/:id/tratamientos"          element={<Private><RecintoTratamientosPage /></Private>} />
         <Route path="/tratamientos"                        element={<Private><TratamientosPage /></Private>} />
+        <Route path="/tratamientos/:id/revision"           element={<Private><RevisionTratamientoPage /></Private>} />
         <Route path="/configuracion"                       element={<Private><ConfiguracionPage /></Private>} />
         <Route path="*"               element={<Navigate to="/login" replace />} />
       </Routes>

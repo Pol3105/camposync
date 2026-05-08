@@ -11,6 +11,10 @@ import com.camposync.dto.InvitacionDTO;
 import com.camposync.dto.ParcelaDTO;
 import com.camposync.dto.RecintoDTO;
 import com.camposync.dto.TratamientoDTO;
+
+import com.camposync.dto.AplicadorDTO;
+import com.camposync.dto.EquipamientoDTO;
+
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.service.AsesorPanelService;
 import jakarta.validation.Valid;
@@ -94,6 +98,17 @@ public class AsesorPanelController {
             @PathVariable Long id,
             @Valid @RequestBody TratamientoValidarRequest request) {
         return ResponseEntity.ok(asesorPanelService.validarTratamiento(currentUsername(), id, request));
+    }
+
+
+    @GetMapping("/granjeros/{username}/aplicadores")
+    public ResponseEntity<List<AplicadorDTO>> listarAplicadores(@PathVariable String username) {
+        return ResponseEntity.ok(asesorPanelService.listarAplicadoresDeGranjero(currentUsername(), username));
+    }
+
+    @GetMapping("/granjeros/{username}/equipamiento")
+    public ResponseEntity<List<EquipamientoDTO>> listarEquipamiento(@PathVariable String username) {
+        return ResponseEntity.ok(asesorPanelService.listarEquipamientoDeGranjero(currentUsername(), username));
     }
 
     @PutMapping("/granjeros/{id}/explotaciones")
