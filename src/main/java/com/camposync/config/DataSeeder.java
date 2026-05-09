@@ -34,6 +34,8 @@ public class DataSeeder implements CommandLineRunner {
     private final TratamientoRepository            tratamientoRepository;
     private final ProductoFitosanitarioRepository  productoRepository;
     private final InventarioRepository             inventarioRepository;
+    private final AplicadorRepository              aplicadorRepository;
+    private final EquipamientoRepository           equipamientoRepository;
 
     private int parcelaSigpacSeq = 1;
 
@@ -55,7 +57,7 @@ public class DataSeeder implements CommandLineRunner {
         List<ProductoFitosanitario> productos = seedProductosExtra();
         seedExplotacionesParcelasInventario(asesoria, productos);
 
-        log.info("[DataSeeder] ✓ 10 granjeros · 25 explotaciones · 50 parcelas · 50 recintos · 20 tratamientos · 50 inventarios creados.");
+        log.info("[DataSeeder] ✓ 10 granjeros · 25 explotaciones · 50 parcelas · 50 recintos · 20 tratamientos · 50 inventarios · 30 aplicadores · 30 equipamientos creados.");
         log.info("[DataSeeder] Contraseña de todos los granjeros de prueba: campo2024");
     }
 
@@ -104,7 +106,21 @@ public class DataSeeder implements CommandLineRunner {
         return productoRepository.findAll();
     }
 
-    // ── 3. Explotaciones + Parcelas + Recintos + Inventario + Tratamientos ───
+    // ── 3. Aplicadores y Equipamiento ────────────────────────────────────────
+
+    private void seedAplicadoresYEquipamiento(Granjero granjero) {
+        // Crear 3 Aplicadores
+        aplicador(granjero, "Manuel García López", "12345678A", "ROPO-12345-AND", "CUALIFICADO");
+        aplicador(granjero, "José Fernández Sánchez", "87654321B", "ROPO-54321-AND", "CUALIFICADO");
+        aplicador(granjero, "Antonio Ruiz Martín", "11223344C", "ROPO-98765-AND", "CUALIFICADO");
+
+        // Crear 3 Equipamientos
+        equipamiento(granjero, "Tractor Principal", "Tractor", "John Deere 6155M", "ROMA-JD-001");
+        equipamiento(granjero, "Pulverizador Arrastrado", "Pulverizador", "Hardi Navigator 3000", "ROMA-HR-002");
+        equipamiento(granjero, "Atomizador Suspendido", "Atomizador", "Mañez y Lozano Twister", "ROMA-ML-003");
+    }
+
+    // ── 4. Explotaciones + Parcelas + Recintos + Inventario + Tratamientos ───
 
     private void seedExplotacionesParcelasInventario(Asesoria asesoria, List<ProductoFitosanitario> prods) {
 
@@ -118,6 +134,17 @@ public class DataSeeder implements CommandLineRunner {
         Granjero rosa     = g("r.jimenez");
         Granjero manuel   = g("m.guerrero");
         Granjero pilar    = g("p.fuentes");
+
+        seedAplicadoresYEquipamiento(pedro);
+        seedAplicadoresYEquipamiento(maria);
+        seedAplicadoresYEquipamiento(fco);
+        seedAplicadoresYEquipamiento(carmen);
+        seedAplicadoresYEquipamiento(jose);
+        seedAplicadoresYEquipamiento(isabel);
+        seedAplicadoresYEquipamiento(antonio);
+        seedAplicadoresYEquipamiento(rosa);
+        seedAplicadoresYEquipamiento(manuel);
+        seedAplicadoresYEquipamiento(pilar);
 
         ProductoFitosanitario captan      = prods.get(0);
         ProductoFitosanitario clorpirifos = prods.get(1);
@@ -144,8 +171,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(pedro, clorpirifos, "Insecticida olivo (mosca)",          8.0f);
         inv(pedro, abamectina,  "Acaricida viña — Pedro",             5.5f);
 
-        trat(pedro, r_pedro_1, captan,      "PR", "Mildiu de la vid",   "PLASVI", LocalDate.of(2024, 4, 10), 2.0f, "kg/ha");
-        trat(pedro, r_pedro_2, cobre,       "CU", "Mildiu de la vid",   "PLASVI", LocalDate.of(2024, 5, 15), 3.0f, "kg/ha");
+        trat(pedro, r_pedro_1, captan,      "PR", "Mildiu de la vid",   "PLASVI", LocalDate.of(2024, 4, 10), 2.0f, "kg/ha", true);
+        trat(pedro, r_pedro_2, cobre,       "CU", "Mildiu de la vid",   "PLASVI", LocalDate.of(2024, 5, 15), 3.0f, "kg/ha", false);
 
         // ── MARÍA DOLORES VIDAL — 3 explotaciones ────────────────────────────
         Explotacion valdejudios = exp(asesoria, maria, "Pago Valdejudíos", "VI", "PF", 8.7f, "SIG-14-022-0-004");
@@ -166,8 +193,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(maria, cobre,       "Mildiu viña — María",           20.0f);
         inv(maria, clorpirifos, "Gusano tomate invernadero",      4.5f);
 
-        trat(maria, r_maria_1, cobre,      "CU", "Mildiu de la vid",       "PLASVI", LocalDate.of(2024, 5, 20), 3.0f, "kg/ha");
-        trat(maria, r_maria_2, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 3, 28), 0.6f, "L/ha");
+        trat(maria, r_maria_1, cobre,      "CU", "Mildiu de la vid",       "PLASVI", LocalDate.of(2024, 5, 20), 3.0f, "kg/ha", true);
+        trat(maria, r_maria_2, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 3, 28), 0.6f, "L/ha", true);
 
         // ── FRANCISCO JAVIER PÉREZ — 2 explotaciones ─────────────────────────
         Explotacion lasturras = exp(asesoria, fco, "Las Turras del Llano", "CE", "PF", 120.0f, "SIG-02-021-0-007");
@@ -184,8 +211,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(fco, cobre,       "Tratamiento preventivo viña",     10.0f);
         inv(fco, abamectina,  "Acaricida ganadería",              3.5f);
 
-        trat(fco, r_fco_1, glifosato,   "PR", "Malas hierbas cereal",  "POAAN", LocalDate.of(2024, 2, 15), 3.5f, "L/ha");
-        trat(fco, r_fco_2, clorpirifos, "CU", "Pulgón del cereal",     "APHISP", LocalDate.of(2024, 4, 5), 1.5f, "L/ha");
+        trat(fco, r_fco_1, glifosato,   "PR", "Malas hierbas cereal",  "POAAN", LocalDate.of(2024, 2, 15), 3.5f, "L/ha", false);
+        trat(fco, r_fco_2, clorpirifos, "CU", "Pulgón del cereal",     "APHISP", LocalDate.of(2024, 4, 5), 1.5f, "L/ha", true);
 
         // ── CARMEN AGUILERA — 3 explotaciones ────────────────────────────────
         Explotacion molinoviejo = exp(asesoria, carmen, "Olivar Molino Viejo", "OL", "PF", 35.5f, "SIG-14-077-0-009");
@@ -206,8 +233,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(carmen, abamectina,  "Acaricida almendro primavera",     7.0f);
         inv(carmen, captan,      "Fungicida almendro monilia",      14.0f);
 
-        trat(carmen, r_carmen_1, cobre,       "PR", "Repilo del olivo",    "SPIOCA", LocalDate.of(2024, 3, 10), 2.5f, "kg/ha");
-        trat(carmen, r_carmen_2, glifosato,   "PR", "Malas hierbas cereal","POAAN",  LocalDate.of(2024, 2, 20), 4.0f, "L/ha");
+        trat(carmen, r_carmen_1, cobre,       "PR", "Repilo del olivo",    "SPIOCA", LocalDate.of(2024, 3, 10), 2.5f, "kg/ha", true);
+        trat(carmen, r_carmen_2, glifosato,   "PR", "Malas hierbas cereal","POAAN",  LocalDate.of(2024, 2, 20), 4.0f, "L/ha", true);
 
         // ── JOSÉ ANTONIO ROMERO — 2 explotaciones ────────────────────────────
         Explotacion fincasanisidro = exp(asesoria, jose, "Finca San Isidro", "CE", "SC", 55.0f, "SIG-23-020-0-012");
@@ -224,8 +251,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(jose, cobre,       "Mildiu viña septiembre",        16.0f);
         inv(jose, abamectina,  "Araña roja viñedo S.C.",         4.0f);
 
-        trat(jose, r_jose_1, glifosato, "PR", "Malas hierbas cereal",  "POAAN",  LocalDate.of(2024, 3, 5),  3.0f, "L/ha");
-        trat(jose, r_jose_2, captan,    "CU", "Oidio de la vid",       "UNCVIT", LocalDate.of(2024, 6, 10), 1.5f, "kg/ha");
+        trat(jose, r_jose_1, glifosato, "PR", "Malas hierbas cereal",  "POAAN",  LocalDate.of(2024, 3, 5),  3.0f, "L/ha", false);
+        trat(jose, r_jose_2, captan,    "CU", "Oidio de la vid",       "UNCVIT", LocalDate.of(2024, 6, 10), 1.5f, "kg/ha", true);
 
         // ── ISABEL MARTÍNEZ — 3 explotaciones ────────────────────────────────
         Explotacion pradonuevo = exp(asesoria, isabel, "Prado Nuevo", "OL", "PF", 40.0f, "SIG-23-050-0-014");
@@ -246,8 +273,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(isabel, clorpirifos, "Barrenillo olivo primavera",      14.0f);
         inv(isabel, captan,      "Fungicida cereal — La Holanda",    8.0f);
 
-        trat(isabel, r_isabel_1, cobre,      "CU", "Repilo del olivo",      "SPIOCA", LocalDate.of(2024, 4, 18), 3.0f, "kg/ha");
-        trat(isabel, r_isabel_2, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 3, 22), 0.5f, "L/ha");
+        trat(isabel, r_isabel_1, cobre,      "CU", "Repilo del olivo",      "SPIOCA", LocalDate.of(2024, 4, 18), 3.0f, "kg/ha", true);
+        trat(isabel, r_isabel_2, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 3, 22), 0.5f, "L/ha", true);
 
         // ── ANTONIO HERRERO — 2 explotaciones ────────────────────────────────
         Explotacion hazasdelmonte = exp(asesoria, antonio, "Las Hazas del Monte", "CE", "PF", 90.0f, "SIG-06-015-0-017");
@@ -264,8 +291,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(antonio, cobre,       "Prevención mildiu pepino",           11.0f);
         inv(antonio, abamectina,  "Minador hoja pepino invernadero",     4.5f);
 
-        trat(antonio, r_antonio_1, glifosato, "PR", "Malas hierbas cereal",    "POAAN",  LocalDate.of(2024, 2, 8),  4.0f, "L/ha");
-        trat(antonio, r_antonio_2, captan,    "CU", "Botritis del tomate",     "BOTRCI", LocalDate.of(2024, 5, 25), 2.0f, "kg/ha");
+        trat(antonio, r_antonio_1, glifosato, "PR", "Malas hierbas cereal",    "POAAN",  LocalDate.of(2024, 2, 8),  4.0f, "L/ha", false);
+        trat(antonio, r_antonio_2, captan,    "CU", "Botritis del tomate",     "BOTRCI", LocalDate.of(2024, 5, 25), 2.0f, "kg/ha", true);
 
         // ── ROSA JIMÉNEZ — 3 explotaciones ───────────────────────────────────
         Explotacion almendrosronda = exp(asesoria, rosa, "Almendros de Ronda", "FS", "PF", 20.0f, "SIG-29-080-0-019");
@@ -286,8 +313,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(rosa, glifosato,   "Herbicida olivo — Frailes",     20.0f);
         inv(rosa, clorpirifos, "Mosca olivo verano",             9.0f);
 
-        trat(rosa, r_rosa_1, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 4, 2),  0.6f, "L/ha");
-        trat(rosa, r_rosa_2, cobre,      "CU", "Mildiu de la vid",       "PLASVI", LocalDate.of(2024, 5, 30), 3.5f, "kg/ha");
+        trat(rosa, r_rosa_1, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 4, 2),  0.6f, "L/ha", true);
+        trat(rosa, r_rosa_2, cobre,      "CU", "Mildiu de la vid",       "PLASVI", LocalDate.of(2024, 5, 30), 3.5f, "kg/ha", true);
 
         // ── MANUEL GUERRERO — 2 explotaciones ────────────────────────────────
         Explotacion dehesagrande = exp(asesoria, manuel, "La Dehesa Grande", "PA", "PF", 110.0f, "SIG-10-030-0-022");
@@ -304,8 +331,8 @@ public class DataSeeder implements CommandLineRunner {
         inv(manuel, cobre,       "Prevención enfermedades cereal",  9.0f);
         inv(manuel, abamectina,  "Control plagas pastizal",         3.0f);
 
-        trat(manuel, r_manuel_1, clorpirifos, "CU", "Mosca del olivo",     "DACUOL", LocalDate.of(2024, 7, 8),  1.5f, "L/ha");
-        trat(manuel, r_manuel_2, glifosato,   "PR", "Malas hierbas cereal","POAAN",  LocalDate.of(2024, 2, 28), 3.5f, "L/ha");
+        trat(manuel, r_manuel_1, clorpirifos, "CU", "Mosca del olivo",     "DACUOL", LocalDate.of(2024, 7, 8),  1.5f, "L/ha", true);
+        trat(manuel, r_manuel_2, glifosato,   "PR", "Malas hierbas cereal","POAAN",  LocalDate.of(2024, 2, 28), 3.5f, "L/ha", false);
 
         // ── PILAR FUENTES — 2 explotaciones ──────────────────────────────────
         Explotacion olivaralqueria = exp(asesoria, pilar, "Olivar Alquería", "OL", "PF", 38.5f, "SIG-06-060-0-024");
@@ -322,11 +349,31 @@ public class DataSeeder implements CommandLineRunner {
         inv(pilar, abamectina,  "Acaricida olivo Pilar",             5.0f);
         inv(pilar, captan,      "Fungicida preventivo cereal Pilar",  7.5f);
 
-        trat(pilar, r_pilar_1, cobre,       "CU", "Repilo del olivo",  "SPIOCA", LocalDate.of(2024, 4, 25), 2.5f, "kg/ha");
-        trat(pilar, r_pilar_2, clorpirifos, "CU", "Mosca del olivo",   "DACUOL", LocalDate.of(2024, 7, 15), 1.0f, "L/ha");
+        trat(pilar, r_pilar_1, cobre,       "CU", "Repilo del olivo",  "SPIOCA", LocalDate.of(2024, 4, 25), 2.5f, "kg/ha", true);
+        trat(pilar, r_pilar_2, clorpirifos, "CU", "Mosca del olivo",   "DACUOL", LocalDate.of(2024, 7, 15), 1.0f, "L/ha", true);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private void aplicador(Granjero g, String nombre, String nif, String numeroRopo, String nivelCapacitacion) {
+        aplicadorRepository.save(Aplicador.builder()
+                .nombre(nombre)
+                .nif(nif)
+                .numeroRopo(numeroRopo)
+                .nivelCapacitacion(nivelCapacitacion)
+                .granjero(g)
+                .build());
+    }
+
+    private void equipamiento(Granjero g, String alias, String tipoMaquina, String marcaModelo, String numRegistroIteaf) {
+        equipamientoRepository.save(Equipamiento.builder()
+                .alias(alias)
+                .tipoMaquina(tipoMaquina)
+                .marcaModelo(marcaModelo)
+                .numRegistroIteaf(numRegistroIteaf)
+                .granjero(g)
+                .build());
+    }
 
     private Granjero g(String username) {
         return granjeroRepository.findByUsername(username)
@@ -385,9 +432,17 @@ public class DataSeeder implements CommandLineRunner {
 
     private void trat(Granjero g, Recinto r, ProductoFitosanitario p,
                       String motivo, String plagaTexto, String eppoCode,
-                      LocalDate fecha, float dosis, String unidades) {
+                      LocalDate fecha, float dosis, String unidades,
+                      boolean validado) {
         String prov = r.getParcela().getExplotacion().getProvinciaExplotacion();
         double superficie = r.getSuperficie() != null ? r.getSuperficie().doubleValue() : 0.0;
+
+        List<Aplicador> aplicadores = aplicadorRepository.findAll();
+        Aplicador aplicador = aplicadores.stream().filter(a -> a.getGranjero().getId().equals(g.getId())).findFirst().orElse(null);
+
+        List<Equipamiento> equipamientos = equipamientoRepository.findAll();
+        Equipamiento equipamiento = equipamientos.stream().filter(e -> e.getGranjero().getId().equals(g.getId())).findFirst().orElse(null);
+
         tratamientoRepository.save(Tratamiento.builder()
                 .fecha(fecha)
                 .dosis(dosis)
@@ -397,12 +452,14 @@ public class DataSeeder implements CommandLineRunner {
                 .motivoTratamiento(motivo)
                 .codigoPlaga(eppoCode)
                 .volumenCaldo(new BigDecimal("200.00"))
-                .estado("VALIDADO")
-                .validado(true)
+                .estado(validado ? "VALIDADO" : "PENDIENTE")
+                .validado(validado)
                 .aiConfidence(0f)
                 .recinto(r)
                 .granjero(g)
                 .productoFitosanitario(p)
+                .aplicador(aplicador)
+                .equipamiento(equipamiento)
                 .build());
     }
 
