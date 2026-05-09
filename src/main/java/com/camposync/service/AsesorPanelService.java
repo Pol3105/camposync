@@ -124,7 +124,15 @@ public class AsesorPanelService {
         List<Tratamiento> tratamientos = tratamientoRepository.findByRecinto_Parcela_Explotacion_IdAndRecinto_Parcela_Explotacion_Asesoria_Id(
                 explotacionId, asesor.getAsesoria().getId());
 
-        return cuePdfExportService.generateCuePdf(explotacion, tratamientos);
+        List<Parcela> parcelas = parcelaRepository.findByExplotacion_Id(explotacionId);
+        List<Recinto> recintos = parcelas.stream()
+            .flatMap(p -> recintoRepository.findByParcela_Id(p.getId()).stream())
+            .toList();
+
+        List<Aplicador> aplicadores = aplicadorRepository.findByGranjero_Id(explotacion.getGranjero().getId());
+        List<Equipamiento> equipos = equipamientoRepository.findByGranjero_Id(explotacion.getGranjero().getId());
+
+        return cuePdfExportService.generateCuePdf(explotacion, tratamientos, parcelas, recintos, aplicadores, equipos, asesor);
     }
 
     // ── Explotaciones por granjero ────────────────────────────────────────────
