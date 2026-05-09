@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -23,9 +22,11 @@ public class CuePdfExportService {
     private final com.camposync.repository.RecintoRepository recintoRepository;
     private final com.camposync.repository.TratamientoRepository tratamientoRepository;
 
-    private static final Font FONT_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+    private static final Font FONT_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+    private static final Font FONT_SECTION = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
     private static final Font FONT_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6);
     private static final Font FONT_CELL = FontFactory.getFont(FontFactory.HELVETICA, 6);
+    private static final Font FONT_NOTE = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 5);
 
     public byte[] generateCuePdf(Long explotacionId) {
         Explotacion explotacion = explotacionRepository.findById(explotacionId)
@@ -39,9 +40,9 @@ public class CuePdfExportService {
             document.open();
 
             // Titulo General
-            Paragraph title = new Paragraph("ANEXO II: MODELO DE CUADERNO DE EXPLOTACIÓN", FONT_TITLE);
+            Paragraph title = new Paragraph("MODELO DEL CUADERNO DE EXPLOTACIÓN", FONT_TITLE);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(10);
+            title.setSpacingAfter(15);
             document.add(title);
 
             // A. DATOS GENERALES DE LA EXPLOTACIÓN
@@ -51,7 +52,7 @@ public class CuePdfExportService {
             PdfPTable tableTitular = new PdfPTable(6);
             tableTitular.setWidthPercentage(100);
             tableTitular.setSpacingAfter(10);
-            tableTitular.setWidths(new float[]{2f, 2f, 2f, 1f, 1f, 2f});
+            tableTitular.setWidths(new float[]{2f, 2f, 1.5f, 1.5f, 1f, 2f});
 
             Granjero granjero = explotacion.getGranjero();
             String nombreGranjero = granjero != null ? granjero.getNombreLegal() : "";
@@ -89,28 +90,33 @@ public class CuePdfExportService {
             document.add(tableTitular);
 
             // Asesoramiento
-            PdfPTable tableAsesor = new PdfPTable(4);
+            PdfPTable tableAsesor = new PdfPTable(6);
             tableAsesor.setWidthPercentage(100);
             tableAsesor.setSpacingAfter(10);
+            tableAsesor.setWidths(new float[]{2f, 2f, 1f, 1f, 1f, 1.5f});
 
             Asesoria asesoria = explotacion.getAsesoria();
             String nombreAsesor = asesoria != null ? asesoria.getNombre() : "";
-            String nifAsesor = "";
+            String nifAsesor = ""; // Podriamos poner el CIF de la asesoria si lo tuvieramos
 
             addCellHeader(tableAsesor, "IDENTIFICACIÓN DE LA AGRUPACIÓN O ENTIDAD DE ASESORAMIENTO (en caso de estar integrado en alguna)");
             addCellData(tableAsesor, "");
             addCellHeader(tableAsesor, "Nº de Registro:");
+            addCellData(tableAsesor, "");
+            addCellHeader(tableAsesor, "Nº Inscripción en ROPO:");
             addCellData(tableAsesor, "");
 
             addCellHeader(tableAsesor, "Persona que asesora a la explotación (Apellidos y nombre):");
             addCellData(tableAsesor, nombreAsesor);
             addCellHeader(tableAsesor, "NIF:");
             addCellData(tableAsesor, nifAsesor);
+            addCellHeader(tableAsesor, "Nº Inscripción en ROPO:");
+            addCellData(tableAsesor, "");
 
             document.add(tableAsesor);
 
             // Zonas Vulnerables
-            document.add(new Paragraph("PARCELAS EN ZONAS VULNERABLES (ZZVV):", FONT_HEADER));
+            document.add(new Paragraph("PARCELAS EN ZONAS VULNERABLES (ZZVV):", FONT_SECTION));
             PdfPTable tableZZVV = new PdfPTable(2);
             tableZZVV.setWidthPercentage(100);
             tableZZVV.setSpacingAfter(10);
@@ -121,7 +127,7 @@ public class CuePdfExportService {
             document.add(tableZZVV);
 
             // Captacion de agua
-            document.add(new Paragraph("Relación de parcelas en las que hay puntos de captación de agua para consumo humano:", FONT_HEADER));
+            document.add(new Paragraph("Relación de parcelas en las que hay puntos de captación de agua para consumo humano:", FONT_SECTION));
             PdfPTable tableAgua = new PdfPTable(1);
             tableAgua.setWidthPercentage(100);
             tableAgua.setSpacingAfter(10);
@@ -133,7 +139,7 @@ public class CuePdfExportService {
             // B. PERSONAS QUE INTERVIENEN Y EQUIPOS DE APLICACIÓN
             addSectionTitle(document, "B. PERSONAS QUE INTERVIENEN Y EQUIPOS DE APLICACIÓN DE PRODUCTOS FITOSANITARIOS (Cumplimentar una sola vez o actualizar si procede)");
 
-            document.add(new Paragraph("B.2. PERSONAL QUE INTERVIENE EN LA APLICACIÓN DE PRODUCTOS FITOSANITARIOS:", FONT_HEADER));
+            document.add(new Paragraph("B.2. PERSONAL QUE INTERVIENE EN LA APLICACIÓN DE PRODUCTOS FITOSANITARIOS:", FONT_SECTION));
             PdfPTable tableAplicadores = new PdfPTable(7);
             tableAplicadores.setWidthPercentage(100);
             tableAplicadores.setSpacingAfter(10);
@@ -164,7 +170,7 @@ public class CuePdfExportService {
             }
             document.add(tableAplicadores);
 
-            document.add(new Paragraph("B.3. EQUIPOS DE APLICACIÓN DE PRODUCTOS FITOSANITARIOS PROPIOS:", FONT_HEADER));
+            document.add(new Paragraph("B.3. EQUIPOS DE APLICACIÓN DE PRODUCTOS FITOSANITARIOS PROPIOS:", FONT_SECTION));
             PdfPTable tableEquipos = new PdfPTable(5);
             tableEquipos.setWidthPercentage(100);
             tableEquipos.setSpacingAfter(10);
@@ -180,8 +186,8 @@ public class CuePdfExportService {
                 for (Equipamiento e : equipos) {
                     addCellData(tableEquipos, e.getTipoMaquina());
                     addCellData(tableEquipos, e.getMarcaModelo());
-                    addCellData(tableEquipos, "");
-                    addCellData(tableEquipos, e.getAlias());
+                    addCellData(tableEquipos, ""); // No tenemos fecha adquisición
+                    addCellData(tableEquipos, e.getAlias()); // Alias -> ROMA provisionalmente
                     addCellData(tableEquipos, e.getNumRegistroIteaf());
                 }
             } else {
@@ -209,8 +215,8 @@ public class CuePdfExportService {
             addSectionTitle(document, "C. IDENTIFICACIÓN DE LAS PARCELAS DE LA EXPLOTACIÓN (Cumplimentar una sola vez o actualizar si procede)");
             PdfPTable tableParcelas = new PdfPTable(19);
             tableParcelas.setWidthPercentage(100);
-            tableParcelas.setSpacingAfter(10);
-            tableParcelas.setWidths(new float[]{1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f,1f});
+            tableParcelas.setSpacingAfter(5);
+            tableParcelas.setWidths(new float[]{1f,1f,1.5f,1f,1f,1.2f,1.2f,1.2f,1.2f,1.2f,1.5f,1.5f,1.5f,1.5f,1f,1f,1f,1f,1f});
 
             String[] cabecerasC = {
                 "Nº Orden", "Provincia", "Municipio", "Agregado", "Zona", "Polígono", "Parcela", "Recinto",
@@ -237,14 +243,14 @@ public class CuePdfExportService {
                             addCellData(tableParcelas, r.getSuperficie() != null ? r.getSuperficie().toString() : "");
                             addCellData(tableParcelas, r.getSuperficie() != null ? r.getSuperficie().toString() : ""); // Asumimos cultivada = sigpac
                             addCellData(tableParcelas, r.getCultivo() != null ? r.getCultivo() : "");
-                            addCellData(tableParcelas, r.getSistemaCultivo() != null ? r.getSistemaCultivo() : "");
-                            addCellData(tableParcelas, "");
-                            addCellData(tableParcelas, "");
-                            addCellData(tableParcelas, "");
-                            addCellData(tableParcelas, r.getUsoSigpac() != null ? r.getUsoSigpac() : "");
-                            addCellData(tableParcelas, "");
-                            addCellData(tableParcelas, "");
-                            addCellData(tableParcelas, "");
+                            addCellData(tableParcelas, ""); // Variedad
+                            addCellData(tableParcelas, ""); // Inicio Cultivo
+                            addCellData(tableParcelas, ""); // Fin Cultivo
+                            addCellData(tableParcelas, ""); // Sistema riego
+                            addCellData(tableParcelas, r.getSistemaCultivo() != null ? r.getSistemaCultivo() : ""); // Sistema explotacion
+                            addCellData(tableParcelas, ""); // Asesoramiento GIP
+                            addCellData(tableParcelas, ""); // Pendiente
+                            addCellData(tableParcelas, ""); // ZV S/N
                         }
                     }
                 }
@@ -253,13 +259,15 @@ public class CuePdfExportService {
                 for(int i=0; i<19; i++) addCellData(tableParcelas, "");
             }
             document.add(tableParcelas);
+            Paragraph notaC = new Paragraph("(1) Sistema de riego: Aspersión (AS), Goteo (GO), Gravedad (GR), Manta (MA), Pivot (PI), Secano (SE). (2) Sistema de explotación: Regadío (RE), Secano (SE). (3) Sistema de asesoramiento (GIP): Producción Integrada (PI), Agricultura Ecológica (AE), Certificación GlobalGAP (GG)...", FONT_NOTE);
+            document.add(notaC);
 
             document.newPage();
 
             // D. REGISTRO DE TRATAMIENTOS FITOSANITARIOS
             addSectionTitle(document, "D. REGISTRO DE TRATAMIENTOS FITOSANITARIOS");
 
-            document.add(new Paragraph("TRATAMIENTO DE SEMILLAS:", FONT_HEADER));
+            document.add(new Paragraph("TRATAMIENTO DE SEMILLAS:", FONT_SECTION));
             PdfPTable tableSemillas = new PdfPTable(6);
             tableSemillas.setWidthPercentage(100);
             tableSemillas.setSpacingAfter(10);
@@ -272,10 +280,10 @@ public class CuePdfExportService {
             for(int i=0; i<6; i++) addCellData(tableSemillas, "");
             document.add(tableSemillas);
 
-            document.add(new Paragraph("TRATAMIENTOS REALIZADOS:", FONT_HEADER));
+            document.add(new Paragraph("INTERVENCIONES FITOSANITARIAS REALIZADAS:", FONT_SECTION));
             PdfPTable tableTratamientos = new PdfPTable(10);
             tableTratamientos.setWidthPercentage(100);
-            tableTratamientos.setSpacingAfter(10);
+            tableTratamientos.setSpacingAfter(5);
             tableTratamientos.setWidths(new float[]{1.5f, 2f, 1f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 2.5f, 1f});
 
             String[] cabecerasD = {
@@ -307,9 +315,9 @@ public class CuePdfExportService {
 
                                     Aplicador app = t.getAplicador();
                                     addCellData(tableTratamientos, app != null ? app.getNombre() : "");
-                                    addCellData(tableTratamientos, "");
+                                    addCellData(tableTratamientos, "" != null ? "" : "");
                                     addCellData(tableTratamientos, t.getMotivoTratamiento() != null ? t.getMotivoTratamiento() : "");
-                                    addCellData(tableTratamientos, "");
+                                    addCellData(tableTratamientos, ""); // Alternativas no químicas
 
                                     ProductoFitosanitario prod = t.getProductoFitosanitario();
                                     String prodInfo = "";
@@ -342,14 +350,109 @@ public class CuePdfExportService {
             addCellData(tableValidacion, "");
             document.add(tableValidacion);
 
-            // E a J en blanco
             document.newPage();
-            addEmptySection(document, "E. REGISTRO DE FERTILIZACIÓN", new String[]{"Fecha", "Identificación parcela", "Superf. Fertilizada", "Abono orgánico", "Abono inorgánico", "Dosis", "Técnica de aplicación"});
-            addEmptySection(document, "F. REGISTRO DE RIEGO", new String[]{"Fecha", "Identificación parcela", "Superf. Regada", "Volumen (m3)", "Calidad agua", "Sistema de riego"});
-            addEmptySection(document, "G. REGISTRO DE PRODUCCIÓN COSECHADA", new String[]{"Fecha", "Identificación parcela", "Superf. Recolectada", "Producto", "Cantidad (kg)", "Destino"});
-            addEmptySection(document, "H. REGISTRO DE ANÁLISIS", new String[]{"Fecha", "Identificación parcela/lote", "Tipo de análisis", "Laboratorio", "Resultado"});
-            addEmptySection(document, "I. REGISTRO DE FACTURAS", new String[]{"Fecha", "Nº Factura", "Proveedor", "Concepto", "Importe"});
-            addEmptySection(document, "J. REGISTRO DE TRATAMIENTOS POSTCOSECHA", new String[]{"Fecha", "Producto Cosechado", "Lote", "Cantidad", "Producto Fitosanitario", "Dosis", "Eficacia"});
+
+            // E. FERTILIZACIÓN
+            addSectionTitle(document, "E. REGISTRO DE FERTILIZACIÓN");
+            document.add(new Paragraph("E.1 PLAN DE ABONADO:", FONT_SECTION));
+
+            PdfPTable tablePlanAbonado = new PdfPTable(8);
+            tablePlanAbonado.setWidthPercentage(100);
+            tablePlanAbonado.setSpacingAfter(10);
+            tablePlanAbonado.setWidths(new float[]{2f, 2f, 1f, 1f, 1f, 1f, 1f, 1f});
+            String[] cabecerasPlanAbonado = {
+                "Identificación parcela", "Fecha prevista", "Necesidad N", "Necesidad P2O5", "Necesidad K2O", "Aporte N", "Aporte P2O5", "Aporte K2O"
+            };
+            for (String h : cabecerasPlanAbonado) addCellHeader(tablePlanAbonado, h);
+            for(int i=0; i<16; i++) addCellData(tablePlanAbonado, "");
+            document.add(tablePlanAbonado);
+
+            document.add(new Paragraph("E.2 APLICACIÓN REAL:", FONT_SECTION));
+            PdfPTable tableFertilizacionReal = new PdfPTable(10);
+            tableFertilizacionReal.setWidthPercentage(100);
+            tableFertilizacionReal.setSpacingAfter(10);
+            tableFertilizacionReal.setWidths(new float[]{1.5f, 2f, 1.5f, 2f, 1f, 1f, 1f, 1f, 1f, 1.5f});
+            String[] cabecerasFertilizacionReal = {
+                "Fecha", "Identificación parcela", "Superf. Fertilizada", "Abono (Tipo/Riqueza)", "Dosis", "N (kg/ha)", "P2O5 (kg/ha)", "K2O (kg/ha)", "Volumen (m3)", "Técnica aplicación"
+            };
+            for (String h : cabecerasFertilizacionReal) addCellHeader(tableFertilizacionReal, h);
+            for(int i=0; i<20; i++) addCellData(tableFertilizacionReal, "");
+            document.add(tableFertilizacionReal);
+
+            document.newPage();
+
+            // F. RIEGO
+            addSectionTitle(document, "F. INFORMACIÓN DE RIEGO");
+            document.add(new Paragraph("F.1 RIEGO GENERAL Y BUENAS PRÁCTICAS:", FONT_SECTION));
+            PdfPTable tableRiego = new PdfPTable(6);
+            tableRiego.setWidthPercentage(100);
+            tableRiego.setSpacingAfter(10);
+            String[] cabecerasRiego = {
+                "Fecha", "Identificación parcela", "Superf. Regada", "Volumen (m3)", "Calidad agua", "Sistema de riego (y buenas prácticas)"
+            };
+            for (String h : cabecerasRiego) addCellHeader(tableRiego, h);
+            for(int i=0; i<12; i++) addCellData(tableRiego, "");
+            document.add(tableRiego);
+
+            document.add(new Paragraph("F.2 FERTIRRIGACIÓN:", FONT_SECTION));
+            PdfPTable tableFertirrigacion = new PdfPTable(5);
+            tableFertirrigacion.setWidthPercentage(100);
+            tableFertirrigacion.setSpacingAfter(10);
+            String[] cabecerasFertirrigacion = {
+                "Fecha", "Identificación parcela", "Producto aportado", "Dosis (kg/m3)", "Total Volumen (m3)"
+            };
+            for (String h : cabecerasFertirrigacion) addCellHeader(tableFertirrigacion, h);
+            for(int i=0; i<10; i++) addCellData(tableFertirrigacion, "");
+            document.add(tableFertirrigacion);
+
+            document.newPage();
+
+            // G-J ECORREGÍMENES (Nuevas Secciones)
+            addSectionTitle(document, "G. ECORREGÍMENES: CUBIERTAS VEGETALES E INERTES EN CULTIVOS LEÑOSOS");
+            PdfPTable tableCubiertas = new PdfPTable(6);
+            tableCubiertas.setWidthPercentage(100);
+            tableCubiertas.setSpacingAfter(20);
+            String[] cabecerasCubiertas = {
+                "Identificación parcela", "Tipo de Cubierta", "Fecha implantación", "Manejo (Segado/Picado)", "Uso fitosanitarios", "Observaciones"
+            };
+            for (String h : cabecerasCubiertas) addCellHeader(tableCubiertas, h);
+            for(int i=0; i<12; i++) addCellData(tableCubiertas, "");
+            document.add(tableCubiertas);
+
+            addSectionTitle(document, "H. ECORREGÍMENES: CULTIVOS BAJO AGUA (ARROZ)");
+            PdfPTable tableArroz = new PdfPTable(4);
+            tableArroz.setWidthPercentage(100);
+            tableArroz.setSpacingAfter(20);
+            String[] cabecerasArroz = {
+                "Identificación parcela", "Fecha siembra", "Fecha inundación", "Labores mecánicas"
+            };
+            for (String h : cabecerasArroz) addCellHeader(tableArroz, h);
+            for(int i=0; i<8; i++) addCellData(tableArroz, "");
+            document.add(tableArroz);
+
+            document.newPage();
+
+            addSectionTitle(document, "I. ECORREGÍMENES: SIEGA SOSTENIBLE Y FAUNA ESTEPARIA");
+            PdfPTable tableSiega = new PdfPTable(4);
+            tableSiega.setWidthPercentage(100);
+            tableSiega.setSpacingAfter(20);
+            String[] cabecerasSiega = {
+                "Identificación parcela", "Tipo de cultivo", "Fecha de siega", "Técnica de siega"
+            };
+            for (String h : cabecerasSiega) addCellHeader(tableSiega, h);
+            for(int i=0; i<8; i++) addCellData(tableSiega, "");
+            document.add(tableSiega);
+
+            addSectionTitle(document, "J. ECORREGÍMENES: PASTOREO EXTENSIVO E ISLAS DE BIODIVERSIDAD");
+            PdfPTable tablePastoreo = new PdfPTable(5);
+            tablePastoreo.setWidthPercentage(100);
+            tablePastoreo.setSpacingAfter(20);
+            String[] cabecerasPastoreo = {
+                "Identificación parcela", "Carga ganadera (UGM/ha)", "Días de pastoreo", "Islas Biodiversidad (Superficie)", "Observaciones"
+            };
+            for (String h : cabecerasPastoreo) addCellHeader(tablePastoreo, h);
+            for(int i=0; i<10; i++) addCellData(tablePastoreo, "");
+            document.add(tablePastoreo);
 
             document.close();
         } catch (DocumentException e) {
@@ -360,24 +463,10 @@ public class CuePdfExportService {
     }
 
     private void addSectionTitle(Document document, String title) throws DocumentException {
-        Paragraph p = new Paragraph(title, FONT_TITLE);
+        Paragraph p = new Paragraph(title, FONT_SECTION);
         p.setSpacingBefore(10);
         p.setSpacingAfter(10);
         document.add(p);
-    }
-
-    private void addEmptySection(Document document, String title, String[] headers) throws DocumentException {
-        addSectionTitle(document, title);
-        PdfPTable table = new PdfPTable(headers.length);
-        table.setWidthPercentage(100);
-        table.setSpacingAfter(20);
-        for (String h : headers) {
-            addCellHeader(table, h);
-        }
-        for (int i = 0; i < headers.length * 2; i++) {
-            addCellData(table, "");
-        }
-        document.add(table);
     }
 
     private void addCellHeader(PdfPTable table, String text) {
