@@ -98,6 +98,16 @@ export const granjero = {
 }
 
 export const asesor = {
+  exportarCuePdfPorExplotacion: async (explotacionId) => {
+    const token = localStorage.getItem('token')
+    const headers = { 'Authorization': `Bearer ${token}` }
+    const res = await fetch(`${BASE}/asesor/explotaciones/${explotacionId}/cue-pdf`, { headers })
+    if (!res.ok) {
+        throw new Error('Error al generar PDF CUE')
+    }
+    return await res.blob()
+  },
+
   granjeros: () => request('/asesor/granjeros'),
   explotaciones: () => request('/asesor/explotaciones'),
   tratamientos: () => request('/asesor/tratamientos'),

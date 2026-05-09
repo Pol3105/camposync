@@ -115,6 +115,24 @@ export default function AgricultorExplotacionesPage() {
   const [loading, setLoading] = useState(true)
   const [siexInfo, setSiexInfo] = useState(null)
 
+  const handleExportPdf = async (exp) => {
+    try {
+      const blob = await asesor.exportarCuePdfPorExplotacion(exp.id)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `CUE_Explotacion_${exp.nombre.replace(/\s+/g, '_')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error(err)
+      alert('Error al generar el PDF CUE')
+    }
+  }
+
+
   const fetchExplotaciones = useCallback(async () => {
     setLoading(true)
     try {
@@ -230,6 +248,14 @@ export default function AgricultorExplotacionesPage() {
                             >
                               <Info size={14} color="#6b7280" />
                               Info SIEX
+                            </button>
+                            <button
+                              onClick={() => handleExportPdf(exp)}
+                              title="Exportar PDF"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 10, color: '#92400e', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                            >
+                              <FileText size={14} color="#92400e" />
+                              Exportar PDF
                             </button>
                             <button
                               onClick={() => navigate(`/explotaciones/${exp.id}/parcelas`, {

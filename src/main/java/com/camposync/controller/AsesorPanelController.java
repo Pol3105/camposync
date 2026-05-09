@@ -18,6 +18,9 @@ import com.camposync.dto.EquipamientoDTO;
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.service.AsesorPanelService;
 import jakarta.validation.Valid;
+import com.camposync.service.CuePdfExportService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,7 @@ import java.util.List;
 public class AsesorPanelController {
 
     private final AsesorPanelService asesorPanelService;
+    private final CuePdfExportService cuePdfExportService;
 
     @GetMapping("/perfil")
     public ResponseEntity<AsesorDTO> getPerfil() {
@@ -183,5 +187,14 @@ public class AsesorPanelController {
 
     private String currentUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    @GetMapping("/explotaciones/{id}/cue-pdf")
+    public ResponseEntity<byte[]> exportarCuePdf(@PathVariable Long id) {
+        byte[] pdfBytes = cuePdfExportService.generateCuePdf(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "CUE_Explotacion_" + id + ".pdf");
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }
