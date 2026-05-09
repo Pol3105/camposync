@@ -46,6 +46,20 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/invitaciones/*/aceptar").permitAll()
+
+                        // RBAC Rules
+                        .requestMatchers("/api/asesor/**").hasRole("ASESOR")
+                        .requestMatchers("/api/granjero/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/explotaciones/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/parcelas/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/recintos/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/tratamientos/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/aplicadores/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/equipamiento/**").hasRole("GRANJERO")
+                        .requestMatchers("/api/inventario/**").hasRole("GRANJERO")
+                        .requestMatchers(HttpMethod.GET, "/api/invitaciones/me").hasRole("GRANJERO")
+                        .requestMatchers("/api/invitaciones/**").hasRole("ASESOR")
+
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
