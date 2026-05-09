@@ -25,13 +25,30 @@ import ParcelaDetalle       from './pages/agricultor/ParcelaDetalle'
 import TratamientosRecinto  from './pages/agricultor/TratamientosRecinto'
 import RecursosAgricultor  from './pages/agricultor/RecursosAgricultor'
 import PerfilAgricultor     from './pages/agricultor/PerfilAgricultor'
+import RoleProtectedRoute from './components/RoleProtectedRoute'
 
 function PrivateRoute({ children }) {
   return localStorage.getItem('token') ? children : <Navigate to="/login" replace />
 }
 
-function Private({ children }) {
-  return <PrivateRoute>{children}</PrivateRoute>
+function PrivateAsesor({ children }) {
+  return (
+    <PrivateRoute>
+      <RoleProtectedRoute allowedRoles={['ASESOR']}>
+        {children}
+      </RoleProtectedRoute>
+    </PrivateRoute>
+  )
+}
+
+function PrivateGranjero({ children }) {
+  return (
+    <PrivateRoute>
+      <RoleProtectedRoute allowedRoles={['GRANJERO']}>
+        {children}
+      </RoleProtectedRoute>
+    </PrivateRoute>
+  )
 }
 
 export default function App() {
@@ -43,27 +60,28 @@ export default function App() {
         <Route path="/register/invite/:token" element={<InviteRegisterPage />} />
         <Route path="/forgot-password"        element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token"  element={<ResetPasswordPage />} />
-        <Route path="/dashboard"      element={<Private><DashboardPage /></Private>} />
+        <Route path="/dashboard"      element={<PrivateAsesor><DashboardPage /></PrivateAsesor>} />
         {/* Agricultor mobile routes */}
-        <Route path="/cuaderno"                                          element={<Private><DashboardAgricultor /></Private>} />
-        <Route path="/cuaderno/tratamientos"                             element={<Private><CuadernoTratamientos /></Private>} />
-        <Route path="/cuaderno/fincas"                                   element={<Private><FincasAgricultor /></Private>} />
-        <Route path="/cuaderno/fincas/:expId"                            element={<Private><FincaDetalle /></Private>} />
-        <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId"        element={<Private><ParcelaDetalle /></Private>} />
-        <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId/recintos/:recintoId/tratamientos" element={<Private><TratamientosRecinto /></Private>} />
-        <Route path="/cuaderno/recursos"                                 element={<Private><RecursosAgricultor /></Private>} />
-        <Route path="/cuaderno/perfil"                                   element={<Private><PerfilAgricultor /></Private>} />
-        <Route path="/invitaciones"   element={<Private><InvitacionesPage /></Private>} />
-        <Route path="/agricultores"                        element={<Private><AgricultoresPage /></Private>} />
-        <Route path="/agricultores/:id/explotaciones"      element={<Private><AgricultorExplotacionesPage /></Private>} />
-        <Route path="/explotaciones"                       element={<Private><ExplotacionesPage /></Private>} />
-        <Route path="/explotaciones/:id/parcelas"          element={<Private><ExplotacionParcelasPage /></Private>} />
-        <Route path="/parcelas/:id/tratamientos"           element={<Private><ParcelaTratamientosPage /></Private>} />
-        <Route path="/parcelas/:id/recintos"              element={<Private><ParcelaRecintosPage /></Private>} />
-        <Route path="/recintos/:id/tratamientos"          element={<Private><RecintoTratamientosPage /></Private>} />
-        <Route path="/tratamientos"                        element={<Private><TratamientosPage /></Private>} />
-        <Route path="/tratamientos/:id/revision"           element={<Private><RevisionTratamientoPage /></Private>} />
-        <Route path="/configuracion"                       element={<Private><ConfiguracionPage /></Private>} />
+        <Route path="/cuaderno"                                          element={<PrivateGranjero><DashboardAgricultor /></PrivateGranjero>} />
+        <Route path="/cuaderno/tratamientos"                             element={<PrivateGranjero><CuadernoTratamientos /></PrivateGranjero>} />
+        <Route path="/cuaderno/fincas"                                   element={<PrivateGranjero><FincasAgricultor /></PrivateGranjero>} />
+        <Route path="/cuaderno/fincas/:expId"                            element={<PrivateGranjero><FincaDetalle /></PrivateGranjero>} />
+        <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId"        element={<PrivateGranjero><ParcelaDetalle /></PrivateGranjero>} />
+        <Route path="/cuaderno/fincas/:expId/parcelas/:parcelaId/recintos/:recintoId/tratamientos" element={<PrivateGranjero><TratamientosRecinto /></PrivateGranjero>} />
+        <Route path="/cuaderno/recursos"                                 element={<PrivateGranjero><RecursosAgricultor /></PrivateGranjero>} />
+        <Route path="/cuaderno/perfil"                                   element={<PrivateGranjero><PerfilAgricultor /></PrivateGranjero>} />
+        {/* Asesor routes */}
+        <Route path="/invitaciones"   element={<PrivateAsesor><InvitacionesPage /></PrivateAsesor>} />
+        <Route path="/agricultores"                        element={<PrivateAsesor><AgricultoresPage /></PrivateAsesor>} />
+        <Route path="/agricultores/:id/explotaciones"      element={<PrivateAsesor><AgricultorExplotacionesPage /></PrivateAsesor>} />
+        <Route path="/explotaciones"                       element={<PrivateAsesor><ExplotacionesPage /></PrivateAsesor>} />
+        <Route path="/explotaciones/:id/parcelas"          element={<PrivateAsesor><ExplotacionParcelasPage /></PrivateAsesor>} />
+        <Route path="/parcelas/:id/tratamientos"           element={<PrivateAsesor><ParcelaTratamientosPage /></PrivateAsesor>} />
+        <Route path="/parcelas/:id/recintos"              element={<PrivateAsesor><ParcelaRecintosPage /></PrivateAsesor>} />
+        <Route path="/recintos/:id/tratamientos"          element={<PrivateAsesor><RecintoTratamientosPage /></PrivateAsesor>} />
+        <Route path="/tratamientos"                        element={<PrivateAsesor><TratamientosPage /></PrivateAsesor>} />
+        <Route path="/tratamientos/:id/revision"           element={<PrivateAsesor><RevisionTratamientoPage /></PrivateAsesor>} />
+        <Route path="/configuracion"                       element={<PrivateAsesor><ConfiguracionPage /></PrivateAsesor>} />
         <Route path="*"               element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
