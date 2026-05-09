@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { Map, ArrowLeft, Info, Eye, X ,FileText,Download} from 'lucide-react'
+import { Map, ArrowLeft, Info, Eye, X } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor } from '../services/api'
 
