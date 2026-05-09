@@ -18,6 +18,7 @@ import com.camposync.dto.EquipamientoDTO;
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.service.AsesorPanelService;
 import jakarta.validation.Valid;
+import com.camposync.security.UsuarioPrincipal;
 import com.camposync.service.CuePdfExportService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -191,6 +192,14 @@ public class AsesorPanelController {
 
     @GetMapping("/explotaciones/{id}/cue-pdf")
     public ResponseEntity<byte[]> exportarCuePdf(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        try {
+            asesorPanelService.listarParcelasDeExplotacion(username, id);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         byte[] pdfBytes = cuePdfExportService.generateCuePdf(id);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
