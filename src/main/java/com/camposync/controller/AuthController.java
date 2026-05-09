@@ -45,12 +45,12 @@ public class AuthController {
                     }
                     authService.registerNuevaAsesoria(
                             request.username(), request.password(),
-                            request.nombreAsesor(), request.nombreAsesoria());
+                            request.nombreAsesor(), request.nifAsesor(), request.nombreLegalAsesor(), request.nombreAsesoria());
                 } else {
                     // Flujo interno: une a un Asesor a una Asesoría ya existente
                     authService.registerAsesor(
                             request.username(), request.password(),
-                            request.nombreAsesor(),
+                            request.nombreAsesor(), request.nifAsesor(), request.nombreLegalAsesor(),
                             request.asesoriaId(), Boolean.TRUE.equals(request.esJefe()));
                 }
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -66,7 +66,7 @@ public class AuthController {
 
         LoginResponse response = authService.registerViaInvite(
                 token,
-                request.username(), request.nombre(), request.password());
+                request.username(), request.nombre(), request.nif(), request.nombreLegal(), request.telefono(), request.password());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

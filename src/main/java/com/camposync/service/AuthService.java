@@ -76,7 +76,7 @@ public class AuthService {
     // ── Registro normal de Asesor ─────────────────────────────────────────────
 
     @Transactional
-    public void registerAsesor(String username, String rawPassword, String nombre, Long asesoriaId, boolean esJefe) {
+    public void registerAsesor(String username, String rawPassword, String nombre, String nif, String nombreLegal, Long asesoriaId, boolean esJefe) {
         if (usuarioRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("El username ya está en uso: " + username);
         }
@@ -88,6 +88,8 @@ public class AuthService {
                 .username(username)
                 .passwd(passwordEncoder.encode(rawPassword))
                 .nombre(nombre) // <--- ¡AÑADIDO AQUÍ!
+                .nif(nif)
+                .nombreLegal(nombreLegal)
                 .asesoria(asesoria)
                 .esJefe(esJefe)
                 .build();
@@ -99,7 +101,7 @@ public class AuthService {
 
     @Transactional
     public void registerNuevaAsesoria(String email, String rawPassword,
-                                      String nombreAsesor, String nombreAsesoria) {
+                                      String nombreAsesor, String nifAsesor, String nombreLegalAsesor, String nombreAsesoria) {
         if (usuarioRepository.existsByUsername(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya está registrado");
         }
@@ -118,6 +120,8 @@ public class AuthService {
                 .username(email)
                 .passwd(passwordEncoder.encode(rawPassword))
                 .nombre(nombreAsesor)
+                .nif(nifAsesor)
+                .nombreLegal(nombreLegalAsesor)
                 .asesoria(asesoria)
                 .esJefe(true)
                 .build();
@@ -128,7 +132,7 @@ public class AuthService {
     // ── Registro normal de Granjero (sin invitación) ──────────────────────────
 
     @Transactional
-    public void registerGranjero(String username, String rawPassword, String nombre, String cnae, Long asesoriaId) {
+    public void registerGranjero(String username, String rawPassword, String nombre, String nif, String nombreLegal, String telefono, String cnae, Long asesoriaId) {
         if (usuarioRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("El username ya está en uso: " + username);
         }
@@ -140,6 +144,9 @@ public class AuthService {
                 .username(username)
                 .passwd(passwordEncoder.encode(rawPassword))
                 .nombre(nombre)
+                .nif(nif)
+                .nombreLegal(nombreLegal)
+                .telefono(telefono)
                 .cnae(cnae)
                 .asesoria(asesoria)
                 .build();
@@ -203,7 +210,7 @@ public class AuthService {
      * Si cualquier paso falla, la transacción hace rollback completo.
      */
     @Transactional
-    public LoginResponse registerViaInvite(String token, String username,String nombre, String rawPassword) {
+    public LoginResponse registerViaInvite(String token, String username, String nombre, String nif, String nombreLegal, String telefono, String rawPassword) {
 
         // 1. Buscar la invitación
         Invitacion invitacion = invitacionRepository.findByToken(token)
@@ -244,6 +251,8 @@ public class AuthService {
             Asesor asesor = Asesor.builder()
                     .username(username)
                     .nombre(nombre)
+                    .nif(nif)
+                    .nombreLegal(nombreLegal)
                     .passwd(passwordEncoder.encode(rawPassword))
                     .asesoria(invitacion.getAsesoria())
                     .esJefe(false)
@@ -255,6 +264,9 @@ public class AuthService {
             Granjero granjero = Granjero.builder()
                     .username(username)
                     .nombre(nombre)
+                    .nif(nif)
+                    .nombreLegal(nombreLegal)
+                    .telefono(telefono)
                     .passwd(passwordEncoder.encode(rawPassword))
                     .asesoria(invitacion.getAsesoria())
                     .build();
