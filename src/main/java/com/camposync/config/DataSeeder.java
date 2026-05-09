@@ -65,16 +65,17 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedGranjeros(Asesoria asesoria) {
         Long aId = asesoria.getId();
-        authService.registerGranjero("pedro.alcantara",  "campo2024", "Pedro Alcántara Fuentes",       "0126", aId);
-        authService.registerGranjero("m.vidal",          "campo2024", "María Dolores Vidal Ramos",     "0121", aId);
-        authService.registerGranjero("fco.perez",        "campo2024", "Francisco Javier Pérez Torres", "0111", aId);
-        authService.registerGranjero("c.aguilera",       "campo2024", "Carmen Aguilera Muñoz",         "0126", aId);
-        authService.registerGranjero("jose.romero",      "campo2024", "Herederos Romero Gil S.C.",     "0125", aId);
-        authService.registerGranjero("i.martinez",       "campo2024", "Isabel Martínez Soria",         "0113", aId);
-        authService.registerGranjero("a.herrero",        "campo2024", "Antonio Herrero Blanco",        "0111", aId);
-        authService.registerGranjero("r.jimenez",        "campo2024", "Rosa Jiménez Castillo",         "0128", aId);
-        authService.registerGranjero("m.guerrero",       "campo2024", "Finca El Cerro de Guerrero",    "0126", aId);
-        authService.registerGranjero("p.fuentes",        "campo2024", "Pilar Fuentes Gallego",         "0119", aId);
+        // registerGranjero(username, rawPassword, nombre, nif, nombreLegal, telefono, cnae, asesoriaId)
+        authService.registerGranjero("pedro.alcantara",  "campo2024", "Pedro Alcántara Fuentes",       "12345678A", "Pedro Alcántara Fuentes",       "600111222", "0126", aId);
+        authService.registerGranjero("m.vidal",          "campo2024", "María Dolores Vidal Ramos",     "87654321B", "María Dolores Vidal Ramos",     "611222333", "0121", aId);
+        authService.registerGranjero("fco.perez",        "campo2024", "Francisco Javier Pérez Torres", "11223344C", "Francisco Javier Pérez Torres", "622333444", "0111", aId);
+        authService.registerGranjero("c.aguilera",       "campo2024", "Carmen Aguilera Muñoz",         "44332211D", "Carmen Aguilera Muñoz",         "633444555", "0126", aId);
+        authService.registerGranjero("jose.romero",      "campo2024", "Herederos Romero Gil S.C.",     "B12345678", "Herederos Romero Gil S.C.",     "644555666", "0125", aId);
+        authService.registerGranjero("i.martinez",       "campo2024", "Isabel Martínez Soria",         "55667788E", "Isabel Martínez Soria",         "655666777", "0113", aId);
+        authService.registerGranjero("a.herrero",        "campo2024", "Antonio Herrero Blanco",        "99887766F", "Antonio Herrero Blanco",        "666777888", "0111", aId);
+        authService.registerGranjero("r.jimenez",        "campo2024", "Rosa Jiménez Castillo",         "10203040G", "Rosa Jiménez Castillo",         "677888999", "0128", aId);
+        authService.registerGranjero("m.guerrero",       "campo2024", "Finca El Cerro de Guerrero",    "B87654321", "Finca El Cerro de Guerrero",    "688999000", "0126", aId);
+        authService.registerGranjero("p.fuentes",        "campo2024", "Pilar Fuentes Gallego",         "50607080H", "Pilar Fuentes Gallego",         "699000111", "0119", aId);
     }
 
     // ── 2. Productos fitosanitarios extra (2 más → 5 en total) ───────────────

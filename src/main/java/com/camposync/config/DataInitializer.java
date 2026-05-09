@@ -60,8 +60,8 @@ public class DataInitializer implements CommandLineRunner {
                 .build());
 
         // 2º — Usuarios
-        authService.registerAsesor("admin", "admin123", "Jefe Admin", asesoria.getId(), true);
-        authService.registerGranjero("granjero1", "granjero123", "Juan el Granjero", null, asesoria.getId());
+        authService.registerAsesor("admin", "admin123", "Jefe Admin", "12345678Z", "Jefe Admin", asesoria.getId(), true);
+        authService.registerGranjero("granjero1", "granjero123", "Juan el Granjero", "87654321X", "Juan el Granjero", "600000000", null, asesoria.getId());
 
         Granjero granjero = granjeroRepository.findByUsername("granjero1")
                 .orElseThrow(() -> new IllegalStateException("granjero1 no encontrado tras el seed"));
