@@ -132,7 +132,7 @@ export const asesor = {
   explotacionesPorGranjero: (granjeroId) => request(`/asesor/granjeros/${granjeroId}/explotaciones`),
   tratamientosPorExplotacion: (explotacionId) => request(`/asesor/explotaciones/${explotacionId}/tratamientos`),
   exportarCuePdfPorExplotacion: (explotacionId) => {
-    return fetch(`${API_URL}/asesor/explotaciones/${explotacionId}/cue-pdf`, {
+    return fetch(`${BASE}/asesor/explotaciones/${explotacionId}/cue-pdf`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,

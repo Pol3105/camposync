@@ -138,6 +138,7 @@ export default function AgricultorExplotacionesPage() {
       a.remove()
       window.URL.revokeObjectURL(url)
     } catch (err) {
+      console.error('Error detallado:', err)
       alert('Error al exportar el PDF. Por favor inténtalo de nuevo.')
     }
   }
