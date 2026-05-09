@@ -131,6 +131,17 @@ export const asesor = {
     request(`/asesor/recintos/${id}`, { method: 'DELETE' }),
   explotacionesPorGranjero: (granjeroId) => request(`/asesor/granjeros/${granjeroId}/explotaciones`),
   tratamientosPorExplotacion: (explotacionId) => request(`/asesor/explotaciones/${explotacionId}/tratamientos`),
+  exportarCuePdfPorExplotacion: (explotacionId) => {
+    return fetch(`${API_URL}/asesor/explotaciones/${explotacionId}/cue-pdf`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    }).then(res => {
+      if (!res.ok) throw new Error('Error al descargar el PDF');
+      return res.blob();
+    });
+  },
   tratamientosPorParcela: (parcelaId) => request(`/asesor/parcelas/${parcelaId}/tratamientos`),
   getPerfil: () => request('/asesor/perfil'),
   actualizarPerfil: (body) =>

@@ -19,7 +19,9 @@ import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.service.AsesorPanelService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -66,6 +68,15 @@ public class AsesorPanelController {
     @GetMapping("/explotaciones/{id}/tratamientos")
     public ResponseEntity<List<TratamientoDTO>> listarTratamientosPorExplotacion(@PathVariable Long id) {
         return ResponseEntity.ok(asesorPanelService.listarTratamientosPorExplotacion(currentUsername(), id));
+    }
+
+    @GetMapping("/explotaciones/{id}/cue-pdf")
+    public ResponseEntity<byte[]> exportarCuePdf(@PathVariable Long id) {
+        byte[] pdfBytes = asesorPanelService.exportarCuePdfPorExplotacion(currentUsername(), id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "CUE_Explotacion_" + id + ".pdf");
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 
     @GetMapping("/granjeros/{id}/explotaciones")

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { Map, ArrowLeft, Info, Eye, X } from 'lucide-react'
+import { Map, ArrowLeft, Info, Eye, X, Download } from 'lucide-react'
 import AppLayout from '../components/AppLayout'
 import { asesor } from '../services/api'
 
@@ -126,6 +126,22 @@ export default function AgricultorExplotacionesPage() {
 
   useEffect(() => { fetchExplotaciones() }, [fetchExplotaciones])
 
+  const handleExportPdf = async (expId, expNombre) => {
+    try {
+      const blob = await asesor.exportarCuePdfPorExplotacion(expId)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `CUE_${expNombre.replace(/\s+/g, '_')}_${expId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Error al exportar el PDF. Por favor inténtalo de nuevo.')
+    }
+  }
+
   const titulo = nombreFromState ? `Explotaciones de ${nombreFromState}` : `Explotaciones del Agricultor #${id}`
   const totalHa = explotaciones.reduce((a, e) => a + (parseFloat(e.superficieTotal) || 0), 0).toFixed(1)
   const totalParcelas = explotaciones.reduce((a, e) => a + (e.numParcelas ?? 0), 0)
@@ -239,6 +255,14 @@ export default function AgricultorExplotacionesPage() {
                             >
                               <Eye size={14} color="#3a5aaa" />
                               Ver Parcelas
+                            </button>
+                            <button
+                              onClick={() => handleExportPdf(exp.id, exp.nombre)}
+                              title="Exportar CUE (PDF)"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#fdf6e3', border: '1px solid #f0d080', borderRadius: 10, color: '#b58900', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                            >
+                              <Download size={14} color="#b58900" />
+                              Exportar PDF
                             </button>
                           </div>
                         </td>

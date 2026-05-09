@@ -60,7 +60,7 @@ public class AsesorPanelService {
     private final InventarioRepository inventarioRepository;
     private final AplicadorRepository aplicadorRepository;
     private final EquipamientoRepository equipamientoRepository;
-
+    private final CuePdfExportService cuePdfExportService;
 
     // ── Granjeros ─────────────────────────────────────────────────────────────
 
@@ -108,6 +108,23 @@ public class AsesorPanelService {
                 .stream()
                 .map(this::toTratamientoDTO)
                 .toList();
+    }
+
+    // ── Exportar CUE PDF por Explotación ──────────────────────────────────────
+
+    public byte[] exportarCuePdfPorExplotacion(String username, Long explotacionId) {
+        Asesor asesor = getAsesor(username);
+        Explotacion explotacion = explotacionRepository.findById(explotacionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Explotacion", explotacionId));
+
+        if (!explotacion.getAsesoria().getId().equals(asesor.getAsesoria().getId())) {
+            throw new ResourceNotFoundException("Explotacion", explotacionId);
+        }
+
+        List<Tratamiento> tratamientos = tratamientoRepository.findByRecinto_Parcela_Explotacion_IdAndRecinto_Parcela_Explotacion_Asesoria_Id(
+                explotacionId, asesor.getAsesoria().getId());
+
+        return cuePdfExportService.generateCuePdf(explotacion, tratamientos);
     }
 
     // ── Explotaciones por granjero ────────────────────────────────────────────
