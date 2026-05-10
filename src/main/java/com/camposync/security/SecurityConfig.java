@@ -46,6 +46,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/invitaciones/*/aceptar").permitAll()
+                        .requestMatchers("/api/asesor/**").hasRole("ASESOR")
+                        .requestMatchers("/api/granjero/**").hasRole("GRANJERO")
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
