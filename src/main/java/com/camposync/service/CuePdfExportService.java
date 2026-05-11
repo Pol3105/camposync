@@ -142,6 +142,7 @@ public class CuePdfExportService {
 
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
+            org.docx4j.Docx4jProperties.setProperty("docx4j.convert.out.fop.FopFactoryBuilder.configuration", "fop-config.xml");
             FOSettings foSettings = Docx4J.createFOSettings();
             foSettings.setWmlPackage(wordMLPackage);
             try {
