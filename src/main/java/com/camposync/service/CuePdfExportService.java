@@ -7,6 +7,10 @@ import org.docx4j.Docx4J;
 import org.docx4j.convert.out.FOSettings;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.wml.*;
+import org.docx4j.fonts.IdentityPlusMapper;
+import org.docx4j.fonts.Mapper;
+import org.docx4j.fonts.PhysicalFonts;
+
 import org.jvnet.jaxb2_commons.ppp.Child;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -115,14 +119,43 @@ public class CuePdfExportService {
 
             wordMLPackage.getMainDocumentPart().variableReplace(tableMappings);
 
+            // Set up Font Mapper to avoid 'Symbol is not mapped to a physical font'
+            Mapper fontMapper = new IdentityPlusMapper();
+            wordMLPackage.setFontMapper(fontMapper);
+            PhysicalFonts.discoverPhysicalFonts();
+
+            if (wordMLPackage.getMainDocumentPart().getStyleDefinitionsPart() != null &&
+                wordMLPackage.getMainDocumentPart().getStyleDefinitionsPart().getDefaultParagraphStyle() == null) {
+                // Ensure default paragraph style exists
+                org.docx4j.wml.Style normal = new org.docx4j.wml.ObjectFactory().createStyle();
+                normal.setType("paragraph");
+                normal.setDefault(true);
+                normal.setStyleId("Normal");
+                org.docx4j.wml.Style.Name name = new org.docx4j.wml.Style.Name();
+                name.setVal("Normal");
+                normal.setName(name);
+                wordMLPackage.getMainDocumentPart().getStyleDefinitionsPart().getContents().getStyle().add(normal);
+            }
+
+
+
+
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             FOSettings foSettings = Docx4J.createFOSettings();
             foSettings.setWmlPackage(wordMLPackage);
-            Docx4J.toFO(foSettings, out, Docx4J.FLAG_EXPORT_PREFER_XSL);
+            try {
+                Docx4J.toFO(foSettings, out, Docx4J.FLAG_EXPORT_PREFER_XSL);
+            } catch (Exception fopEx) {
+                System.err.println("FOP Exception details: ");
+                fopEx.printStackTrace();
+                throw new RuntimeException("Error rendering FO to PDF: " + fopEx.getMessage(), fopEx);
+            }
 
             return out.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("Error generando PDF CUE mediante plantilla DOCX", e);
+            e.printStackTrace();
+            throw new RuntimeException("Error generando PDF CUE mediante plantilla DOCX: " + e.getMessage(), e);
         }
     }
 }
