@@ -11,17 +11,16 @@ import org.docx4j.fonts.IdentityPlusMapper;
 import org.docx4j.fonts.Mapper;
 import org.docx4j.fonts.PhysicalFonts;
 
-import org.jvnet.jaxb2_commons.ppp.Child;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import jakarta.xml.bind.JAXBElement;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import org.docx4j.XmlUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -42,82 +41,165 @@ public class CuePdfExportService {
             InputStream templateIs = new ClassPathResource("templates/2026_modelo_cuaderno_explotacion_v19.docx").getInputStream();
             WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(templateIs);
 
-            HashMap<String, String> mappings = new HashMap<>();
-
             Granjero granjero = explotacion.getGranjero();
-            mappings.put("titular", granjero != null && granjero.getNombreLegal() != null ? granjero.getNombreLegal() : "");
-            mappings.put("nif", granjero != null && granjero.getNif() != null ? granjero.getNif() : "");
-            mappings.put("regepa", explotacion.getCodigoRea() != null ? explotacion.getCodigoRea() : "");
-            mappings.put("provincia", explotacion.getProvinciaExplotacion() != null ? explotacion.getProvinciaExplotacion() : "");
-            mappings.put("municipio", explotacion.getMunicipioExplotacion() != null ? explotacion.getMunicipioExplotacion() : "");
-            mappings.put("telefono", granjero != null && granjero.getTelefono() != null ? granjero.getTelefono() : "");
-            mappings.put("email", granjero != null ? granjero.getUsername() : "");
-
             Asesoria asesoria = explotacion.getAsesoria();
-            mappings.put("asesor_nombre", asesoria != null && asesoria.getNombre() != null ? asesoria.getNombre() : "");
-            mappings.put("ropo_asesor", "");
 
-            org.docx4j.model.datastorage.migration.VariablePrepare.prepare(wordMLPackage);
-            wordMLPackage.getMainDocumentPart().variableReplace(mappings);
+            // Extract tables
+            List<Object> tables = wordMLPackage.getMainDocumentPart().getJAXBNodesViaXPath("//w:tbl", false);
 
-            // Fetch data for tables
+            // Table 0: Titular
+            if (tables.size() > 0) {
+                Tbl tblTitular = (Tbl) tables.get(0);
+                List<Object> rows = tblTitular.getContent();
+                if (rows.size() > 7) {
+                    fillCell((Tr) rows.get(1), 0, granjero != null && granjero.getNombreLegal() != null ? granjero.getNombreLegal() : "");
+                    fillCell((Tr) rows.get(1), 1, granjero != null && granjero.getNif() != null ? granjero.getNif() : "");
+                    fillCell((Tr) rows.get(3), 1, granjero != null && granjero.getTelefono() != null ? granjero.getTelefono() : "");
+                    fillCell((Tr) rows.get(5), 0, explotacion.getMunicipioExplotacion() != null ? explotacion.getMunicipioExplotacion() : "");
+                    fillCell((Tr) rows.get(5), 2, granjero != null ? granjero.getUsername() : "");
+                }
+            }
+
+            // Table 1: Aplicadores
             List<Aplicador> aplicadores = aplicadorRepository.findByGranjero_Id(granjero != null ? granjero.getId() : -1L);
+            if (tables.size() > 1 && aplicadores != null && !aplicadores.isEmpty()) {
+                Tbl tbl = (Tbl) tables.get(1);
+                List<Object> rows = tbl.getContent();
+                if (rows.size() > 2) {
+                    Tr templateRow = (Tr) rows.get(2);
+                    tbl.getContent().remove(templateRow);
+                    int idx = 1;
+                    for (Aplicador a : aplicadores) {
+                        Tr newRow = XmlUtils.deepCopy(templateRow);
+                        fillCell(newRow, 0, String.valueOf(idx++));
+                        fillCell(newRow, 1, a.getNombre() != null ? a.getNombre() : "");
+                        fillCell(newRow, 2, a.getNif() != null ? a.getNif() : "");
+                        fillCell(newRow, 3, a.getNumeroRopo() != null ? a.getNumeroRopo() : "");
+                        String nivel = a.getNivelCapacitacion() != null ? a.getNivelCapacitacion() : "";
+                        fillCell(newRow, 4, nivel.equalsIgnoreCase("BASICO") ? "X" : "");
+                        fillCell(newRow, 5, nivel.equalsIgnoreCase("CUALIFICADO") ? "X" : "");
+                        fillCell(newRow, 6, nivel.equalsIgnoreCase("FUMIGADOR") ? "X" : "");
+                        tbl.getContent().add(newRow);
+                    }
+                }
+            }
+
+            // Table 2: Asesor
+            if (tables.size() > 2) {
+                Tbl tbl = (Tbl) tables.get(2);
+                List<Object> rows = tbl.getContent();
+                if (rows.size() > 2) {
+                    fillCell((Tr) rows.get(2), 0, "1");
+                    fillCell((Tr) rows.get(2), 1, asesoria != null && asesoria.getNombre() != null ? asesoria.getNombre() : "");
+                }
+            }
+
+            // Table 8: Maquinaria
             List<Equipamiento> equipos = equipamientoRepository.findByGranjero_Id(granjero != null ? granjero.getId() : -1L);
+            if (tables.size() > 8 && equipos != null && !equipos.isEmpty()) {
+                Tbl tbl = (Tbl) tables.get(8);
+                List<Object> rows = tbl.getContent();
+                if (rows.size() > 1) {
+                    Tr templateRow = (Tr) rows.get(1); // Row 1 is first empty
+                    for(int k=rows.size()-1; k>=1; k--) tbl.getContent().remove(k); // remove all empty rows
+                    int idx = 1;
+                    for (Equipamiento e : equipos) {
+                        Tr newRow = XmlUtils.deepCopy(templateRow);
+                        fillCell(newRow, 0, String.valueOf(idx++));
+                        fillCell(newRow, 1, e.getTipoMaquina() != null ? e.getTipoMaquina() : "");
+                        fillCell(newRow, 2, e.getAlias() != null ? e.getAlias() : ""); // ROMA
+                        fillCell(newRow, 3, "");
+                        fillCell(newRow, 4, e.getNumRegistroIteaf() != null ? e.getNumRegistroIteaf() : "");
+                        tbl.getContent().add(newRow);
+                    }
+                }
+            }
+
             List<Parcela> parcelas = parcelaRepository.findByExplotacion_Id(explotacionId);
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            // Map data to replace standard row templates if present
-            // We do a simple replacement for the first item if there are placeholders in the tables.
-            // If the user's template just has variables, this will replace them.
-            // If they need dynamic rows, a much more complex traversal is required.
-            // The instructions specifically said: "sustitución... placeholders... convert ese documento".
-            HashMap<String, String> tableMappings = new HashMap<>();
+            // Table 13: Parcelas
+            if (tables.size() > 13 && parcelas != null && !parcelas.isEmpty()) {
+                Tbl tbl = (Tbl) tables.get(13);
+                List<Object> rows = tbl.getContent();
+                if (rows.size() > 1) {
+                    Tr templateRow = (Tr) rows.get(1);
+                    for(int k=rows.size()-1; k>=1; k--) tbl.getContent().remove(k);
 
-            if (parcelas != null && !parcelas.isEmpty()) {
-                Parcela p1 = parcelas.get(0);
-                tableMappings.put("p_provincia", p1.getProvincia() != null ? p1.getProvincia() : "");
-                tableMappings.put("p_municipio", p1.getMunicipio() != null ? p1.getMunicipio() : "");
-                tableMappings.put("p_poligono", p1.getPoligono() != null ? String.valueOf(p1.getPoligono()) : "");
-                tableMappings.put("p_parcela", p1.getParcelaSigpac() != null ? String.valueOf(p1.getParcelaSigpac()) : "");
+                    int idx = 1;
+                    for (Parcela p : parcelas) {
+                        List<Recinto> recintos = recintoRepository.findByParcela_Id(p.getId());
+                        if (recintos != null) {
+                            for (Recinto r : recintos) {
+                                Tr newRow = XmlUtils.deepCopy(templateRow);
+                                fillCell(newRow, 0, String.valueOf(idx++));
+                                fillCell(newRow, 1, p.getProvincia() != null ? p.getProvincia() : "");
+                                fillCell(newRow, 2, p.getMunicipio() != null ? p.getMunicipio() : "");
+                                fillCell(newRow, 3, p.getAgregado() != null ? String.valueOf(p.getAgregado()) : "");
+                                fillCell(newRow, 4, p.getZona() != null ? String.valueOf(p.getZona()) : "");
+                                fillCell(newRow, 5, p.getPoligono() != null ? String.valueOf(p.getPoligono()) : "");
+                                fillCell(newRow, 6, p.getParcelaSigpac() != null ? String.valueOf(p.getParcelaSigpac()) : "");
+                                fillCell(newRow, 7, String.valueOf(r.getNumeroRecinto()));
 
-                List<Recinto> recintos = recintoRepository.findByParcela_Id(p1.getId());
-                if (recintos != null && !recintos.isEmpty()) {
-                    Recinto r1 = recintos.get(0);
-                    tableMappings.put("r_superficie", r1.getSuperficie() != null ? r1.getSuperficie().toString() : "");
-                    tableMappings.put("r_cultivo", r1.getCultivo() != null ? r1.getCultivo() : "");
-
-                    List<Tratamiento> tratamientos = tratamientoRepository.findByRecinto_Id(r1.getId());
-                    if (tratamientos != null && !tratamientos.isEmpty()) {
-                        Tratamiento t1 = tratamientos.get(0);
-                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                        tableMappings.put("t_fecha", t1.getFecha() != null ? t1.getFecha().format(dtf) : "");
-                        tableMappings.put("t_plaga", t1.getCodigoPlaga() != null ? t1.getCodigoPlaga() : "");
-                        tableMappings.put("t_dosis", t1.getDosis() > 0 ? String.valueOf(t1.getDosis()) : "");
-                        tableMappings.put("t_justificacion", t1.getMotivoTratamiento() != null ? t1.getMotivoTratamiento() : "");
-
-                        if (t1.getProductoFitosanitario() != null) {
-                            tableMappings.put("t_producto", t1.getProductoFitosanitario().getNombre());
-                            tableMappings.put("t_registro", t1.getProductoFitosanitario().getNumReg());
+                                String sup = r.getSuperficie() != null ? r.getSuperficie().setScale(4, RoundingMode.HALF_UP).toString() : "";
+                                fillCell(newRow, 8, sup);
+                                fillCell(newRow, 9, sup);
+                                fillCell(newRow, 10, r.getCultivo() != null ? r.getCultivo() : "");
+                                fillCell(newRow, 14, ""); // Sistema riego
+                                fillCell(newRow, 15, r.getSistemaCultivo() != null ? r.getSistemaCultivo() : "");
+                                tbl.getContent().add(newRow);
+                            }
                         }
                     }
                 }
             }
 
-            if (aplicadores != null && !aplicadores.isEmpty()) {
-                Aplicador a1 = aplicadores.get(0);
-                tableMappings.put("ap_nombre", a1.getNombre());
-                tableMappings.put("ap_nif", a1.getNif());
-                tableMappings.put("ap_ropo", a1.getNumeroRopo() != null ? a1.getNumeroRopo() : "");
+            // Table 14: Tratamientos
+            if (tables.size() > 14 && parcelas != null && !parcelas.isEmpty()) {
+                Tbl tbl = (Tbl) tables.get(14);
+                List<Object> rows = tbl.getContent();
+                if (rows.size() > 15) {
+                    Tr templateRow = (Tr) rows.get(15);
+                    for(int k=rows.size()-1; k>=15; k--) tbl.getContent().remove(k);
+
+                    for (Parcela p : parcelas) {
+                        List<Recinto> recintos = recintoRepository.findByParcela_Id(p.getId());
+                        if (recintos != null) {
+                            for (Recinto r : recintos) {
+                                List<Tratamiento> tratamientos = tratamientoRepository.findByRecinto_Id(r.getId());
+                                if (tratamientos != null) {
+                                    for (Tratamiento t : tratamientos) {
+                                        Tr newRow = XmlUtils.deepCopy(templateRow);
+                                        fillCell(newRow, 0, t.getFecha() != null ? t.getFecha().format(dtf) : "");
+                                        String idParcela = String.format("Pol %s Par %s Rec %d",
+                                                p.getPoligono()!=null ? p.getPoligono() : "-",
+                                                p.getParcelaSigpac()!=null ? p.getParcelaSigpac() : "-",
+                                                r.getNumeroRecinto());
+                                        fillCell(newRow, 1, idParcela);
+                                        fillCell(newRow, 2, r.getSuperficie() != null ? r.getSuperficie().setScale(4, RoundingMode.HALF_UP).toString() : "");
+                                        fillCell(newRow, 3, t.getCodigoPlaga() != null ? t.getCodigoPlaga() : "");
+
+                                        Aplicador app = t.getAplicador();
+                                        fillCell(newRow, 4, app != null ? app.getNombre() : "");
+                                        fillCell(newRow, 6, t.getMotivoTratamiento() != null ? t.getMotivoTratamiento() : "");
+
+                                        ProductoFitosanitario prod = t.getProductoFitosanitario();
+                                        if (prod != null) {
+                                            fillCell(newRow, 8, prod.getNombre());
+                                            fillCell(newRow, 9, prod.getNumReg() != null ? prod.getNumReg() : "");
+                                        }
+                                        fillCell(newRow, 10, t.getDosis() > 0 ? String.valueOf(t.getDosis()) : "");
+                                        fillCell(newRow, 13, "Buena");
+
+                                        tbl.getContent().add(newRow);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            if (equipos != null && !equipos.isEmpty()) {
-                Equipamiento e1 = equipos.get(0);
-                tableMappings.put("eq_tipo", e1.getTipoMaquina() != null ? e1.getTipoMaquina() : "");
-                tableMappings.put("eq_marca", e1.getMarcaModelo() != null ? e1.getMarcaModelo() : "");
-                tableMappings.put("eq_roma", e1.getAlias() != null ? e1.getAlias() : "");
-                tableMappings.put("eq_iteaf", e1.getNumRegistroIteaf() != null ? e1.getNumRegistroIteaf() : "");
-            }
-
-            wordMLPackage.getMainDocumentPart().variableReplace(tableMappings);
 
             // Set up Font Mapper to avoid 'Symbol is not mapped to a physical font'
             Mapper fontMapper = new IdentityPlusMapper();
@@ -148,11 +230,8 @@ public class CuePdfExportService {
                 wordMLPackage.getMainDocumentPart().getStyleDefinitionsPart().getContents().getStyle().add(normal);
             }
 
-
-
-
-
             ByteArrayOutputStream out = new ByteArrayOutputStream();
+            org.docx4j.Docx4jProperties.setProperty("docx4j.convert.out.fop.FopFactoryBuilder.configuration", "fop-config.xml");
 
             String fopConfigXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><fop version=\"1.0\"><strict-configuration>true</strict-configuration><renderers><renderer mime=\"application/pdf\"><fonts><auto-detect/></fonts></renderer></renderers></fop>";
             org.docx4j.convert.out.fopconf.Fop fopConfig = null;
@@ -168,9 +247,6 @@ public class CuePdfExportService {
             foSettings.setWmlPackage(wordMLPackage);
             if (fopConfig != null) {
                 foSettings.setFopConfig(fopConfig);
-                System.out.println("FOP Config successfully initialized via Unmarshaller.");
-            } else {
-                System.err.println("FOP Config is NULL!");
             }
 
             try {
@@ -185,6 +261,22 @@ public class CuePdfExportService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error generando PDF CUE mediante plantilla DOCX: " + e.getMessage(), e);
+        }
+    }
+
+    private void fillCell(Tr row, int cellIndex, String text) {
+        List<Object> cells = row.getContent();
+        if (cells != null && cellIndex < cells.size()) {
+            Tc cell = (Tc) XmlUtils.unwrap(cells.get(cellIndex));
+            cell.getContent().clear();
+            org.docx4j.wml.ObjectFactory factory = new org.docx4j.wml.ObjectFactory();
+            P paragraph = factory.createP();
+            R run = factory.createR();
+            Text wText = factory.createText();
+            wText.setValue(text != null ? text : "");
+            run.getContent().add(wText);
+            paragraph.getContent().add(run);
+            cell.getContent().add(paragraph);
         }
     }
 }
