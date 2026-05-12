@@ -121,6 +121,17 @@ public class CuePdfExportService {
 
             // Set up Font Mapper to avoid 'Symbol is not mapped to a physical font'
             Mapper fontMapper = new IdentityPlusMapper();
+
+            // Map Calibri and Liberation Serif to Arial/Helvetica to avoid WARN and FOP issues
+            org.docx4j.fonts.PhysicalFont arialFont = PhysicalFonts.get("Arial");
+            if (arialFont == null) {
+                arialFont = PhysicalFonts.get("Helvetica");
+            }
+            if (arialFont != null) {
+                fontMapper.put("Calibri", arialFont);
+                fontMapper.put("Liberation Serif", arialFont);
+            }
+
             wordMLPackage.setFontMapper(fontMapper);
             PhysicalFonts.discoverPhysicalFonts();
 
@@ -142,9 +153,26 @@ public class CuePdfExportService {
 
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            org.docx4j.Docx4jProperties.setProperty("docx4j.convert.out.fop.FopFactoryBuilder.configuration", "fop-config.xml");
+
+            String fopConfigXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><fop version=\"1.0\"><strict-configuration>true</strict-configuration><renderers><renderer mime=\"application/pdf\"><fonts><auto-detect/></fonts></renderer></renderers></fop>";
+            org.docx4j.convert.out.fopconf.Fop fopConfig = null;
+            try {
+                jakarta.xml.bind.JAXBContext jc = jakarta.xml.bind.JAXBContext.newInstance(org.docx4j.convert.out.fopconf.ObjectFactory.class);
+                jakarta.xml.bind.Unmarshaller u = jc.createUnmarshaller();
+                fopConfig = (org.docx4j.convert.out.fopconf.Fop) u.unmarshal(new java.io.ByteArrayInputStream(fopConfigXml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
             FOSettings foSettings = Docx4J.createFOSettings();
             foSettings.setWmlPackage(wordMLPackage);
+            if (fopConfig != null) {
+                foSettings.setFopConfig(fopConfig);
+                System.out.println("FOP Config successfully initialized via Unmarshaller.");
+            } else {
+                System.err.println("FOP Config is NULL!");
+            }
+
             try {
                 Docx4J.toFO(foSettings, out, Docx4J.FLAG_EXPORT_PREFER_XSL);
             } catch (Exception fopEx) {
