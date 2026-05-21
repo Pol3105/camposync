@@ -59,6 +59,10 @@ class CamposyncApplicationTests {
 		// Validar provincia de Ciudad Real
 		assertTrue(xml.contains("<ProvinciaExplotacion>13</ProvinciaExplotacion>"), "La provincia debe ser 13 (Ciudad Real)");
 
+		// Validar provincia y municipio del Recinto (Códigos oficiales en lugar de texto)
+		assertTrue(xml.contains("<Provincia>13</Provincia>"), "El Recinto debe tener el código de provincia 13");
+		assertTrue(xml.contains("<Municipio>023</Municipio>"), "El Recinto debe tener el código de municipio 023");
+
 		// Validar que el titular tenga datos reales y NIF
 		assertTrue(xml.contains("<NombreLegal>"), "Debe tener NombreLegal");
 		assertTrue(xml.contains("<NIF>"), "Debe tener NIF");

@@ -124,8 +124,32 @@ public class CueXmlExportService {
             if (r != null) {
                 Parcela p = r.getParcela();
                 if (p != null) {
-                    xml.append("                <Provincia>").append(escapeXml(p.getProvincia())).append("</Provincia>\n");
-                    xml.append("                <Municipio>").append(escapeXml(p.getMunicipio())).append("</Municipio>\n");
+                    String provCode = "";
+                    String munCode = "";
+                    if (p.getRefCatastral() != null && p.getRefCatastral().length() >= 5) {
+                        provCode = p.getRefCatastral().substring(0, 2);
+                        munCode = p.getRefCatastral().substring(2, 5);
+                    }
+                    if (provCode == null || provCode.isEmpty()) {
+                        if ("Ciudad Real".equalsIgnoreCase(p.getProvincia())) {
+                            provCode = "13";
+                        } else {
+                            provCode = explotacion.getProvinciaExplotacion();
+                        }
+                    }
+                    if (munCode == null || munCode.isEmpty()) {
+                        if ("Daimiel".equalsIgnoreCase(p.getMunicipio())) {
+                            munCode = "023";
+                        } else if ("Tomelloso".equalsIgnoreCase(p.getMunicipio())) {
+                            munCode = "086";
+                        } else if ("Valdepeñas".equalsIgnoreCase(p.getMunicipio())) {
+                            munCode = "087";
+                        } else {
+                            munCode = explotacion.getMunicipioExplotacion();
+                        }
+                    }
+                    xml.append("                <Provincia>").append(escapeXml(provCode)).append("</Provincia>\n");
+                    xml.append("                <Municipio>").append(escapeXml(munCode)).append("</Municipio>\n");
                     xml.append("                <Poligono>").append(p.getPoligono() != null ? p.getPoligono() : "").append("</Poligono>\n");
                     xml.append("                <Parcela>").append(p.getParcelaSigpac() != null ? p.getParcelaSigpac() : "").append("</Parcela>\n");
                 } else {
