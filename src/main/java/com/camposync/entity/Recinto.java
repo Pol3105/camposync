@@ -31,7 +31,7 @@ public class Recinto {
     @Column(name = "sistema_cultivo", length = 50)
     private String sistemaCultivo;
 
-    @Column(length = 10)
+    @Column(length = 100)
     private String cultivo;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -66,41 +66,42 @@ public class DataSeeder implements CommandLineRunner {
     private void seedGranjeros(Asesoria asesoria) {
         Long aId = asesoria.getId();
         // registerGranjero(username, rawPassword, nombre, nif, nombreLegal, telefono, cnae, asesoriaId)
-        authService.registerGranjero("pedro.alcantara",  "campo2024", "Pedro Alcántara Fuentes",       "12345678A", "Pedro Alcántara Fuentes",       "600111222", "0126", aId);
-        authService.registerGranjero("m.vidal",          "campo2024", "María Dolores Vidal Ramos",     "87654321B", "María Dolores Vidal Ramos",     "611222333", "0121", aId);
-        authService.registerGranjero("fco.perez",        "campo2024", "Francisco Javier Pérez Torres", "11223344C", "Francisco Javier Pérez Torres", "622333444", "0111", aId);
-        authService.registerGranjero("c.aguilera",       "campo2024", "Carmen Aguilera Muñoz",         "44332211D", "Carmen Aguilera Muñoz",         "633444555", "0126", aId);
-        authService.registerGranjero("jose.romero",      "campo2024", "Herederos Romero Gil S.C.",     "B12345678", "Herederos Romero Gil S.C.",     "644555666", "0125", aId);
-        authService.registerGranjero("i.martinez",       "campo2024", "Isabel Martínez Soria",         "55667788E", "Isabel Martínez Soria",         "655666777", "0113", aId);
-        authService.registerGranjero("a.herrero",        "campo2024", "Antonio Herrero Blanco",        "99887766F", "Antonio Herrero Blanco",        "666777888", "0111", aId);
-        authService.registerGranjero("r.jimenez",        "campo2024", "Rosa Jiménez Castillo",         "10203040G", "Rosa Jiménez Castillo",         "677888999", "0128", aId);
-        authService.registerGranjero("m.guerrero",       "campo2024", "Finca El Cerro de Guerrero",    "B87654321", "Finca El Cerro de Guerrero",    "688999000", "0126", aId);
-        authService.registerGranjero("p.fuentes",        "campo2024", "Pilar Fuentes Gallego",         "50607080H", "Pilar Fuentes Gallego",         "699000111", "0119", aId);
+        authService.registerGranjero("pedro.alcantara@agrocalatrava.com",  "campo2024", "Pedro Alcántara Fuentes",       "B13000001", "Agro Calatrava S.L.",       "600111222", "0126", aId);
+        authService.registerGranjero("maria.vidal@vinedosvidal.com",          "campo2024", "María Dolores Vidal Ramos",     "B13000002", "Viñedos Vidal S.L.",     "611222333", "0121", aId);
+        authService.registerGranjero("javier.perez@olivarera.com",        "campo2024", "Francisco Javier Pérez Torres", "B13000003", "Explotación El Llano S.L.", "622333444", "0111", aId);
+        authService.registerGranjero("carmen.aguilera@carmengranja.com",       "campo2024", "Carmen Aguilera Muñoz",         "B13000004", "Granja Aguilera S.L.",         "633444555", "0126", aId);
+        authService.registerGranjero("romero.herederos@romerogil.com",      "campo2024", "Herederos Romero Gil S.C.",     "G13000005", "Herederos Romero Gil S.C.",     "644555666", "0125", aId);
+        authService.registerGranjero("isabel.martinez@pradonuevo.com",       "campo2024", "Isabel Martínez Soria",         "B13000006", "Prado Nuevo S.L.",         "655666777", "0113", aId);
+        authService.registerGranjero("antonio.herrero@herreroagro.com",        "campo2024", "Antonio Herrero Blanco",        "B13000007", "Herrero Agropecuaria S.L.",        "666777888", "0111", aId);
+        authService.registerGranjero("rosa.jimenez@vinedosdelsol.com",        "campo2024", "Rosa Jiménez Castillo",         "B13000008", "Viñedos Del Sol S.L.",         "677888999", "0128", aId);
+        authService.registerGranjero("manuel.guerrero@cerrodeguerrero.com",       "campo2024", "Finca El Cerro de Guerrero",    "B13000009", "Finca El Cerro de Guerrero S.L.", "688999000", "0126", aId);
+        authService.registerGranjero("pilar.fuentes@olivaralqueria.com",        "campo2024", "Pilar Fuentes Gallego",         "B13000010", "Olivar Alquería S.L.",         "699000111", "0119", aId);
     }
 
-    // ── 2. Productos fitosanitarios extra (2 más → 5 en total) ───────────────
+    // ── 2. Productos fitosanitarios extra (2 más) ──────────────────────────
 
     private List<ProductoFitosanitario> seedProductosExtra() {
-        if (productoRepository.count() < 5) {
-            productoRepository.save(ProductoFitosanitario.builder()
-                    .nombre("Cobre Oxicloruro 50 WP")
-                    .principioAct("Oxicloruro de cobre")
-                    .numReg("ES-01122")
-                    .cultivosAutori("Olivo,Vid,Patata,Tomate,Pepino")
-                    .dosisMin(new BigDecimal("2.0"))
-                    .dosisMax(new BigDecimal("4.0"))
-                    .unidadDosisOficial("kg/ha")
-                    .activo(true)
-                    .build());
-
+        if (productoRepository.findAll().stream().noneMatch(p -> p.getNombre().contains("Abamectina"))) {
             productoRepository.save(ProductoFitosanitario.builder()
                     .nombre("Abamectina 1.8 EC")
                     .principioAct("Abamectina")
                     .numReg("ES-03344")
-                    .cultivosAutori("Almendro,Manzano,Peral,Cítricos,Ornamentales")
+                    .cultivosAutori("Almendro,Manzano,Peral,Cítricos,Vid")
                     .dosisMin(new BigDecimal("0.4"))
                     .dosisMax(new BigDecimal("0.8"))
                     .unidadDosisOficial("L/ha")
+                    .activo(true)
+                    .build());
+        }
+        if (productoRepository.findAll().stream().noneMatch(p -> p.getNombre().contains("Mancozeb"))) {
+            productoRepository.save(ProductoFitosanitario.builder()
+                    .nombre("Mancozeb 80% WP")
+                    .principioAct("Mancozeb")
+                    .numReg("19875")
+                    .cultivosAutori("Vid,Manzano,Peral,Olivo")
+                    .dosisMin(new BigDecimal("1.5"))
+                    .dosisMax(new BigDecimal("3.0"))
+                    .unidadDosisOficial("kg/ha")
                     .activo(true)
                     .build());
         }
@@ -110,31 +111,31 @@ public class DataSeeder implements CommandLineRunner {
     // ── 3. Aplicadores y Equipamiento ────────────────────────────────────────
 
     private void seedAplicadoresYEquipamiento(Granjero granjero) {
-        // Crear 3 Aplicadores
-        aplicador(granjero, "Manuel García López", "12345678A", "ROPO-12345-AND", "CUALIFICADO");
-        aplicador(granjero, "José Fernández Sánchez", "87654321B", "ROPO-54321-AND", "CUALIFICADO");
-        aplicador(granjero, "Antonio Ruiz Martín", "11223344C", "ROPO-98765-AND", "CUALIFICADO");
+        // Crear 3 Aplicadores con estructura 13-XXXXX-P (Ciudad Real)
+        aplicador(granjero, "Manuel García López", "12345678A", "13-12345-P", "CUALIFICADO");
+        aplicador(granjero, "José Fernández Sánchez", "87654321B", "13-54321-P", "CUALIFICADO");
+        aplicador(granjero, "Antonio Ruiz Martín", "11223344C", "13-98765-P", "CUALIFICADO");
 
-        // Crear 3 Equipamientos
-        equipamiento(granjero, "Tractor Principal", "Tractor", "John Deere 6155M", "ROMA-JD-001");
-        equipamiento(granjero, "Pulverizador Arrastrado", "Pulverizador", "Hardi Navigator 3000", "ROMA-HR-002");
-        equipamiento(granjero, "Atomizador Suspendido", "Atomizador", "Mañez y Lozano Twister", "ROMA-ML-003");
+        // Crear 3 Equipamientos completos
+        equipamiento(granjero, "13-0948", "Atomizador remolcado", "Hardi Mercury 2000", "ITEAF-13-876");
+        equipamiento(granjero, "13-2244", "Pulverizador arrastrado", "Hardi Navigator 3000", "ITEAF-13-123");
+        equipamiento(granjero, "13-5566", "Pulverizador suspendido", "Mañez y Lozano Twister", "ITEAF-13-456");
     }
 
     // ── 4. Explotaciones + Parcelas + Recintos + Inventario + Tratamientos ───
 
     private void seedExplotacionesParcelasInventario(Asesoria asesoria, List<ProductoFitosanitario> prods) {
 
-        Granjero pedro    = g("pedro.alcantara");
-        Granjero maria    = g("m.vidal");
-        Granjero fco      = g("fco.perez");
-        Granjero carmen   = g("c.aguilera");
-        Granjero jose     = g("jose.romero");
-        Granjero isabel   = g("i.martinez");
-        Granjero antonio  = g("a.herrero");
-        Granjero rosa     = g("r.jimenez");
-        Granjero manuel   = g("m.guerrero");
-        Granjero pilar    = g("p.fuentes");
+        Granjero pedro    = g("pedro.alcantara@agrocalatrava.com");
+        Granjero maria    = g("maria.vidal@vinedosvidal.com");
+        Granjero fco      = g("javier.perez@olivarera.com");
+        Granjero carmen   = g("carmen.aguilera@carmengranja.com");
+        Granjero jose     = g("romero.herederos@romerogil.com");
+        Granjero isabel   = g("isabel.martinez@pradonuevo.com");
+        Granjero antonio  = g("antonio.herrero@herreroagro.com");
+        Granjero rosa     = g("rosa.jimenez@vinedosdelsol.com");
+        Granjero manuel   = g("manuel.guerrero@cerrodeguerrero.com");
+        Granjero pilar    = g("pilar.fuentes@olivaralqueria.com");
 
         seedAplicadoresYEquipamiento(pedro);
         seedAplicadoresYEquipamiento(maria);
@@ -147,211 +148,203 @@ public class DataSeeder implements CommandLineRunner {
         seedAplicadoresYEquipamiento(manuel);
         seedAplicadoresYEquipamiento(pilar);
 
-        ProductoFitosanitario captan      = prods.get(0);
-        ProductoFitosanitario clorpirifos = prods.get(1);
-        ProductoFitosanitario glifosato   = prods.get(2);
-        ProductoFitosanitario cobre       = prods.size() > 3 ? prods.get(3) : captan;
-        ProductoFitosanitario abamectina  = prods.size() > 4 ? prods.get(4) : clorpirifos;
+        ProductoFitosanitario cobre = prods.stream().filter(p -> p.getNombre().contains("Cupreox")).findFirst().orElse(prods.get(0));
+        ProductoFitosanitario azufre = prods.stream().filter(p -> p.getNombre().contains("Azufre")).findFirst().orElse(prods.get(0));
+        ProductoFitosanitario glifosato = prods.stream().filter(p -> p.getNombre().contains("Glifosato")).findFirst().orElse(prods.get(0));
+        ProductoFitosanitario abamectina = prods.stream().filter(p -> p.getNombre().contains("Abamectina")).findFirst().orElse(prods.get(0));
+        ProductoFitosanitario mancozeb = prods.stream().filter(p -> p.getNombre().contains("Mancozeb")).findFirst().orElse(prods.get(0));
 
-        // ── PEDRO ALCÁNTARA — 3 explotaciones ────────────────────────────────
-        Explotacion hoyadelmoro = exp(asesoria, pedro, "Hoya del Moro", "CE", "PF", 45.5f, "SIG-14-077-0-001");
-        Recinto r_pedro_1 = pc(hoyadelmoro, "14077A0010002580000JK", 22.0f, "TBL", "SE", "Montoro");
-                            pc(hoyadelmoro, "14077A0010002610000JK", 23.5f, "EB",  "SE", "Montoro");
+        // ── PEDRO ALCÁNTARA — Daimiel (023) ────────────────────────────────
+        Explotacion hoyadelmoro = exp(asesoria, pedro, "Hoya del Moro", "CE", "PF", 45.5f, "SIG-13-023-0-001");
+        Recinto r_pedro_1 = pc(hoyadelmoro, "13023A0010002580000JK", 22.0f, "TBL", "SE", "Daimiel");
+                            pc(hoyadelmoro, "13023A0010002610000JK", 23.5f, "EB",  "SE", "Daimiel");
 
-        Explotacion carrascal = exp(asesoria, pedro, "Viñedo El Carrascal", "VI", "PF", 12.3f, "SIG-14-077-0-002");
-        Recinto r_pedro_2 = pc(carrascal, "14077A0020001120000MR", 6.8f, "VI", "RG", "Montilla");
-                            pc(carrascal, "14077A0020001150000MR", 5.5f, "VI", "SE", "Montilla");
+        Explotacion carrascal = exp(asesoria, pedro, "Viñedo El Carrascal", "VI", "PF", 12.3f, "SIG-13-023-0-002");
+        Recinto r_pedro_2 = pc(carrascal, "13023A0020001120000MR", 6.8f, "VI", "RG", "Daimiel");
+                            pc(carrascal, "13023A0020001150000MR", 5.5f, "VI", "SE", "Daimiel");
 
-        Explotacion cortijofrontera = exp(asesoria, pedro, "Cortijo La Frontera", "OL", "PF", 28.0f, "SIG-14-021-0-003");
-        pc(cortijofrontera, "14021A0030002300000SL", 14.0f, "OV", "SE", "Aguilar");
-        pc(cortijofrontera, "14021A0030002340000SL", 14.0f, "OV", "SE", "Aguilar");
+        Explotacion cortijofrontera = exp(asesoria, pedro, "Cortijo La Frontera", "OL", "PF", 28.0f, "SIG-13-023-0-003");
+        pc(cortijofrontera, "13023A0030002300000SL", 14.0f, "OV", "SE", "Daimiel");
+        pc(cortijofrontera, "13023A0030002340000SL", 14.0f, "OV", "SE", "Daimiel");
 
-        inv(pedro, captan,      "Fungicida Viña — stock principal",  18.5f);
+        inv(pedro, mancozeb,    "Fungicida Viña — stock principal",  18.5f);
         inv(pedro, glifosato,   "Herbicida calle viñedo",            10.0f);
         inv(pedro, cobre,       "Caldo bordelés olivo",              25.0f);
-        inv(pedro, clorpirifos, "Insecticida olivo (mosca)",          8.0f);
+        inv(pedro, azufre,      "Azufre para oidio",                 30.0f);
         inv(pedro, abamectina,  "Acaricida viña — Pedro",             5.5f);
 
-        trat(pedro, r_pedro_1, captan,      "PR", "Mildiu de la vid",   "PLASVI", LocalDate.of(2024, 4, 10), 2.0f, "kg/ha", true);
-        trat(pedro, r_pedro_2, cobre,       "CU", "Mildiu de la vid",   "PLASVI", LocalDate.of(2024, 5, 15), 3.0f, "kg/ha", false);
+        trat(pedro, r_pedro_1, mancozeb,    "PR", "Mildiu de la vid",       "EPPO: PLASVI", LocalDate.of(2024, 4, 10), 2.0f, "kg/ha", true);
+        trat(pedro, r_pedro_2, cobre,       "CU", "Repilo del olivo",       "EPPO: REPI1",  LocalDate.of(2024, 5, 15), 3.0f, "kg/ha", false);
 
-        // ── MARÍA DOLORES VIDAL — 3 explotaciones ────────────────────────────
-        Explotacion valdejudios = exp(asesoria, maria, "Pago Valdejudíos", "VI", "PF", 8.7f, "SIG-14-022-0-004");
-        Recinto r_maria_1 = pc(valdejudios, "14022A0010000980000KQ", 4.5f, "VI", "RG", "Lucena");
-                            pc(valdejudios, "14022A0010001010000KQ", 4.2f, "VI", "SE", "Lucena");
+        // ── MARÍA DOLORES VIDAL — Valdepeñas (087) ────────────────────────────
+        Explotacion valdejudios = exp(asesoria, maria, "Pago Valdejudíos", "VI", "PF", 8.7f, "SIG-13-087-0-004");
+        Recinto r_maria_1 = pc(valdejudios, "13087A0010000980000KQ", 4.5f, "VI", "RG", "Valdepeñas");
+                            pc(valdejudios, "13087A0010001010000KQ", 4.2f, "VI", "SE", "Valdepeñas");
 
-        Explotacion almendralsierra = exp(asesoria, maria, "Almendral de la Sierra", "FS", "PF", 22.5f, "SIG-14-022-0-005");
-        Recinto r_maria_2 = pc(almendralsierra, "14022A0020003400000PR", 11.0f, "FS", "SE", "Cabra");
-                            pc(almendralsierra, "14022A0020003440000PR", 11.5f, "FS", "SE", "Cabra");
+        Explotacion almendralsierra = exp(asesoria, maria, "Almendral de la Sierra", "FS", "PF", 22.5f, "SIG-13-087-0-005");
+        Recinto r_maria_2 = pc(almendralsierra, "13087A0020003400000PR", 11.0f, "FS", "SE", "Valdepeñas");
+                            pc(almendralsierra, "13087A0020003440000PR", 11.5f, "FS", "SE", "Valdepeñas");
 
-        Explotacion huertasanmiguel = exp(asesoria, maria, "Huerta San Miguel", "HO", "PF", 6.2f, "SIG-14-022-0-006");
-        pc(huertasanmiguel, "14022A0030000650000VW", 3.2f, "TA", "RG", "Lucena");
-        pc(huertasanmiguel, "14022A0030000680000VW", 3.0f, "TA", "RG", "Lucena");
+        Explotacion huertasanmiguel = exp(asesoria, maria, "Huerta San Miguel", "HO", "PF", 6.2f, "SIG-13-087-0-006");
+        pc(huertasanmiguel, "13087A0030000650000VW", 3.2f, "TA", "RG", "Valdepeñas");
+        pc(huertasanmiguel, "13087A0030000680000VW", 3.0f, "TA", "RG", "Valdepeñas");
 
-        inv(maria, captan,      "Fungicida Tomate — Huerta",     12.0f);
+        inv(maria, mancozeb,    "Fungicida Tomate — Huerta",     12.0f);
         inv(maria, glifosato,   "Mata-hierbas calles almendro",  15.0f);
         inv(maria, abamectina,  "Veneno araña roja almendro",     6.0f);
         inv(maria, cobre,       "Mildiu viña — María",           20.0f);
-        inv(maria, clorpirifos, "Gusano tomate invernadero",      4.5f);
+        inv(maria, azufre,      "Oidio viña — María",            25.0f);
 
-        trat(maria, r_maria_1, cobre,      "CU", "Mildiu de la vid",       "PLASVI", LocalDate.of(2024, 5, 20), 3.0f, "kg/ha", true);
-        trat(maria, r_maria_2, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 3, 28), 0.6f, "L/ha", true);
+        trat(maria, r_maria_1, cobre,      "CU", "Repilo del olivo",       "EPPO: REPI1", LocalDate.of(2024, 5, 20), 3.0f, "kg/ha", true);
+        trat(maria, r_maria_2, abamectina, "PR", "Araña roja del almendro","EPPO: PANUTE", LocalDate.of(2024, 3, 28), 0.6f, "L/ha", true);
 
-        // ── FRANCISCO JAVIER PÉREZ — 2 explotaciones ─────────────────────────
-        Explotacion lasturras = exp(asesoria, fco, "Las Turras del Llano", "CE", "PF", 120.0f, "SIG-02-021-0-007");
-        Recinto r_fco_1 = pc(lasturras, "02021A0010008900000AX", 62.0f, "TDU", "SE", "Hellín");
-                          pc(lasturras, "02021A0010009100000AX", 58.0f, "GI",  "SE", "Hellín");
+        // ── FRANCISCO JAVIER PÉREZ — Tomelloso (086) ─────────────────────────
+        Explotacion lasturras = exp(asesoria, fco, "Las Turras del Llano", "CE", "PF", 120.0f, "SIG-13-086-0-007");
+        Recinto r_fco_1 = pc(lasturras, "13086A0010008900000AX", 62.0f, "TDU", "SE", "Tomelloso");
+                          pc(lasturras, "13086A0010009100000AX", 58.0f, "GI",  "SE", "Tomelloso");
 
-        Explotacion dehesabaja = exp(asesoria, fco, "Dehesa Baja", "PA", "PF", 85.0f, "SIG-02-021-0-008");
-        Recinto r_fco_2 = pc(dehesabaja, "02021A0020006500000BZ", 42.0f, "PR", "SE", "Almansa");
-                          pc(dehesabaja, "02021A0020006800000BZ", 43.0f, "PR", "SE", "Almansa");
+        Explotacion dehesabaja = exp(asesoria, fco, "Dehesa Baja", "PA", "PF", 85.0f, "SIG-13-086-0-008");
+        Recinto r_fco_2 = pc(dehesabaja, "13086A0020006500000BZ", 42.0f, "PR", "SE", "Tomelloso");
+                          pc(dehesabaja, "13086A0020006800000BZ", 43.0f, "PR", "SE", "Tomelloso");
 
         inv(fco, glifosato,   "Herbicida total cereal — stock",  30.0f);
-        inv(fco, clorpirifos, "Insecticida cereal general",      20.0f);
-        inv(fco, captan,      "Fungicida cebada",                 8.0f);
         inv(fco, cobre,       "Tratamiento preventivo viña",     10.0f);
-        inv(fco, abamectina,  "Acaricida ganadería",              3.5f);
+        inv(fco, abamectina,  "Acaricida pastos",                 3.5f);
+        inv(fco, azufre,      "Tratamiento oidio Tomelloso",     15.0f);
 
-        trat(fco, r_fco_1, glifosato,   "PR", "Malas hierbas cereal",  "POAAN", LocalDate.of(2024, 2, 15), 3.5f, "L/ha", false);
-        trat(fco, r_fco_2, clorpirifos, "CU", "Pulgón del cereal",     "APHISP", LocalDate.of(2024, 4, 5), 1.5f, "L/ha", true);
+        trat(fco, r_fco_1, glifosato,   "PR", "Malas hierbas cereal",  "EPPO: POAAN", LocalDate.of(2024, 2, 15), 3.5f, "L/ha", false);
+        trat(fco, r_fco_2, azufre,      "CU", "Oidio de la vid",       "EPPO: OIDI1", LocalDate.of(2024, 4, 5), 1.5f, "kg/ha", true);
 
-        // ── CARMEN AGUILERA — 3 explotaciones ────────────────────────────────
-        Explotacion molinoviejo = exp(asesoria, carmen, "Olivar Molino Viejo", "OL", "PF", 35.5f, "SIG-14-077-0-009");
-        Recinto r_carmen_1 = pc(molinoviejo, "14077A0040003800000CL", 18.0f, "OV", "SE", "Baena");
-                             pc(molinoviejo, "14077A0040003840000CL", 17.5f, "OV", "SE", "Baena");
+        // ── CARMEN AGUILERA — Daimiel (023) ────────────────────────────────
+        Explotacion molinoviejo = exp(asesoria, carmen, "Olivar Molino Viejo", "OL", "PF", 35.5f, "SIG-13-023-0-009");
+        Recinto r_carmen_1 = pc(molinoviejo, "13023A0040003800000CL", 18.0f, "OV", "SE", "Daimiel");
+                             pc(molinoviejo, "13023A0040003840000CL", 17.5f, "OV", "SE", "Daimiel");
 
-        Explotacion terrerosaltos = exp(asesoria, carmen, "Los Terreros Altos", "CE", "PF", 60.0f, "SIG-14-077-0-010");
-        Recinto r_carmen_2 = pc(terrerosaltos, "14077A0050005200000DM", 30.0f, "TBL", "SE", "Luque");
-                             pc(terrerosaltos, "14077A0050005250000DM", 30.0f, "AV",  "SE", "Luque");
+        Explotacion terrerosaltos = exp(asesoria, carmen, "Los Terreros Altos", "CE", "PF", 60.0f, "SIG-13-023-0-010");
+        Recinto r_carmen_2 = pc(terrerosaltos, "13023A0050005200000DM", 30.0f, "TBL", "SE", "Daimiel");
+                             pc(terrerosaltos, "13023A0050005250000DM", 30.0f, "AV",  "SE", "Daimiel");
 
-        Explotacion elmendral = exp(asesoria, carmen, "El Almendral", "FS", "PF", 15.5f, "SIG-14-077-0-011");
-        pc(elmendral, "14077A0060001400000EN", 8.0f, "FS", "SE", "Castro");
-        pc(elmendral, "14077A0060001430000EN", 7.5f, "FS", "SE", "Castro");
+        Explotacion elmendral = exp(asesoria, carmen, "El Almendral", "FS", "PF", 15.5f, "SIG-13-023-0-011");
+        pc(elmendral, "13023A0060001400000EN", 8.0f, "FS", "SE", "Daimiel");
+        pc(elmendral, "13023A0060001430000EN", 7.5f, "FS", "SE", "Daimiel");
 
         inv(carmen, cobre,       "Repaso olivo — Tratamiento 1",   22.0f);
         inv(carmen, glifosato,   "Herbicida suelo olivar",          18.0f);
-        inv(carmen, clorpirifos, "Mosca olivo — Carmen",            12.0f);
         inv(carmen, abamectina,  "Acaricida almendro primavera",     7.0f);
-        inv(carmen, captan,      "Fungicida almendro monilia",      14.0f);
+        inv(carmen, azufre,      "Fungicida preventivo",            14.0f);
 
-        trat(carmen, r_carmen_1, cobre,       "PR", "Repilo del olivo",    "SPIOCA", LocalDate.of(2024, 3, 10), 2.5f, "kg/ha", true);
-        trat(carmen, r_carmen_2, glifosato,   "PR", "Malas hierbas cereal","POAAN",  LocalDate.of(2024, 2, 20), 4.0f, "L/ha", true);
+        trat(carmen, r_carmen_1, cobre,       "PR", "Repilo del olivo",    "EPPO: REPI1", LocalDate.of(2024, 3, 10), 2.5f, "kg/ha", true);
+        trat(carmen, r_carmen_2, glifosato,   "PR", "Malas hierbas cereal","EPPO: POAAN", LocalDate.of(2024, 2, 20), 4.0f, "L/ha", true);
 
-        // ── JOSÉ ANTONIO ROMERO — 2 explotaciones ────────────────────────────
-        Explotacion fincasanisidro = exp(asesoria, jose, "Finca San Isidro", "CE", "SC", 55.0f, "SIG-23-020-0-012");
-        Recinto r_jose_1 = pc(fincasanisidro, "23020A0010004800000FP", 28.0f, "TDU", "SE", "Jaén");
-                           pc(fincasanisidro, "23020A0010004850000FP", 27.0f, "EB",  "SE", "Jaén");
+        // ── JOSÉ ANTONIO ROMERO — Valdepeñas (087) ────────────────────────────
+        Explotacion fincasanisidro = exp(asesoria, jose, "Finca San Isidro", "CE", "SC", 55.0f, "SIG-13-087-0-012");
+        Recinto r_jose_1 = pc(fincasanisidro, "13087A0010004800000FP", 28.0f, "TDU", "SE", "Valdepeñas");
+                           pc(fincasanisidro, "13087A0010004850000FP", 27.0f, "EB",  "SE", "Valdepeñas");
 
-        Explotacion vinasalcaide = exp(asesoria, jose, "Las Viñas del Alcaide", "VI", "SC", 18.5f, "SIG-23-020-0-013");
-        Recinto r_jose_2 = pc(vinasalcaide, "23020A0020002100000GQ", 9.5f, "VI", "RG", "Martos");
-                           pc(vinasalcaide, "23020A0020002140000GQ", 9.0f, "VI", "SE", "Martos");
+        Explotacion vinasalcaide = exp(asesoria, jose, "Las Viñas del Alcaide", "VI", "SC", 18.5f, "SIG-13-087-0-013");
+        Recinto r_jose_2 = pc(vinasalcaide, "13087A0020002100000GQ", 9.5f, "VI", "RG", "Valdepeñas");
+                           pc(vinasalcaide, "13087A0020002140000GQ", 9.0f, "VI", "SE", "Valdepeñas");
 
         inv(jose, glifosato,   "Herbicida cereal — Romero",    25.0f);
-        inv(jose, clorpirifos, "Plaga viña — José Antonio",    10.0f);
-        inv(jose, captan,      "Fungicida oidio viña",          9.0f);
         inv(jose, cobre,       "Mildiu viña septiembre",        16.0f);
         inv(jose, abamectina,  "Araña roja viñedo S.C.",         4.0f);
+        inv(jose, azufre,      "Azufre oidio viña",             20.0f);
 
-        trat(jose, r_jose_1, glifosato, "PR", "Malas hierbas cereal",  "POAAN",  LocalDate.of(2024, 3, 5),  3.0f, "L/ha", false);
-        trat(jose, r_jose_2, captan,    "CU", "Oidio de la vid",       "UNCVIT", LocalDate.of(2024, 6, 10), 1.5f, "kg/ha", true);
+        trat(jose, r_jose_1, glifosato, "PR", "Malas hierbas cereal",  "EPPO: POAAN", LocalDate.of(2024, 3, 5),  3.0f, "L/ha", false);
+        trat(jose, r_jose_2, azufre,    "CU", "Oidio de la vid",       "EPPO: OIDI1", LocalDate.of(2024, 6, 10), 1.5f, "kg/ha", true);
 
-        // ── ISABEL MARTÍNEZ — 3 explotaciones ────────────────────────────────
-        Explotacion pradonuevo = exp(asesoria, isabel, "Prado Nuevo", "OL", "PF", 40.0f, "SIG-23-050-0-014");
-        Recinto r_isabel_1 = pc(pradonuevo, "23050A0010003900000HR", 20.0f, "OV", "SE", "Úbeda");
-                             pc(pradonuevo, "23050A0010003950000HR", 20.0f, "OV", "SE", "Úbeda");
+        // ── ISABEL MARTÍNEZ — Tomelloso (086) ────────────────────────────────
+        Explotacion pradonuevo = exp(asesoria, isabel, "Prado Nuevo", "OL", "PF", 40.0f, "SIG-13-086-0-014");
+        Recinto r_isabel_1 = pc(pradonuevo, "13086A0010003900000HR", 20.0f, "OV", "SE", "Tomelloso");
+                             pc(pradonuevo, "13086A0010003950000HR", 20.0f, "OV", "SE", "Tomelloso");
 
-        Explotacion almendrovega = exp(asesoria, isabel, "El Almendro de la Vega", "FS", "PF", 25.0f, "SIG-23-050-0-015");
-        Recinto r_isabel_2 = pc(almendrovega, "23050A0020002800000IS", 13.0f, "FS", "SE", "Baeza");
-                             pc(almendrovega, "23050A0020002840000IS", 12.0f, "FS", "SE", "Baeza");
+        Explotacion almendrovega = exp(asesoria, isabel, "El Almendro de la Vega", "FS", "PF", 25.0f, "SIG-13-086-0-015");
+        Recinto r_isabel_2 = pc(almendrovega, "13086A0020002800000IS", 13.0f, "FS", "SE", "Tomelloso");
+                             pc(almendrovega, "13086A0020002840000IS", 12.0f, "FS", "SE", "Tomelloso");
 
-        Explotacion laholanda = exp(asesoria, isabel, "La Holanda", "CE", "PF", 75.5f, "SIG-23-050-0-016");
-        pc(laholanda, "23050A0030006800000JT", 38.0f, "TBL", "SE", "Andújar");
-        pc(laholanda, "23050A0030006850000JT", 37.5f, "GI",  "RG", "Andújar");
+        Explotacion laholanda = exp(asesoria, isabel, "La Holanda", "CE", "PF", 75.5f, "SIG-13-086-0-016");
+        pc(laholanda, "13086A0030006800000JT", 38.0f, "TBL", "SE", "Tomelloso");
+        pc(laholanda, "13086A0030006850000JT", 37.5f, "GI",  "RG", "Tomelloso");
 
         inv(isabel, cobre,       "Repaso olivo Isabel — P. Nuevo",  28.0f);
         inv(isabel, glifosato,   "Herbicida rodales olivar",        22.0f);
         inv(isabel, abamectina,  "Veneno araña almendro — Isabel",   5.5f);
-        inv(isabel, clorpirifos, "Barrenillo olivo primavera",      14.0f);
-        inv(isabel, captan,      "Fungicida cereal — La Holanda",    8.0f);
+        inv(isabel, azufre,      "Fungicida oidio",                 15.0f);
 
-        trat(isabel, r_isabel_1, cobre,      "CU", "Repilo del olivo",      "SPIOCA", LocalDate.of(2024, 4, 18), 3.0f, "kg/ha", true);
-        trat(isabel, r_isabel_2, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 3, 22), 0.5f, "L/ha", true);
+        trat(isabel, r_isabel_1, cobre,      "CU", "Repilo del olivo",      "EPPO: REPI1",  LocalDate.of(2024, 4, 18), 3.0f, "kg/ha", true);
+        trat(isabel, r_isabel_2, abamectina, "PR", "Araña roja del almendro","EPPO: PANUTE", LocalDate.of(2024, 3, 22), 0.5f, "L/ha", true);
 
-        // ── ANTONIO HERRERO — 2 explotaciones ────────────────────────────────
-        Explotacion hazasdelmonte = exp(asesoria, antonio, "Las Hazas del Monte", "CE", "PF", 90.0f, "SIG-06-015-0-017");
-        Recinto r_antonio_1 = pc(hazasdelmonte, "06015A0010007900000KU", 45.0f, "TDU", "SE", "Mérida");
-                              pc(hazasdelmonte, "06015A0010008000000KU", 45.0f, "EB",  "SE", "Mérida");
+        // ── ANTONIO HERRERO — Daimiel (023) ────────────────────────────────
+        Explotacion hazasdelmonte = exp(asesoria, antonio, "Las Hazas del Monte", "CE", "PF", 90.0f, "SIG-13-023-0-017");
+        Recinto r_antonio_1 = pc(hazasdelmonte, "13023A0010007900000KU", 45.0f, "TDU", "SE", "Daimiel");
+                              pc(hazasdelmonte, "13023A0010008000000KU", 45.0f, "EB",  "SE", "Daimiel");
 
-        Explotacion huertanoria = exp(asesoria, antonio, "Huerta La Noria", "HO", "PF", 5.5f, "SIG-06-015-0-018");
-        Recinto r_antonio_2 = pc(huertanoria, "06015A0020000480000LV", 2.8f, "TA", "RG", "Don Benito");
-                              pc(huertanoria, "06015A0020000510000LV", 2.7f, "TA", "RG", "Don Benito");
+        Explotacion huertanoria = exp(asesoria, antonio, "Huerta La Noria", "HO", "PF", 5.5f, "SIG-13-023-0-018");
+        Recinto r_antonio_2 = pc(huertanoria, "13023A0020000480000LV", 2.8f, "TA", "RG", "Daimiel");
+                              pc(huertanoria, "13023A0020000510000LV", 2.7f, "TA", "RG", "Daimiel");
 
         inv(antonio, glifosato,   "Herbicida cereal secano — Herrero", 35.0f);
-        inv(antonio, clorpirifos, "Pulgón cereal general",              16.0f);
-        inv(antonio, captan,      "Fungicida huerta tomate",             7.0f);
         inv(antonio, cobre,       "Prevención mildiu pepino",           11.0f);
         inv(antonio, abamectina,  "Minador hoja pepino invernadero",     4.5f);
+        inv(antonio, azufre,      "Fungicida preventivo oidio",         10.0f);
 
-        trat(antonio, r_antonio_1, glifosato, "PR", "Malas hierbas cereal",    "POAAN",  LocalDate.of(2024, 2, 8),  4.0f, "L/ha", false);
-        trat(antonio, r_antonio_2, captan,    "CU", "Botritis del tomate",     "BOTRCI", LocalDate.of(2024, 5, 25), 2.0f, "kg/ha", true);
+        trat(antonio, r_antonio_1, glifosato, "PR", "Malas hierbas cereal",    "EPPO: POAAN",  LocalDate.of(2024, 2, 8),  4.0f, "L/ha", false);
+        trat(antonio, r_antonio_2, azufre,    "CU", "Oidio de las hortícolas",  "EPPO: OIDI1", LocalDate.of(2024, 5, 25), 2.0f, "kg/ha", true);
 
-        // ── ROSA JIMÉNEZ — 3 explotaciones ───────────────────────────────────
-        Explotacion almendrosronda = exp(asesoria, rosa, "Almendros de Ronda", "FS", "PF", 20.0f, "SIG-29-080-0-019");
-        Recinto r_rosa_1 = pc(almendrosronda, "29080A0010002000000MW", 10.0f, "FS", "SE", "Ronda");
-                           pc(almendrosronda, "29080A0010002040000MW", 10.0f, "FS", "SE", "Ronda");
+        // ── ROSA JIMÉNEZ — Valdepeñas (087) ───────────────────────────────────
+        Explotacion almendrosronda = exp(asesoria, rosa, "Almendros de Ronda", "FS", "PF", 20.0f, "SIG-13-087-0-019");
+        Recinto r_rosa_1 = pc(almendrosronda, "13087A0010002000000MW", 10.0f, "FS", "SE", "Valdepeñas");
+                           pc(almendrosronda, "13087A0010002040000MW", 10.0f, "FS", "SE", "Valdepeñas");
 
-        Explotacion vinedossol = exp(asesoria, rosa, "Viñedos del Sol", "VI", "PF", 14.5f, "SIG-29-080-0-020");
-        Recinto r_rosa_2 = pc(vinedossol, "29080A0020001500000NX", 7.5f, "VI", "RG", "Málaga");
-                           pc(vinedossol, "29080A0020001540000NX", 7.0f, "VI", "SE", "Málaga");
+        Explotacion vinedossol = exp(asesoria, rosa, "Viñedos del Sol", "VI", "PF", 14.5f, "SIG-13-087-0-020");
+        Recinto r_rosa_2 = pc(vinedossol, "13087A0020001500000NX", 7.5f, "VI", "RG", "Valdepeñas");
+                           pc(vinedossol, "13087A0020001540000NX", 7.0f, "VI", "SE", "Valdepeñas");
 
-        Explotacion olivarfrailes = exp(asesoria, rosa, "El Olivar de Frailes", "OL", "PF", 32.0f, "SIG-29-080-0-021");
-        pc(olivarfrailes, "29080A0030003200000OY", 16.0f, "OV", "SE", "Coín");
-        pc(olivarfrailes, "29080A0030003240000OY", 16.0f, "OV", "SE", "Coín");
+        Explotacion olivarfrailes = exp(asesoria, rosa, "El Olivar de Frailes", "OL", "PF", 32.0f, "SIG-13-087-0-021");
+        pc(olivarfrailes, "13087A0030003200000OY", 16.0f, "OV", "SE", "Valdepeñas");
+        pc(olivarfrailes, "13087A0030003240000OY", 16.0f, "OV", "SE", "Valdepeñas");
 
         inv(rosa, abamectina,  "Araña roja almendro — Rosa",    8.0f);
-        inv(rosa, captan,      "Monilia almendro primavera",    15.0f);
         inv(rosa, cobre,       "Mildiu viña — Jiménez",         18.0f);
         inv(rosa, glifosato,   "Herbicida olivo — Frailes",     20.0f);
-        inv(rosa, clorpirifos, "Mosca olivo verano",             9.0f);
+        inv(rosa, azufre,      "Oidio viña — Jiménez",          22.0f);
 
-        trat(rosa, r_rosa_1, abamectina, "PR", "Araña roja del almendro","PANUTE", LocalDate.of(2024, 4, 2),  0.6f, "L/ha", true);
-        trat(rosa, r_rosa_2, cobre,      "CU", "Mildiu de la vid",       "PLASVI", LocalDate.of(2024, 5, 30), 3.5f, "kg/ha", true);
+        trat(rosa, r_rosa_1, abamectina, "PR", "Araña roja del almendro","EPPO: PANUTE", LocalDate.of(2024, 4, 2),  0.6f, "L/ha", true);
+        trat(rosa, r_rosa_2, azufre,      "CU", "Oidio de la vid",       "EPPO: OIDI1",  LocalDate.of(2024, 5, 30), 3.5f, "kg/ha", true);
 
-        // ── MANUEL GUERRERO — 2 explotaciones ────────────────────────────────
-        Explotacion dehesagrande = exp(asesoria, manuel, "La Dehesa Grande", "PA", "PF", 110.0f, "SIG-10-030-0-022");
-        Recinto r_manuel_1 = pc(dehesagrande, "10030A0010009800000PZ", 55.0f, "PR", "SE", "Cáceres");
-                             pc(dehesagrande, "10030A0010009900000PZ", 55.0f, "PR", "SE", "Cáceres");
+        // ── MANUEL GUERRERO — Tomelloso (086) ────────────────────────────────
+        Explotacion dehesagrande = exp(asesoria, manuel, "La Dehesa Grande", "PA", "PF", 110.0f, "SIG-13-086-0-022");
+        Recinto r_manuel_1 = pc(dehesagrande, "13086A0010009800000PZ", 55.0f, "PR", "SE", "Tomelloso");
+                             pc(dehesagrande, "13086A0010009900000PZ", 55.0f, "PR", "SE", "Tomelloso");
 
-        Explotacion cerrosberrocal = exp(asesoria, manuel, "Cerros Berrocal", "CE", "PF", 50.0f, "SIG-10-030-0-023");
-        Recinto r_manuel_2 = pc(cerrosberrocal, "10030A0020004500000QA", 25.0f, "TBL", "SE", "Trujillo");
-                             pc(cerrosberrocal, "10030A0020004550000QA", 25.0f, "CE",  "SE", "Trujillo");
+        Explotacion cerrosberrocal = exp(asesoria, manuel, "Cerros Berrocal", "CE", "PF", 50.0f, "SIG-13-086-0-023");
+        Recinto r_manuel_2 = pc(cerrosberrocal, "13086A0020004500000QA", 25.0f, "TBL", "SE", "Tomelloso");
+                             pc(cerrosberrocal, "13086A0020004550000QA", 25.0f, "CE",  "SE", "Tomelloso");
 
         inv(manuel, glifosato,   "Herbicida cereal — El Cerro",    28.0f);
-        inv(manuel, clorpirifos, "Insecticida general dehesa",     18.0f);
-        inv(manuel, captan,      "Fungicida cereal berrocal",       6.0f);
         inv(manuel, cobre,       "Prevención enfermedades cereal",  9.0f);
         inv(manuel, abamectina,  "Control plagas pastizal",         3.0f);
+        inv(manuel, azufre,      "Fungicida oidio pastos",         12.0f);
 
-        trat(manuel, r_manuel_1, clorpirifos, "CU", "Mosca del olivo",     "DACUOL", LocalDate.of(2024, 7, 8),  1.5f, "L/ha", true);
-        trat(manuel, r_manuel_2, glifosato,   "PR", "Malas hierbas cereal","POAAN",  LocalDate.of(2024, 2, 28), 3.5f, "L/ha", false);
+        trat(manuel, r_manuel_1, cobre,      "CU", "Repilo del olivo",     "EPPO: REPI1",  LocalDate.of(2024, 7, 8),  1.5f, "kg/ha", true);
+        trat(manuel, r_manuel_2, glifosato,   "PR", "Malas hierbas cereal","EPPO: POAAN",  LocalDate.of(2024, 2, 28), 3.5f, "L/ha", false);
 
-        // ── PILAR FUENTES — 2 explotaciones ──────────────────────────────────
-        Explotacion olivaralqueria = exp(asesoria, pilar, "Olivar Alquería", "OL", "PF", 38.5f, "SIG-06-060-0-024");
-        Recinto r_pilar_1 = pc(olivaralqueria, "06060A0010003700000RB", 19.0f, "OV", "SE", "Olivenza");
-                            pc(olivaralqueria, "06060A0010003750000RB", 19.5f, "OV", "SE", "Olivenza");
+        // ── PILAR FUENTES — Daimiel (023) ──────────────────────────────────
+        Explotacion olivaralqueria = exp(asesoria, pilar, "Olivar Alquería", "OL", "PF", 38.5f, "SIG-13-023-0-024");
+        Recinto r_pilar_1 = pc(olivaralqueria, "13023A0010003700000RB", 19.0f, "OV", "SE", "Daimiel");
+                            pc(olivaralqueria, "13023A0010003750000RB", 19.5f, "OV", "SE", "Daimiel");
 
-        Explotacion dehesafuentes = exp(asesoria, pilar, "Dehesa Fuentes", "PA", "PF", 95.0f, "SIG-06-060-0-025");
-        Recinto r_pilar_2 = pc(dehesafuentes, "06060A0020008500000SC", 48.0f, "PR", "SE", "Badajoz");
-                            pc(dehesafuentes, "06060A0020008600000SC", 47.0f, "PR", "SE", "Badajoz");
+        Explotacion dehesafuentes = exp(asesoria, pilar, "Dehesa Fuentes", "PA", "PF", 95.0f, "SIG-13-023-0-025");
+        Recinto r_pilar_2 = pc(dehesafuentes, "13023A0020008500000SC", 48.0f, "PR", "SE", "Daimiel");
+                            pc(dehesafuentes, "13023A0020008600000SC", 47.0f, "PR", "SE", "Daimiel");
 
         inv(pilar, cobre,       "Repaso olivo — Alquería",          24.0f);
         inv(pilar, glifosato,   "Herbicida suelo olivar seco",      16.0f);
-        inv(pilar, clorpirifos, "Mosca olivo — Fuentes",            13.0f);
         inv(pilar, abamectina,  "Acaricida olivo Pilar",             5.0f);
-        inv(pilar, captan,      "Fungicida preventivo cereal Pilar",  7.5f);
+        inv(pilar, azufre,      "Fungicida oidio preventivo Pilar", 10.0f);
 
-        trat(pilar, r_pilar_1, cobre,       "CU", "Repilo del olivo",  "SPIOCA", LocalDate.of(2024, 4, 25), 2.5f, "kg/ha", true);
-        trat(pilar, r_pilar_2, clorpirifos, "CU", "Mosca del olivo",   "DACUOL", LocalDate.of(2024, 7, 15), 1.0f, "L/ha", true);
+        trat(pilar, r_pilar_1, cobre,       "CU", "Repilo del olivo",  "EPPO: REPI1", LocalDate.of(2024, 4, 25), 2.5f, "kg/ha", true);
+        trat(pilar, r_pilar_2, cobre,       "CU", "Repilo del olivo",  "EPPO: REPI1", LocalDate.of(2024, 7, 15), 1.0f, "kg/ha", true);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -426,7 +419,7 @@ public class DataSeeder implements CommandLineRunner {
                 .superficie(BigDecimal.valueOf(superficie))
                 .usoSigpac(usoSigpac)
                 .sistemaCultivo(sistemaCultivo)
-                .cultivo(usoSigpac)
+                .cultivo(mapUsoToFegaCultivo(usoSigpac))
                 .parcela(parcela)
                 .build());
     }
@@ -435,7 +428,6 @@ public class DataSeeder implements CommandLineRunner {
                       String motivo, String plagaTexto, String eppoCode,
                       LocalDate fecha, float dosis, String unidades,
                       boolean validado) {
-        String prov = r.getParcela().getExplotacion().getProvinciaExplotacion();
         double superficie = r.getSuperficie() != null ? r.getSuperficie().doubleValue() : 0.0;
 
         List<Aplicador> aplicadores = aplicadorRepository.findAll();
@@ -443,6 +435,27 @@ public class DataSeeder implements CommandLineRunner {
 
         List<Equipamiento> equipamientos = equipamientoRepository.findAll();
         Equipamiento equipamiento = equipamientos.stream().filter(e -> e.getGranjero().getId().equals(g.getId())).findFirst().orElse(null);
+
+        // Fallback robusto para garantizar datos completos
+        if (aplicador == null) {
+            aplicador = aplicadorRepository.save(Aplicador.builder()
+                    .nombre("Manuel García López")
+                    .nif("12345678A")
+                    .numeroRopo("13-12345-P")
+                    .nivelCapacitacion("CUALIFICADO")
+                    .granjero(g)
+                    .build());
+        }
+
+        if (equipamiento == null) {
+            equipamiento = equipamientoRepository.save(Equipamiento.builder()
+                    .alias("13-0948")
+                    .tipoMaquina("Atomizador remolcado")
+                    .marcaModelo("Hardi Mercury 2000")
+                    .numRegistroIteaf("ITEAF-13-876")
+                    .granjero(g)
+                    .build());
+        }
 
         tratamientoRepository.save(Tratamiento.builder()
                 .fecha(fecha)
@@ -475,6 +488,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private String provToNombre(String cod) {
         return switch (cod) {
+            case "13" -> "Ciudad Real";
             case "02" -> "Albacete";
             case "06" -> "Badajoz";
             case "10" -> "Cáceres";
@@ -482,6 +496,20 @@ public class DataSeeder implements CommandLineRunner {
             case "23" -> "Jaén";
             case "29" -> "Málaga";
             default   -> "España";
+        };
+    }
+
+    private String mapUsoToFegaCultivo(String uso) {
+        return switch (uso) {
+            case "VI" -> "Viñedo de transformación";
+            case "OV" -> "Olivar";
+            case "TBL" -> "Cebada de dos carreras";
+            case "EB" -> "Cereal de invierno";
+            case "FS" -> "Almendro";
+            case "TA" -> "Hortícolas";
+            case "PR" -> "Pastizal";
+            case "GI" -> "Girasol";
+            default -> "Olivar";
         };
     }
 }

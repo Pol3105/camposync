@@ -17,9 +17,12 @@ import com.camposync.dto.EquipamientoDTO;
 
 import com.camposync.dto.TratamientoValidarRequest;
 import com.camposync.service.AsesorPanelService;
+import com.camposync.service.CueXmlExportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +35,7 @@ import java.util.List;
 public class AsesorPanelController {
 
     private final AsesorPanelService asesorPanelService;
+    private final CueXmlExportService cueXmlExportService;
 
     @GetMapping("/perfil")
     public ResponseEntity<AsesorDTO> getPerfil() {
@@ -179,6 +183,22 @@ public class AsesorPanelController {
     public ResponseEntity<Void> eliminarRecinto(@PathVariable Long id) {
         asesorPanelService.eliminarRecinto(currentUsername(), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/explotaciones/{id}/cue-xml")
+    public ResponseEntity<byte[]> exportarCueXml(@PathVariable Long id) {
+        String username = currentUsername();
+        try {
+            asesorPanelService.listarParcelasDeExplotacion(username, id);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        byte[] xmlBytes = cueXmlExportService.generateCueXml(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_XML);
+        headers.setContentDispositionFormData("attachment", "CUE_Explotacion_" + id + ".xml");
+        return new ResponseEntity<>(xmlBytes, headers, HttpStatus.OK);
     }
 
     private String currentUsername() {

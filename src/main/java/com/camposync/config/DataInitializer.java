@@ -29,12 +29,14 @@ public class DataInitializer implements CommandLineRunner {
     private final RecintoRepository               recintoRepository;
     private final InventarioRepository            inventarioRepository;
     private final TratamientoRepository           tratamientoRepository;
+    private final AsesorRepository                asesorRepository;
+    private final AplicadorRepository             aplicadorRepository;
+    private final EquipamientoRepository          equipamientoRepository;
 
     @Override
     @Transactional
     public void run(String... args) {
         seedUsuariosBase();
-        seedProductosFitosanitarios();
     }
 
     private void seedUsuariosBase() {
@@ -52,99 +54,128 @@ public class DataInitializer implements CommandLineRunner {
                 .build());
 
         Asesoria asesoria = asesoriaRepository.save(Asesoria.builder()
-                .nombre("Asesoría Demo")
+                .nombre("Calatrava Asesores")
                 .email("demo@camposync.com")
-                .provincia("Madrid")
+                .provincia("Ciudad Real")
                 .plan(plan)
                 .activo(true)
                 .build());
 
         // 2º — Usuarios
+        // Asesor: "admin"
         authService.registerAsesor("admin", "admin123", "Jefe Admin", "12345678Z", "Jefe Admin", asesoria.getId(), true);
-        authService.registerGranjero("granjero1", "granjero123", "Juan el Granjero", "87654321X", "Juan el Granjero", "600000000", null, asesoria.getId());
+        Asesor adminAsesor = asesorRepository.findByUsername("admin")
+                .orElseThrow(() -> new IllegalStateException("admin no encontrado tras el seed"));
+        adminAsesor.setNumColegiado("13/99999/A");
+        asesorRepository.save(adminAsesor);
 
-        Granjero granjero = granjeroRepository.findByUsername("granjero1")
-                .orElseThrow(() -> new IllegalStateException("granjero1 no encontrado tras el seed"));
+        // Granjero: "contacto@fincalacalatrava.com"
+        authService.registerGranjero("contacto@fincalacalatrava.com", "granjero123", "Finca La Calatrava S.L.", "B13123456", "Finca La Calatrava S.L.", "600000000", "0111", asesoria.getId());
+        Granjero granjero = granjeroRepository.findByUsername("contacto@fincalacalatrava.com")
+                .orElseThrow(() -> new IllegalStateException("contacto@fincalacalatrava.com no encontrado tras el seed"));
 
         // 3º — Explotación
         Explotacion explotacion = explotacionRepository.save(Explotacion.builder()
-                .nombre("Finca La Demo")
-                .refSig("SIG-28-013-0-001")
+                .nombre("Finca La Calatrava")
+                .refSig("SIG-13-023-0-001")
                 .superficieTotal(new BigDecimal("25.5000"))
                 .estado("ACTIVA")
-                .codigoRea("ES280130001")
+                .codigoRea("ES130230001")
                 .tipoExplotacion("PF")
-                .orientacionProductiva("CE")
-                .provinciaExplotacion("28")
-                .municipioExplotacion("013")
+                .orientacionProductiva("OL")
+                .provinciaExplotacion("13")
+                .municipioExplotacion("023")
                 .anioDeclaracion(2024)
                 .asesoria(asesoria)
                 .granjero(granjero)
                 .build());
 
-        // 4º — Parcela (sin cultivo/superficie: migrados al Recinto)
+        // 4º — Parcela
         Parcela parcelaNorte = parcelaRepository.save(Parcela.builder()
-                .refCatastral("Parcela Norte")
-                .municipio("Aranjuez")
-                .provincia("Madrid")
-                .poligono(12)
-                .parcelaSigpac(34)
+                .refCatastral("13023A0040001200000JK")
+                .municipio("Daimiel")
+                .provincia("Ciudad Real")
+                .poligono(4)
+                .parcelaSigpac(12)
                 .explotacion(explotacion)
                 .build());
 
         parcelaRepository.save(Parcela.builder()
-                .refCatastral("Parcela Sur")
-                .municipio("Aranjuez")
-                .provincia("Madrid")
-                .poligono(12)
-                .parcelaSigpac(35)
+                .refCatastral("13023A0040001300000MR")
+                .municipio("Daimiel")
+                .provincia("Ciudad Real")
+                .poligono(4)
+                .parcelaSigpac(13)
                 .explotacion(explotacion)
                 .build());
 
         // 5º — Productos fitosanitarios
         seedProductosFitosanitarios();
 
-        ProductoFitosanitario producto = productoRepository.findAll().get(0);
+        ProductoFitosanitario cobre = productoRepository.findAll().stream()
+                .filter(p -> p.getNombre().contains("Cupreox"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Cupreox no encontrado"));
 
         // 6º — Recinto (unidad mínima SIGPAC para el tratamiento)
         Recinto recinto = recintoRepository.save(Recinto.builder()
                 .numeroRecinto(1)
                 .superficie(new BigDecimal("12.5000"))
-                .usoSigpac("TA")
+                .usoSigpac("OV")
                 .sistemaCultivo("SE")
-                .cultivo("TBL")
+                .cultivo("Olivar")
                 .parcela(parcelaNorte)
                 .build());
 
         // 7º — Inventario
         inventarioRepository.save(Inventario.builder()
-                .aliasAgric("Captan — stock principal")
+                .aliasAgric("Cobre — stock principal")
                 .stockAct(50.0f)
                 .granjero(granjero)
-                .productoFitosanitario(producto)
+                .productoFitosanitario(cobre)
+                .build());
+
+        // Aplicador base
+        Aplicador aplicador = aplicadorRepository.save(Aplicador.builder()
+                .nombre("Manuel García")
+                .nif("12345678Z")
+                .numeroRopo("13-98765-P")
+                .nivelCapacitacion("CUALIFICADO")
+                .granjero(granjero)
+                .build());
+
+        // Equipamiento base
+        Equipamiento equipamiento = equipamientoRepository.save(Equipamiento.builder()
+                .alias("13-0948") // ROMA
+                .tipoMaquina("Atomizador remolcado")
+                .marcaModelo("Hardi Mercury 2000")
+                .numRegistroIteaf("ITEAF-13-876")
+                .granjero(granjero)
                 .build());
 
         // 8º — Tratamiento (FK → recinto)
         tratamientoRepository.save(Tratamiento.builder()
                 .fecha(LocalDate.now())
                 .dosis(2.5f)
-                .unidades("L/ha")
+                .unidades("kg/ha")
                 .superficieTratada(12.5)
-                .plagaObjetivo("Mildiu de la vid")
-                .motivoTratamiento("CU")
-                .codigoPlaga("PLASVI")
-                .volumenCaldo(new java.math.BigDecimal("200.00"))
+                .plagaObjetivo("Repilo del olivo")
+                .motivoTratamiento("PR")
+                .codigoPlaga("EPPO: REPI1")
+                .volumenCaldo(new java.math.BigDecimal("800.00"))
                 .estado("PENDIENTE")
                 .validado(false)
                 .aiConfidence(0f)
                 .recinto(recinto)
                 .granjero(granjero)
-                .productoFitosanitario(producto)
+                .productoFitosanitario(cobre)
+                .aplicador(aplicador)
+                .equipamiento(equipamiento)
                 .build());
 
         log.info("Usuarios de prueba creados:");
         log.info("  Asesor   → admin / admin123");
-        log.info("  Granjero → granjero1 / granjero123");
+        log.info("  Granjero → contacto@fincalacalatrava.com / granjero123");
         log.info("  Tablas pobladas: explotacion, parcela (x2), recinto (x1), inventario, tratamiento");
     }
 
@@ -155,10 +186,10 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         productoRepository.save(ProductoFitosanitario.builder()
-                .nombre("Captan 50 WP")
-                .principioAct("Captan")
-                .numReg("ES-00123")
-                .cultivosAutori("Manzano,Peral,Vid,Fresa")
+                .nombre("Cupreox 50 WP")
+                .principioAct("Oxicloruro de cobre 50%")
+                .numReg("12345")
+                .cultivosAutori("Olivar,Viñedo,Manzano,Cítricos")
                 .fechaCadu(LocalDate.of(2027, 12, 31))
                 .dosisMin(new java.math.BigDecimal("1.5"))
                 .dosisMax(new java.math.BigDecimal("3.0"))
@@ -167,14 +198,14 @@ public class DataInitializer implements CommandLineRunner {
                 .build());
 
         productoRepository.save(ProductoFitosanitario.builder()
-                .nombre("Clorpirifos 48 EC")
-                .principioAct("Clorpirifos")
-                .numReg("ES-00456")
-                .cultivosAutori("Cereal,Olivo,Citricos")
+                .nombre("Azufre Dorado")
+                .principioAct("Azufre 80%")
+                .numReg("54321")
+                .cultivosAutori("Viñedo,Olivo,Tomate,Cereal")
                 .fechaCadu(LocalDate.of(2026, 6, 30))
                 .dosisMin(new java.math.BigDecimal("1.0"))
                 .dosisMax(new java.math.BigDecimal("2.0"))
-                .unidadDosisOficial("L/ha")
+                .unidadDosisOficial("kg/ha")
                 .activo(true)
                 .build());
 
@@ -190,6 +221,6 @@ public class DataInitializer implements CommandLineRunner {
                 .activo(true)
                 .build());
 
-        log.info("Productos fitosanitarios de prueba creados (Captan, Clorpirifos, Glifosato).");
+        log.info("Productos fitosanitarios de prueba creados (Cupreox 50 WP, Azufre Dorado, Glifosato).");
     }
 }

@@ -106,6 +106,22 @@ export default function ExplotacionParcelasPage() {
     setTimeout(() => setPdfToast(false), 4000)
   }
 
+  async function handleExportarXml() {
+    try {
+      const blob = await asesor.descargarCueXml(id)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `CUE_${expNombre.replace(/\s+/g, '_')}_Explotacion_${id}.xml`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Error al exportar XML: ' + (err.message || err))
+    }
+  }
+
   async function handleDeleteParcela(parcela) {
     if (!window.confirm('¿Estás seguro de que deseas eliminar esta parcela? Esta acción no se puede deshacer.')) return
     try {
@@ -146,7 +162,7 @@ export default function ExplotacionParcelasPage() {
               Volver a Explotaciones
             </button>
             <button
-              onClick={() => alert('Exportación SIEX (XML) — próximamente')}
+              onClick={handleExportarXml}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', background: 'linear-gradient(135deg,#2e5c38,#4e9a5f)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(46,92,56,0.28)' }}
             >
               <FileCode size={15} color="#fff" />

@@ -132,6 +132,14 @@ export const asesor = {
   explotacionesPorGranjero: (granjeroId) => request(`/asesor/granjeros/${granjeroId}/explotaciones`),
   tratamientosPorExplotacion: (explotacionId) => request(`/asesor/explotaciones/${explotacionId}/tratamientos`),
   tratamientosPorParcela: (parcelaId) => request(`/asesor/parcelas/${parcelaId}/tratamientos`),
+  descargarCueXml: async (id) => {
+    const token = localStorage.getItem('token')
+    const headers = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(`http://localhost:8080/api/asesor/explotaciones/${id}/cue-xml`, { headers })
+    if (!res.ok) throw new Error('Error al descargar el XML')
+    return res.blob()
+  },
   getPerfil: () => request('/asesor/perfil'),
   actualizarPerfil: (body) =>
     request('/asesor/perfil', { method: 'PUT', body: JSON.stringify(body) }),
