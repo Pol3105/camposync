@@ -1,5 +1,11 @@
 # CampoSync
 
+> 🎓 **Università Roma Tre — Big Data Project (SSB Track · AA 2025/2026)**
+> The Big Data layer (Experiments 1 & 2) lives in the **[`big-data/`](./big-data/)** folder.
+> Full report: [`big-data/informe_bigdata_camposync.pdf`](./big-data/informe_bigdata_camposync.pdf) · Branch: `BigData`
+
+---
+
 **SaaS B2B multi-tenant para automatizar el Cuaderno Digital de Explotación (CUE)**, obligatorio en España desde septiembre de 2025 y conectado al sistema **SIEX** del MAPA.
 
 ---

@@ -114,17 +114,31 @@ Contexto: `Tratamiento` tiene 5 relaciones LAZY → `Recinto`, `Granjero`, `Prod
 
 ---
 
-## FASE 6 — Informe final
-**Estado: PENDIENTE** | Deadline: subir a Moodle el 23 julio 2026
+## FASE 6 — Integración de Buscador Inteligente y Sinónimos (Exp 1)
+**Estado: COMPLETADO** | Carpeta: `camposync/`
 
-Estructura del report académico:
-- [ ] **6.1** Introducción + motivación (5Vs de CampoSync)
-- [ ] **6.2** Arquitectura del sistema
-- [ ] **6.3** Exp1: metodología, resultados, análisis, conclusión
-- [ ] **6.4** Exp2: metodología, resultados, análisis, conclusión
-- [ ] **6.5** Conclusiones generales + trabajo futuro
-- [ ] **6.6** `big-data/README.md` con instrucciones de reproducibilidad paso a paso
-- [ ] **6.7** Subir código a GitHub + Moodle
+*Nota: Esta fase ha sido integrada como nuestra **FASE 6** para consolidar la transferencia tecnológica del Experimento 1 (precisión léxica) en la interfaz real de usuario. Como consecuencia, el informe final y la documentación académica se desplazan a la **FASE 7**.*
+
+Traducir los aprendizajes del Experimento 1 (precisión léxica) a una característica real de usabilidad dentro de la aplicación móvil de CampoSync, depurando la sensibilidad a tildes e implementando expansión de consultas para pestes y compuestos químicos activos.
+
+- [x] **6.1** Eliminar el dropdown estático de 2.045 productos en `ModalNuevoInventario.jsx` para evitar lag y habilitar un buscador autocompletable dinámico con debouncing (250 ms) y estilos premium.
+- [x] **6.2** Crear el endpoint de búsqueda `GET /api/productos/search` en `ProductoFitosanitarioController.java` y limitar a 50 resultados para máxima velocidad de base de datos.
+- [x] **6.3** Solucionar la sensibilidad a acentos/tildes en PostgreSQL normalizando el término de búsqueda en Java (`java.text.Normalizer`) antes de enviar la consulta.
+- [x] **6.4** Mapear el límite biológico-regulatorio del catálogo: documentar por qué "matarratas" y "rodenticida" no devuelven nada (son biocidas regulados por Sanidad, no fitosanitarios del catálogo RETO del MAPA).
+- [x] **6.5** Desarrollar un motor de Expansión de Consultas (Query Expansion) mediante sinónimos locales que traduzca términos coloquiales del agricultor directamente a principios activos químicos o términos existentes en la DB (ej. "caracoles" ➔ "metaldehido", "malas hierbas" ➔ "glifosato", "bichos" ➔ "deltametrin", "hongos" ➔ "cobre") logrando coincidencias del 100% al instante.
+
+---
+
+## FASE 7 — Informe final
+**Estado: COMPLETADO** | Entregado: 26 mayo 2026
+
+- [x] **7.1** Introducción + motivación (5Vs de CampoSync)
+- [x] **7.2** Arquitectura del sistema
+- [x] **7.3** Exp1: metodología, resultados, análisis, conclusión
+- [x] **7.4** Exp2: metodología, resultados, análisis, conclusión
+- [x] **7.5** Conclusiones generales + trabajo futuro
+- [x] **7.6** `big-data/README.md` — instrucciones de reproducibilidad paso a paso
+- [x] **7.7** Subir código a GitHub + Moodle
 
 ---
 

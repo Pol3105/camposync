@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { granjero } from '../services/api'
+import { Search } from 'lucide-react'
 
 const GREEN_DARK = '#1c3829'
 const GREEN_MID  = '#2e5c38'
@@ -21,6 +22,18 @@ export default function ModalNuevoInventario({ onClose, onCreado, productoPresel
   const [enviando,  setEnviando]  = useState(false)
   const [error,     setError]     = useState(null)
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searching, setSearching] = useState(false)
+  const [searchTimeout, setSearchTimeout] = useState(null)
+  
+  const [selectedProducto, setSelectedProducto] = useState(productoPreseleccionado ? {
+    id: productoPreseleccionado.productoFitosanitarioId,
+    nombre: productoPreseleccionado.productoNombre,
+    principioAct: productoPreseleccionado.principioAct,
+    numReg: productoPreseleccionado.numReg,
+    unidadDosisOficial: productoPreseleccionado.unidadDosisOficial
+  } : null)
+
   const [form, setForm] = useState({
     productoFitoId: productoPreseleccionado ? String(productoPreseleccionado.productoFitosanitarioId) : '',
     aliasAgric:     productoPreseleccionado ? (productoPreseleccionado.aliasAgric ?? '') : '',
@@ -28,18 +41,50 @@ export default function ModalNuevoInventario({ onClose, onCreado, productoPresel
   })
 
   useEffect(() => {
-    granjero.productosOficiales()
-      .then(data => setProductos(data ?? []))
-      .catch(() => setError('No se pudo cargar el catálogo de productos.'))
-      .finally(() => setLoading(false))
+    setLoading(false)
   }, [])
 
   function set(field, value) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
-  const selectedProducto = productos.find(p => String(p.id) === String(form.productoFitoId))
-  const unidadHint       = productoPreseleccionado
+  function handleSearchChange(val) {
+    setSearchQuery(val)
+    if (searchTimeout) clearTimeout(searchTimeout)
+
+    if (val.trim().length < 2) {
+      setProductos([])
+      return
+    }
+
+    setSearching(true)
+    const timeout = setTimeout(() => {
+      granjero.buscarProductosOficiales(val.trim())
+        .then(data => setProductos(data ?? []))
+        .catch(() => {})
+        .finally(() => setSearching(false))
+    }, 250)
+
+    setSearchTimeout(timeout)
+  }
+
+  function handleSelectProduct(p) {
+    setSelectedProducto(p)
+    set('productoFitoId', String(p.id))
+    // Auto-prefill the agricultural alias with the official product name
+    set('aliasAgric', p.nombre)
+    // Clear search query and results so list closes
+    setProductos([])
+    setSearchQuery('')
+  }
+
+  function handleClearSelection() {
+    setSelectedProducto(null)
+    set('productoFitoId', '')
+    set('aliasAgric', '')
+  }
+
+  const unidadHint = productoPreseleccionado
     ? deriveUnidad(productoPreseleccionado.unidadDosisOficial)
     : selectedProducto ? deriveUnidad(selectedProducto.unidadDosisOficial) : null
 
@@ -120,27 +165,102 @@ export default function ModalNuevoInventario({ onClose, onCreado, productoPresel
               </Field>
             ) : (
               <>
-                <Field label="Producto oficial (catálogo MAPA)">
-                  {productos.length === 0 ? (
-                    <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>
-                      No hay productos activos en el catálogo.
-                    </p>
-                  ) : (
-                    <select
-                      required
-                      value={form.productoFitoId}
-                      onChange={e => set('productoFitoId', e.target.value)}
-                      style={selectStyle}
-                    >
-                      <option value="">Selecciona un producto…</option>
-                      {productos.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre}{p.principioAct ? ` — ${p.principioAct}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </Field>
+                {!selectedProducto ? (
+                  <Field label="Buscar Producto Oficial (MAPA)">
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        placeholder="Ej. Cúprico, Glifosato, Manzano pulgón..."
+                        value={searchQuery}
+                        onChange={e => handleSearchChange(e.target.value)}
+                        style={{ ...inputStyle, paddingLeft: 38 }}
+                      />
+                      <Search size={16} color="#9ca3af" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
+                    </div>
+                    {searching && (
+                      <p style={{ fontSize: 12, color: GREEN_ACT, fontWeight: 600, margin: '2px 0 0 2px' }}>Buscando coincidencias…</p>
+                    )}
+                  </Field>
+                ) : (
+                  <Field label="Producto Oficial Seleccionado">
+                    <div style={{
+                      padding: '12px 14px',
+                      background: '#edf7e8',
+                      border: '1.5px solid #c0e8b0',
+                      borderRadius: 14,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#155724', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedProducto.nombre}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: '#2b5a30', marginTop: 2 }}>
+                          {selectedProducto.principioAct ? `${selectedProducto.principioAct} · ` : ''}Nº Reg: {selectedProducto.numReg}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleClearSelection}
+                        style={{
+                          background: '#fff',
+                          border: '1px solid #c0e8b0',
+                          borderRadius: 10,
+                          width: 28,
+                          height: 28,
+                          color: '#721c24',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </Field>
+                )}
+
+                {/* Search Results list */}
+                {productos.length > 0 && !selectedProducto && (
+                  <div style={{
+                    border: '1.5px solid #e5e7eb',
+                    borderRadius: 12,
+                    background: '#f9fafb',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    marginTop: -6,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }}>
+                    {productos.map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => handleSelectProduct(p)}
+                        style={{
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #f3f4f6',
+                          cursor: 'pointer',
+                          fontSize: 13,
+                          transition: 'background 0.15s'
+                        }}
+                        onMouseEnter={e => e.target.style.background = '#edf7e8'}
+                        onMouseLeave={e => e.target.style.background = 'transparent'}
+                      >
+                        <div style={{ fontWeight: 700, color: '#111827' }}>{p.nombre}</div>
+                        {p.principioAct && (
+                          <div style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic', marginTop: 1 }}>{p.principioAct}</div>
+                        )}
+                        {p.numReg && (
+                          <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 1 }}>Nº Reg: {p.numReg}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Product meta chips */}
                 {selectedProducto && (
@@ -159,10 +279,10 @@ export default function ModalNuevoInventario({ onClose, onCreado, productoPresel
                 )}
 
                 {/* 2. Alias propio (opcional) */}
-                <Field label="Nombre propio (opcional)">
+                <Field label="Nombre propio / Alias (opcional)">
                   <input
                     type="text"
-                    placeholder="Ej. Veneno para la viña"
+                    placeholder="Ej. Fungicida para la viña"
                     value={form.aliasAgric}
                     onChange={e => set('aliasAgric', e.target.value)}
                     style={inputStyle}
@@ -250,13 +370,4 @@ const inputStyle = {
   width: '100%',
   boxSizing: 'border-box',
   outline: 'none',
-}
-
-const selectStyle = {
-  ...inputStyle,
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 12px center',
-  paddingRight: 32,
 }

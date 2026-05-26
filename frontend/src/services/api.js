@@ -83,6 +83,7 @@ export const granjero = {
   crearInventario:        (body) => request('/inventario', { method: 'POST', body: JSON.stringify(body) }),
   ajustarStock:           (id, nuevoStock) => request(`/inventario/${id}/stock`, { method: 'PATCH', body: JSON.stringify({ nuevoStock }) }),
   productosOficiales:     () => request('/productos'),
+  buscarProductosOficiales: (query) => request(`/productos/search?query=${encodeURIComponent(query)}`),
   tratamientos:           () => request('/tratamientos'),
   crearTratamiento:       (body) => request('/tratamientos', { method: 'POST', body: JSON.stringify(body) }),
   actualizarTratamiento:  (id, body) => request(`/tratamientos/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
