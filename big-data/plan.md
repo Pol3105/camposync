@@ -30,28 +30,36 @@
 ---
 
 ## FASE 2 — Dataset anotado (base de Exp1)
-**Estado: PENDIENTE** | Carpeta: `big-data/exp1-retrieval/data/`
+**Estado: COMPLETADO** | Carpeta: `big-data/exp1-retrieval/data/`
 
-- [ ] **2.1** Construir `queries_raw.csv` (~500 queries de texto libre):
-  - Variantes: errores tipográficos, nombres comerciales, nombres coloquiales, consultas incompletas
-  - Script semi-automático a partir de productos RETO reales + revisión manual ~50 casos difíciles
-- [ ] **2.2** Anotar → `queries_annotated.csv` (columnas: `query_text`, `producto_id_correcto`, `dificultad`)
+- [x] **2.1** Script `generate_dataset.py` genera queries automáticamente desde RETO
+  - 7 tipos de variante por producto: exacto, parcial, principio activo, cultivo+plaga, cultivo solo, typo, minúscula
+- [x] **2.2** `queries_annotated.csv` — **841 queries** anotadas (fácil: 150, media: 373, difícil: 318)
 
 ---
 
 ## FASE 3 — Experimento 1: Retrieval Accuracy
-**Estado: PENDIENTE** | Carpeta: `big-data/exp1-retrieval/`
+**Estado: COMPLETADO** | Carpeta: `big-data/exp1-retrieval/`
 
-Objetivo: demostrar que embeddings superan a búsqueda exacta/TF-IDF/BM25 para entradas informales de agricultores.
+Objetivo: comparar 4 métodos de recuperación. Resultado inesperado: TF-IDF supera a embeddings (análisis documentado en explicacion.md).
 
-- [ ] **3.1** `scripts/exact_match.py` — búsqueda exacta por nombre
-- [ ] **3.2** `scripts/tfidf.py` — sklearn TF-IDF vectorizer
-- [ ] **3.3** `scripts/bm25.py` — rank-bm25
-- [ ] **3.4** `scripts/embeddings_pgvector.py` — sentence-transformers + ANN pgvector (cosine similarity)
-- [ ] **3.5** `evaluate.py` — corre los 4 métodos sobre el dataset anotado
+- [x] **3.1** `scripts/exact_match.py` — búsqueda exacta por nombre
+- [x] **3.2** `scripts/tfidf.py` — sklearn TF-IDF vectorizer
+- [x] **3.3** `scripts/bm25.py` — rank-bm25
+- [x] **3.4** `scripts/embeddings_pgvector.py` — sentence-transformers + ANN pgvector (cosine similarity)
+- [x] **3.5** `evaluate.py` — corre los 4 métodos sobre el dataset anotado
   - Métricas: **Precision@1, Recall@5, F1-Score**
-  - Output: `results/metrics_comparison.csv` + gráfica de barras
-- [ ] **3.6** Análisis de resultados — anotar casos donde embeddings falla y por qué
+  - Output: `results/metrics_comparison.csv` + `results/metrics_chart.png`
+- [x] **3.6** Análisis de resultados:
+
+| Método | P@1 | R@5 | F1 |
+|--------|-----|-----|----|
+| Exact Match | 0.345 | 0.345 | 0.345 |
+| TF-IDF | 0.537 | 0.738 | **0.622** |
+| BM25 | 0.533 | 0.687 | 0.600 |
+| Embeddings (paraphrase) | 0.050 | 0.064 | 0.056 |
+
+Hallazgo clave: TF-IDF supera a embeddings 11x en F1 global. Ver explicacion.md §3.6.
 
 ---
 

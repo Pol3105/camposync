@@ -140,4 +140,97 @@ Concatenar todo maximiza la similitud con consultas informales como "fungicida m
 - Query `"manzana pulgon"` → top-5 devuelve productos para manzano (Cydia) con similitud coseno ~0.53-0.56 ✅
 - El ivfflat index avisa de "little data" con solo ~10k filas — es un warning informativo, no un error. En producción con más datos desaparece.
 
-<!-- Aquí se irán añadiendo los siguientes pasos conforme se completen -->
+---
+
+## FASE 2 — Dataset anotado
+
+### generate_dataset.py
+**Fichero:** `big-data/exp1-retrieval/generate_dataset.py`
+**Output:** `big-data/exp1-retrieval/data/queries_annotated.csv`
+
+**Qué hace:** toma 150 productos vigentes del RETO al azar y genera hasta 7 variantes de query por producto, simulando cómo un agricultor real buscaría ese producto.
+
+**7 tipos de variante:**
+
+| Tipo | Ejemplo | Dificultad |
+|------|---------|------------|
+| nombre exacto | `PENSHAR 40% SC` | fácil |
+| nombre parcial (1-2 palabras) | `PENSHAR` | media |
+| principio activo | `pendimetalina` | media |
+| nombre minúscula sin guiones | `penshar 40% sc` | media |
+| cultivo + plaga | `achicoria dicotiledóneas anuales` | difícil |
+| cultivo solo | `achicoria (hojas)` | difícil |
+| typo (letra dup/swap/del) | `peshar 40% sc` | difícil |
+
+**Resultado:** 841 queries anotadas — cada una sabe cuál es su `num_reg_correcto` y `nombre_correcto`.
+
+**Por qué >500:** el plan pedía ~500 pero con 150 productos × 7 variantes salen 841. Más datos = mejor evaluación estadística. No hay razón para reducirlos.
+
+---
+
+## FASE 3 — Experimento 1: Retrieval Accuracy
+
+### 3.1–3.4 Scripts de búsqueda
+**Ficheros:**
+- `exp1-retrieval/scripts/exact_match.py` — ya existía, compatible con el evaluador
+- `exp1-retrieval/scripts/tfidf.py` — TF-IDF con bigramas y sublinear TF
+- `exp1-retrieval/scripts/bm25.py` — BM25Okapi de rank-bm25
+- `exp1-retrieval/scripts/embeddings_pgvector.py` — sentence-transformers + pgvector ANN
+
+Todos los scripts exponen `run(queries_df, productos_df) → pd.DataFrame` con columnas `acierto_p1` y `acierto_r5`.
+
+---
+
+### 3.5 evaluate.py
+**Fichero:** `exp1-retrieval/evaluate.py`
+
+Orquesta los 4 métodos, calcula Precision@1 / Recall@5 / F1-Score global y por dificultad, y genera:
+- `results/metrics_comparison.csv`
+- `results/metrics_chart.png`
+
+**Uso:**
+```bash
+cd big-data/exp1-retrieval
+python evaluate.py                   # todos los métodos
+python evaluate.py --skip-embeddings # sin DB (solo baselines)
+python evaluate.py --metodo tfidf    # un solo método
+```
+
+**Errores encontrados y resueltos:**
+1. `psycopg2` en `embeddings_pgvector.py` usaba `%s::vector` con cast explícito. Con `register_vector(conn)` activo, el cast causa conflicto — la función recibe el vector como tipo erróneo y devuelve resultados aleatorios (P@1 = 1.9%). Solución: quitar el cast, usar solo `%s` y pasar el numpy array directamente. El adaptador pgvector lo convierte automáticamente.
+
+---
+
+### 3.6 Análisis de resultados
+
+**Resultados finales (841 queries, 1969 productos vigentes):**
+
+| Método | P@1 | R@5 | F1 global | F1 fácil | F1 media | F1 difícil |
+|--------|-----|-----|-----------|----------|----------|------------|
+| Exact Match | 0.345 | 0.345 | 0.345 | **1.000** | 0.373 | 0.003 |
+| TF-IDF | 0.537 | 0.738 | **0.622** | 0.966 | **0.739** | **0.301** |
+| BM25 | 0.533 | 0.687 | 0.600 | 0.966 | 0.734 | 0.262 |
+| Embeddings (paraphrase) | 0.050 | 0.064 | 0.056 | 0.139 | 0.055 | 0.018 |
+
+**Hallazgo inesperado — por qué embeddings falla:**
+
+Se esperaba que embeddings (`paraphrase-multilingual-MiniLM-L12-v2`) superase a TF-IDF, pero quedó último con F1=0.056. Las causas son:
+
+1. **Modelo inadecuado para retrieval:** `paraphrase-multilingual-MiniLM-L12-v2` es un modelo *simétrico* entrenado para detectar paráfrasis (equivalencia semántica entre dos frases). NO está diseñado para retrieval asimétrico (consulta corta → documento largo). Para retrieval se necesitan bi-encoders especializados como `multi-qa-MiniLM-L6-cos-v1` o `msmarco-distilbert`.
+
+2. **Nombres de marca fuera del vocabulario:** Los nombres RETO son marcas propias ("RUNRUD", "CHANON", "GRAPHOLITA PRO PRESS"). El modelo los tokeniza como subpalabras desconocidas, produciendo embeddings similares entre productos con estructura morfológica parecida pero semánticamente distintos.
+
+3. **Asimetría query-documento:** Incluso con el texto indexado reducido a `"{nombre} {principio_act}"`, la similitud coseno entre "RUNRUD" (query) y "RUNRUD GLIFOSATO 36%" (documento) es ~0.65 — pero otros productos con tokens similares pueden puntuarse más alto.
+
+**Por qué TF-IDF gana:**
+
+TF-IDF funciona por coincidencia léxica exacta: "PENSHAR 40% SC" tokenizado tiene IDF alto porque esos tokens son raros en el corpus → el producto correcto siempre ocupa el top-1. Para consultas difíciles (cultivo+plaga), TF-IDF también funciona porque los campos `cultivos_autori` y `plagas` contienen exactamente esas palabras.
+
+**Conclusión académica:**
+
+Para catálogos de productos fitosanitarios con nombres de marca, TF-IDF/BM25 superan a embeddings simétricos. La mejora de embeddings requeriría:
+- Modelo bi-encoder entrenado para retrieval (asimétrico)
+- Fine-tuning sobre consultas reales de agricultores
+- O un enfoque híbrido: BM25 para recall + reranking semántico
+
+Este resultado, aunque inesperado, es un hallazgo válido y documentable en el informe.

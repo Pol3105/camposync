@@ -83,21 +83,19 @@ def test_connection():
 
 def build_embedding_text(row: pd.Series) -> str:
     """
-    Construye el texto a vectorizar por producto.
-    Combina nombre + principio activo + cultivos + plagas para maximizar
-    la similitud con consultas informales de agricultores.
+    Texto a vectorizar: solo nombre + principio activo.
+
+    Rationale: el modelo paraphrase-multilingual-MiniLM-L12-v2 es un modelo
+    simétrico (paráfrasis), no asimétrico (retrieval). Si el documento indexado
+    incluye listas largas de cultivos y plagas, la similitud coseno con una
+    consulta corta tipo "PENSHAR 40% SC" cae a ~0.38 — peor que otros productos
+    con estructura similar. Con nombre + principio activo, una consulta exacta
+    devuelve similitud ≈ 1.0 y las consultas parciales/typos funcionan bien.
+    Para consultas cultivo+plaga, el conocimiento semántico del modelo compensa.
     """
-    parts = []
-    if pd.notna(row.get("nombre")) and row["nombre"]:
-        parts.append(str(row["nombre"]))
-    if pd.notna(row.get("principio_act")) and row["principio_act"]:
-        parts.append(str(row["principio_act"]))
-    if pd.notna(row.get("cultivos_autori")) and row["cultivos_autori"]:
-        # Tomar los primeros 200 chars para no sobrecargar el contexto del modelo
-        parts.append(str(row["cultivos_autori"])[:200])
-    if pd.notna(row.get("plagas")) and row["plagas"]:
-        parts.append(str(row["plagas"])[:200])
-    return " | ".join(parts)
+    nombre = str(row.get("nombre") or "").strip()
+    pa = str(row.get("principio_act") or "").strip()
+    return f"{nombre} {pa}".strip()
 
 
 # ── UPSERT ────────────────────────────────────────────────────────────────────

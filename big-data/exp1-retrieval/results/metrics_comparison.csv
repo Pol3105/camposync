@@ -1,0 +1,17 @@
+metodo,dificultad,n_queries,precision_1,recall_5,f1_score
+exact,global,841,0.3448,0.3448,0.3448
+exact,facil,150,1.0,1.0,1.0
+exact,media,373,0.3727,0.3727,0.3727
+exact,dificil,318,0.0031,0.0031,0.0031
+tfidf,global,841,0.5375,0.7384,0.6221
+tfidf,facil,150,0.9333,1.0,0.9655
+tfidf,media,373,0.6488,0.8579,0.7388
+tfidf,dificil,318,0.2201,0.4748,0.3008
+bm25,global,841,0.5327,0.6873,0.6002
+bm25,facil,150,0.9333,1.0,0.9655
+bm25,media,373,0.6488,0.8445,0.7338
+bm25,dificil,318,0.2075,0.3553,0.262
+embeddings,global,841,0.0499,0.0642,0.0562
+embeddings,facil,150,0.1267,0.1533,0.1387
+embeddings,media,373,0.0483,0.0643,0.0552
+embeddings,dificil,318,0.0157,0.022,0.0183
