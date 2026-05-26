@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate  # Flyway gestiona el schema — Hibernate solo valida, no borra/crea tablas
     show-sql: false
     properties:
       hibernate:

@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    # image: postgres:15-alpine  # imagen original (sin pgvector)
+    image: pgvector/pgvector:pg15  # pgvector = postgres:15 + extensión vector (datos del volumen se conservan)
     container_name: camposync-postgres
     ports:
       - "5432:5432"

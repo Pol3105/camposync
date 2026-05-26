@@ -1,0 +1,34 @@
+# Big Data CampoSync — dependencias Python
+# Instalar: pip install -r requirements.txt
+
+# Embeddings y modelos
+sentence-transformers==3.0.1
+torch==2.3.1
+
+# Base de datos
+psycopg2-binary==2.9.9
+pgvector==0.3.2
+sqlalchemy==2.0.31
+
+# Recuperación de información (Exp1)
+rank-bm25==0.2.2
+scikit-learn==1.5.1
+
+# Datos y análisis
+pandas==2.2.2
+numpy==1.26.4
+
+# Visualización (gráficas de resultados)
+matplotlib==3.9.1
+seaborn==0.13.2
+
+# HTTP (benchmark Exp2 + scraper RETO)
+requests==2.32.3
+httpx==0.27.0
+
+# Parsing XML (scraper RETO)
+lxml==5.2.2
+
+# Utilidades
+python-dotenv==1.0.1
+tqdm==4.66.4

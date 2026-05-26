@@ -7,13 +7,13 @@
 ## FASE 0 — Entorno Big Data
 **Estado: PENDIENTE**
 
-- [ ] **0.1** Cambiar imagen Docker: `postgres:15-alpine` → `pgvector/pgvector:pg15`
-- [ ] **0.2** Crear migration Flyway `V14__pgvector_embeddings.sql`:
+- [x] **0.1** Cambiar imagen Docker: `postgres:15-alpine` → `pgvector/pgvector:pg15`
+- [x] **0.2** Crear migration Flyway `V14__pgvector_embeddings.sql`:
   - `CREATE EXTENSION IF NOT EXISTS vector`
   - `ALTER TABLE producto_fitosanitario ADD COLUMN embedding vector(384)`
   - `CREATE INDEX ivfflat` sobre la columna embedding
-- [ ] **0.3** Fix `application.yaml`: cambiar `ddl-auto: create` → `validate` (evita borrar datos de experimentos al reiniciar)
-- [ ] **0.4** Crear `big-data/requirements.txt` con dependencias Python:
+- [x] **0.3** Fix `application.yaml`: cambiar `ddl-auto: create` → `validate` (evita borrar datos de experimentos al reiniciar)
+- [x] **0.4** Crear `big-data/requirements.txt` con dependencias Python:
   - `sentence-transformers`, `pgvector`, `psycopg2`, `rank-bm25`, `scikit-learn`, `pandas`, `matplotlib`, `seaborn`, `requests`
 
 ---
