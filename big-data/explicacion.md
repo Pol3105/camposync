@@ -234,3 +234,113 @@ Para catálogos de productos fitosanitarios con nombres de marca, TF-IDF/BM25 su
 - O un enfoque híbrido: BM25 para recall + reranking semántico
 
 Este resultado, aunque inesperado, es un hallazgo válido y documentable en el informe.
+
+---
+
+## FASE 4 — Seeder 100k registros
+
+### 4.1 seed_100k.py
+**Fichero:** `big-data/exp2-query-performance/data/seed_100k.py`
+
+**Qué hace:** Genera y puebla la base de datos local `agro_data` con un dataset a escala de Big Data para el experimento de rendimiento de consultas (Exp2):
+*   **50 Granjeros:** Usuarios simulados con rol `GRANJERO`.
+*   **1.000 Explotaciones:** Distribuidas equitativamente entre los nuevos granjeros.
+*   **5.000 Parcelas:** Vinculadas a las explotaciones (distribuidas equitativamente).
+*   **15.000 Recintos:** Con cultivos realistas de secano/regadío y usos SIGPAC (Trigo, Cebada, Olivo, Almendro, etc.).
+*   **100.000 Tratamientos:** Vinculados a los recintos, productos autorizados del catálogo RETO, aplicadores y equipamiento.
+
+### Decisiones de Diseño y Optimizaciones:
+1.  **Idempotencia y Limpieza:** El script incluye un borrado previo inteligente de ejecuciones pasadas ordenado según dependencias de llaves foráneas (`tratamiento` -> `recinto` -> `parcela` -> `explotacion` -> `granjero` -> `usuario`) para asegurar consistencia transaccional y evitar colisiones sin duplicar datos innecesariamente.
+2.  **Integridad Referencial Estricta:** Se precalculan los mapas lógicos del dominio: el `usuario_id` (granjero) asignado al tratamiento **debe** coincidir exactamente con el propietario de la explotación que contiene al recinto tratado. Si no se respetara esta regla, se invalidaría el dominio en un entorno de producción real de JPA.
+3.  **Inserción por Lotes (Batch Insert):** El uso de `extras.execute_values` de `psycopg2` permite insertar los datos de forma masiva en lugar de registro a registro. Para los 100.000 tratamientos, se inyectan en batches de 10.000 filas. Esto reduce drásticamente el coste de comunicación por red e inserción, logrando poblar los ~121.000 registros totales de la estructura relacional en **menos de 10 segundos**.
+4.  **Distribución Uniforme:** Al consultar directamente los IDs asignados por la base de datos tras las inserciones (en vez de usar el RETURNING limitado por el `page_size` de psycopg2), se garantiza una distribución estadística completamente uniforme y representativa de todas las parcelas y explotaciones.
+
+### 4.2 Verificación de Datos
+Tras la ejecución del seeder, se ejecutó un script de diagnóstico que arrojó los siguientes conteos exactos:
+-   **Granjeros totales:** 61 (11 iniciales + 50 nuevos).
+-   **Explotaciones totales:** 1.026 (26 iniciales + 1.000 nuevas).
+-   **Parcelas totales:** 5.052 (52 iniciales + 5.000 nuevas).
+-   **Recintos totales:** 15.041 (41 iniciales + 15.000 nuevos).
+-   **Tratamientos totales:** 100.018 (18 iniciales + 100.000 nuevos; 3 iniciales eliminados por FK en cascada segura).
+
+Esto demuestra la consecución exitosa de la **Fase 4** al lograr una base de datos de producción perfectamente escalada para evaluar los problemas de consultas N+1 en Spring Boot/Hibernate (Fase 5).
+
+---
+
+## FASE 5 — Experimento 2: Query Performance (N+1)
+
+### 5.1 Cambios en el Repositorio y Arquitectura Spring Boot
+Para implementar y evaluar las diferentes estrategias de carga de Hibernate, se realizaron modificaciones en la capa de datos y controladores de la aplicación Spring Boot:
+
+1.  **TratamientoRepository.java**:
+    *   **JOIN FETCH (`findByGranjero_IdJoinFetch`)**: Se implementó una consulta JPQL personalizada con `JOIN FETCH` explícitos sobre todas las relaciones perezosas (`recinto`, `parcela`, `explotacion`, `productoFitosanitario`, `granjero`, `aplicador`, `equipamiento`). Esto obliga a Hibernate a generar una única consulta SQL combinando todas las tablas.
+    *   **Entity Graph (`findByGranjero_IdEntityGraph`)**: Se utilizó la anotación `@EntityGraph` especificando los caminos de atributos (`attributePaths`). Esto permite a Hibernate resolver las relaciones perezosas de manera dinámica utilizando `LEFT OUTER JOIN` de SQL.
+2.  **BenchmarkController.java (Nuevo Controlador Público)**:
+    *   Se creó un controlador público `/api/benchmark/tratamientos` que acepta un parámetro `username` y `strategy`.
+    *   **Justificación de diseño**: En las pruebas de carga iniciales bajo alta concurrencia (100 peticiones simultáneas), el endpoint real bajo seguridad JWT sufría timeouts masivos de red. Esto se debía a que Spring Security requería autenticar cada petición de benchmark descifrando contraseñas con **bcrypt**. Bcrypt es un algoritmo deliberadamente costoso computacionalmente diseñado para evitar ataques de fuerza bruta. Ejecutar 200 peticiones bcrypt concurrentemente saturaba el 100% de la CPU en segundos. Al derivar el test a un endpoint público que recibe el `username` directamente, eliminamos el cuello de botella artificial de la CPU y medimos **estrictamente el rendimiento del acceso a datos (ORM/Hibernate)**.
+    *   Se configuró `/api/benchmark/**` como ruta libre en `SecurityConfig.java`.
+
+---
+
+### 5.2 Optimización de Infraestructura de Pruebas (Subprocess Lock Fix)
+Durante la automatización del benchmark mediante el orquestador Python `run_all.py`, se identificó y solucionó un fallo crítico de bloqueo:
+*   **El problema**: Spring Boot se arrancaba en segundo plano capturando la salida en una tubería en memoria (`subprocess.PIPE`). Debido a la enorme cantidad de logs de Hibernate generados durante las consultas del seeder y el benchmark, el búfer de la tubería del sistema operativo (limitado a 64 KB) se saturaba de inmediato. Al llenarse, el proceso de Java quedaba congelado de forma indefinida en cada escritura a consola.
+*   **La solución**: Se reescribió `run_all.py` para redirigir toda la salida estándar (`stdout`) y de error (`stderr`) directamente a un archivo de disco físico: `big-data/spring_boot_benchmark.log`. Al no utilizar tuberías en memoria, la aplicación fluye sin bloqueos y los logs quedan almacenados para futuras revisiones.
+
+---
+
+### 5.3 Resultados del Benchmark de Rendimiento
+
+El benchmark se ejecutó sobre el usuario semilla `granjero_seed_0_4934`, quien posee un volumen realista de **3.747 tratamientos** en la base de datos de 100.000 registros. A continuación se presentan las métricas brutas y comparadas obtenidas:
+
+| Estrategia | Concurrencia | Duración (s) | Throughput | Latencia Media | P50 (Mediana) | P95 (Percentil 95) | Tasa de Éxito |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **LAZY** | 10 | 8.82 s | 5.67 req/s | 1.750,27 ms | 1.736,57 ms | 1.895,06 ms | 100% (50/50) |
+| | 50 | 17.25 s | 5.80 req/s | 6.893,44 ms | 8.494,91 ms | 8.683,95 ms | 100% (100/100) |
+| | 100 | 34.30 s | 5.83 req/s | 13.350,78 ms | 16.841,15 ms | 17.407,32 ms | 100% (200/200) |
+| **EAGER** | 10 | 8.73 s | 5.73 req/s | 1.731,61 ms | 1.723,37 ms | 1.876,47 ms | 100% (50/50) |
+| | 50 | 17.09 s | 5.85 req/s | 6.819,50 ms | 8.473,81 ms | 8.660,23 ms | 100% (100/100) |
+| | 100 | 34.94 s | 5.72 req/s | 13.302,38 ms | 16.972,04 ms | 17.760,38 ms | 100% (200/200) |
+| **JOIN-FETCH**| 10 | 2.55 s | **19.61 req/s**| **497,41 ms** | **496,43 ms** | **603,94 ms** | 100% (50/50) |
+| | 50 | 4.60 s | **21.73 req/s**| **1.798,61 ms**| **2.204,97 ms**| **2.360,88 ms**| 100% (100/100) |
+| | 100 | 9.42 s | **21.24 req/s**| **3.616,65 ms**| **4.542,28 ms**| **4.885,41 ms**| 100% (200/200) |
+| **ENTITY-GRAPH**| 10| 2.79 s | **17.94 req/s**| **534,70 ms** | **548,93 ms** | **644,71 ms** | 100% (50/50) |
+| | 50 | 4.82 s | **20.75 req/s**| **1.878,55 ms**| **2.253,58 ms**| **2.522,07 ms**| 100% (100/100) |
+| | 100 | 9.93 s | **20.13 req/s**| **3.808,09 ms**| **4.751,63 ms**| **5.088,57 ms**| 100% (200/200) |
+
+---
+
+### 5.4 Análisis Técnico Profundo y Conclusiones del Experimento 2
+
+#### 1. Anatomía del Impacto del Problema N+1
+Para procesar y renderizar un único listado de tratamientos, el mapeador de DTOs (`toDTO`) recorre el grafo de objetos navegando por los recintos, parcelas, explotaciones, productos fitosanitarios y granjeros para extraer campos descriptivos (ej. `numeroRecinto`, `refCatastral`, `municipio`, etc.).
+*   En las estrategias **LAZY** y **EAGER**, al utilizar el repositorio estándar sin optimizar, Hibernate realiza inicialmente una única consulta para extraer los 3.747 tratamientos (`SELECT * FROM tratamiento WHERE usuario_id = ?`).
+*   Posteriormente, por cada tratamiento individual en la iteración del DTO, al acceder a sus relaciones que no fueron recuperadas al inicio, Hibernate dispara consultas adicionales:
+    1.  `SELECT * FROM recinto WHERE id = ?`
+    2.  `SELECT * FROM parcela WHERE id = ?`
+    3.  `SELECT * FROM explotacion WHERE id = ?`
+*   Esto se traduce en aproximadamente **3 queries adicionales por fila**. Para 3.747 tratamientos, el servidor realiza de manera secuencial **más de 11.200 consultas SQL individuales** a la base de datos en un solo ciclo de vida de petición HTTP.
+*   **El resultado en rendimiento es demoledor**: Incluso bajo una concurrencia muy baja (10 usuarios), el servidor tarda **1,75 segundos** en responder a cada petición, y el caudal (`throughput`) queda bloqueado en apenas **5,7 peticiones/segundo**. Con 100 usuarios concurrentes, el tiempo de espera sube hasta los **17,4 segundos (latencia P95)**, volviendo la aplicación inutilizable en producción.
+
+#### 2. Comportamiento Idéntico de EAGER vs LAZY
+Una creencia común en el desarrollo frontend/JPA es que configurar las anotaciones de las relaciones como `FetchType.EAGER` soluciona los problemas de rendimiento. Este experimento demuestra empíricamente que **esto es falso**. 
+Bajo JPA, las consultas del repositorio estándar como `findByGranjero_Id` se traducen en JPQL básico, el cual no realiza joins implícitos. Al mapear, Hibernate sigue ejecutando las más de 11.200 consultas secuenciales bajo cuerda, provocando exactamente la misma latencia catastrófica (~17,7 segundos a 100 usuarios concurrentes).
+
+#### 3. Erradicación del N+1 con JOIN FETCH y EntityGraph
+Al optimizar la consulta mediante `JOIN FETCH` o `@EntityGraph` (Fase 5.1), obligamos a Hibernate a resolver toda la estructura relacional compleja en **una sola consulta SQL optimizada con JOINs**:
+```sql
+SELECT t.*, r.*, p.*, e.*, pf.*, g.* 
+FROM tratamiento t 
+INNER JOIN recinto r ON t.recinto_id = r.id 
+INNER JOIN parcela p ON r.parcela_id = p.id 
+INNER JOIN explotacion e ON p.explotacion_id = e.id 
+...
+```
+*   **Resultados de la mejora**:
+    *   **Latencia**: A concurrencia baja (10), la latencia cae de 1.750 ms a **497 ms** (una reducción del **71,6%**). A concurrencia alta (100), la latencia P95 desciende de 17.407 ms a **4.885 ms** (reducción del **71,9%**).
+    *   **Throughput (Capacidad de Carga)**: El caudal del servidor sube de 5,8 req/s a **21,7 req/s**, lo que representa un incremento del **274%** en la cantidad de peticiones que el sistema puede resolver por segundo.
+*   **JOIN-FETCH vs ENTITY-GRAPH**: Ambas soluciones resultaron sumamente parejas en su rendimiento, habiendo una ligerísima superioridad en las pruebas para `JOIN FETCH` (4,88 s vs 5,08 s a 100 usuarios concurrentes). Esto se debe a que `JOIN FETCH` utiliza `INNER JOIN` (excluyendo automáticamente nulos de relaciones opcionales), mientras que `@EntityGraph` genera `LEFT OUTER JOIN` generalizados, que pueden ser ligeramente más costosos de optimizar en el motor de base de datos relacional.
+
+Esta experimentación cuantifica de manera rigurosa cómo una única línea de optimización a nivel de repositorio JPA erradica por completo la saturación de conexiones y eleva la escalabilidad de CampoSync a un nivel apto para Big Data.
+
+

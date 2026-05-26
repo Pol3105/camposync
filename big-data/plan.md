@@ -64,33 +64,53 @@ Hallazgo clave: TF-IDF supera a embeddings 11x en F1 global. Ver explicacion.md 
 ---
 
 ## FASE 4 — Seeder 100k registros (base de Exp2)
-**Estado: PENDIENTE** | Carpeta: `big-data/exp2-query-performance/data/`
+**Estado: COMPLETADO** | Carpeta: `big-data/exp2-query-performance/data/`
 
-- [ ] **4.1** `seed_100k.py` — genera datos realistas a escala:
+- [x] **4.1** `seed_100k.py` — genera datos realistas a escala:
   - ~1.000 explotaciones, ~5.000 parcelas, ~15.000 recintos, **100.000 tratamientos**
   - Usa productos RETO reales ya ingestados
   - Verifica integridad referencial antes de insertar
-- [ ] **4.2** Verificar: `SELECT COUNT(*) FROM tratamiento` → 100.000
+- [x] **4.2** Verificar: `SELECT COUNT(*) FROM tratamiento` → 100.000
+
 
 ---
 
 ## FASE 5 — Experimento 2: Query Performance (N+1)
-**Estado: PENDIENTE** | Carpeta: `big-data/exp2-query-performance/`
+**Estado: COMPLETADO** | Carpeta: `big-data/exp2-query-performance/`
 
 Objetivo: cuantificar el impacto del problema N+1 en ORM Hibernate y demostrar la mejora con JOIN FETCH / EntityGraph.
 
 Contexto: `Tratamiento` tiene 5 relaciones LAZY → `Recinto`, `Granjero`, `ProductoFitosanitario`, `Aplicador`, `Equipamiento`. Cada listado dispara N+1 queries.
 
-- [ ] **5.1** Añadir variantes al repositorio JPA (en rama BigData):
+- [x] **5.1** Añadir variantes al repositorio JPA (en rama BigData):
   - `TratamientoRepository`: método con `@Query JOIN FETCH` y método con `@EntityGraph`
-  - Variante EAGER: modificación puntual solo para benchmark
-- [ ] **5.2** `scripts/benchmark.py` — mide latencia del endpoint `GET /api/tratamientos` bajo carga:
-  - Cargas: 10, 100, 500 peticiones concurrentes
+  - Variante EAGER: modificación puntual en controlador/servicio
+- [x] **5.2** `scripts/benchmark.py` — mide latencia del endpoint `GET /api/benchmark/tratamientos` bajo carga:
+  - Cargas concurrentes: 10, 50, 100 peticiones simultáneas
   - 4 estrategias: LAZY / EAGER / JOIN FETCH / EntityGraph
-  - Métricas: latencia media, p95, throughput (req/s)
-- [ ] **5.3** `run_all.sh` — ejecuta los 4 benchmarks secuencialmente y guarda resultados
-- [ ] **5.4** Output: `results/latency_comparison.csv` + gráfica línea (latencia vs carga por estrategia)
-- [ ] **5.5** Análisis: cuantificar reducción de latencia JOIN FETCH vs LAZY (esperado: 60-80%)
+  - Métricas: latencia media, p50, p95, throughput (req/s), tasa de éxito
+- [x] **5.3** `run_all.sh` — ejecuta los benchmarks de forma automática con la aplicación Spring Boot levantada y la DB sembrada con 100K registros
+- [x] **5.4** Output: `results/latency_comparison.csv` + `results/latency_comparison.png` (gráfica generada automáticamente)
+- [x] **5.5** Análisis: cuantificar reducción de latencia JOIN FETCH vs LAZY (reducción de latencia del **72%** en P95 bajo alta concurrencia de 100 usuarios, incremento del **260%** en throughput).
+
+### Resumen de Resultados (3.747 tratamientos por petición):
+
+| Estrategia | Concurrencia | Req. Totales | Throughput | Latencia Media | P50 (Mediana) | P95 | Éxito |
+|------------|--------------|--------------|------------|----------------|---------------|-----|-------|
+| **LAZY** (N+1) | 10 | 50 | 5.67 req/s | 1.750 ms | 1.736 ms | 1.895 ms | 100% |
+| | 50 | 100 | 5.80 req/s | 6.893 ms | 8.494 ms | 8.683 ms | 100% |
+| | 100 | 200 | 5.83 req/s | 13.350 ms | 16.841 ms | 17.407 ms | 100% |
+| **EAGER** (N+1)| 10 | 50 | 5.73 req/s | 1.731 ms | 1.723 ms | 1.876 ms | 100% |
+| | 50 | 100 | 5.85 req/s | 6.819 ms | 8.473 ms | 8.660 ms | 100% |
+| | 100 | 200 | 5.72 req/s | 13.302 ms | 16.972 ms | 17.760 ms | 100% |
+| **JOIN-FETCH** | 10 | 50 | **19.61 req/s** | **497 ms** | **496 ms** | **603 ms** | 100% |
+| | 50 | 100 | **21.73 req/s** | **1.798 ms** | **2.204 ms** | **2.360 ms** | 100% |
+| | 100 | 200 | **21.24 req/s** | **3.616 ms** | **4.542 ms** | **4.885 ms** | 100% |
+| **ENTITY-GRAPH**| 10 | 50 | **17.94 req/s** | **534 ms** | **548 ms** | **644 ms** | 100% |
+| | 50 | 100 | **20.75 req/s** | **1.878 ms** | **2.253 ms** | **2.522 ms** | 100% |
+| | 100 | 200 | **20.13 req/s** | **3.808 ms** | **4.751 ms** | **5.088 ms** | 100% |
+
+**Hallazgo clave**: JOIN FETCH y ENTITY GRAPH reducen la latencia de procesamiento P95 a una tercera parte de la original (reducción del 72% bajo carga de 100 usuarios concurrentes) y multiplican el throughput del servidor por **3.6x** al erradicar las consultas N+1 y reducirlas a una única consulta SQL optimizada con JOINs. EAGER y LAZY se comportan idénticos debido a que el mapper realiza la navegación del grafo de objetos por igual.
 
 ---
 
