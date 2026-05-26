@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/invitaciones/*/aceptar").permitAll()
+                        .requestMatchers("/api/benchmark/**").permitAll() // Public benchmark endpoint for Exp2 Big Data
 
                         // RBAC Rules
                         .requestMatchers("/api/asesor/**").hasRole("ASESOR")

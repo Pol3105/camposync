@@ -21,9 +21,10 @@ public class TratamientoController {
     private final TratamientoService tratamientoService;
 
     @GetMapping
-    public ResponseEntity<List<TratamientoDTO>> listar() {
-        return ResponseEntity.ok(tratamientoService.listarPorGranjero(currentUsername()));
+    public ResponseEntity<List<TratamientoDTO>> listar(@RequestParam(required = false) String strategy) {
+        return ResponseEntity.ok(tratamientoService.listarPorGranjero(currentUsername(), strategy));
     }
+
 
     @PostMapping
     public ResponseEntity<TratamientoDTO> crear(@Valid @RequestBody TratamientoCreateRequest request) {

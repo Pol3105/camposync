@@ -178,13 +178,21 @@ public class TratamientoService {
         return toDTO(saved);
     }
 
-    public List<TratamientoDTO> listarPorGranjero(String username) {
+    public List<TratamientoDTO> listarPorGranjero(String username, String strategy) {
         Granjero granjero = getGranjero(username);
-        return tratamientoRepository.findByGranjero_Id(granjero.getId())
-                .stream()
+        List<Tratamiento> list;
+        if ("join-fetch".equalsIgnoreCase(strategy)) {
+            list = tratamientoRepository.findByGranjero_IdJoinFetch(granjero.getId());
+        } else if ("entity-graph".equalsIgnoreCase(strategy)) {
+            list = tratamientoRepository.findByGranjero_IdEntityGraph(granjero.getId());
+        } else {
+            list = tratamientoRepository.findByGranjero_Id(granjero.getId());
+        }
+        return list.stream()
                 .map(this::toDTO)
                 .toList();
     }
+
 
     public List<TratamientoDTO> listarPorRecinto(Long recintoId, String username) {
         Granjero granjero = getGranjero(username);
