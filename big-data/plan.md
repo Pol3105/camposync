@@ -19,13 +19,13 @@
 ---
 
 ## FASE 1 — Ingesta RETO (vector store)
-**Estado: PENDIENTE** | Carpeta: `big-data/` (raíz de big-data)
+**Estado: EN PROGRESO** | Carpeta: `big-data/` (raíz de big-data)
 
-- [ ] **1.1** `reto_scraper.py` — descarga y parsea XML del registro oficial RETO
-  - Output: `data/reto_productos.csv` (nombre, materia_activa, cultivos, plagas, dosis_min, dosis_max)
-- [ ] **1.2** `ingest_reto.py` — genera embeddings con `paraphrase-multilingual-MiniLM-L12-v2`
+- [x] **1.1** `reto_scraper.py` — descarga y parsea el catálogo oficial RETO (JSON, no XML)
+  - Output: `data/reto_productos.csv` — **2045 productos reales** con cultivos, plagas y dosis
+- [x] **1.2** `ingest_reto.py` — genera embeddings con `paraphrase-multilingual-MiniLM-L12-v2`
   - Lee CSV → genera vector(384) por producto → inserta en columna `embedding` de `producto_fitosanitario`
-- [ ] **1.3** Verificación manual: query "manzana pulgon" → top-3 debe incluir producto correcto
+- [x] **1.3** Verificación manual: query "manzana pulgon" → top-5 devuelve productos para manzano con similitud ~0.53-0.56 ✅
 
 ---
 
